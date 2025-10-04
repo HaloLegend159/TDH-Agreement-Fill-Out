@@ -3,35 +3,28 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>TDH Agreement – Exact PDF (Mobile Friendly)</title>
+<title>TDH Agreement – Exact PDF (Calibrate + Mobile)</title>
 <style>
   :root { --bg:#0f172a; --panel:#111827; --ink:#e5e7eb; --muted:#94a3b8; --border:#1f2937; --gap:14px; --radius:14px; }
   html,body{height:100%}
   body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.35 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
   .wrap{max-width:1100px;margin:20px auto;padding:0 12px 80px}
-  .toolbar{
-    position:sticky;top:0;z-index:20;backdrop-filter:blur(6px);
+  .toolbar{position:sticky;top:0;z-index:20;backdrop-filter:blur(6px);
     background:color-mix(in oklab,var(--bg) 85%, transparent);
-    display:flex;gap:8px;padding:10px 0 14px;align-items:center;flex-wrap:wrap
-  }
+    display:flex;gap:8px;padding:10px 0 14px;align-items:center;flex-wrap:wrap}
   .toolbar h1{margin:0;font-size:18px;margin-right:auto}
   .actions{display:flex;gap:8px;flex-wrap:wrap}
-  button{
-    border:1px solid var(--border);background:#0b1324;color:var(--ink);
-    padding:10px 14px;border-radius:12px;cursor:pointer;font-weight:600
-  }
+  button{border:1px solid var(--border);background:#0b1324;color:var(--ink);
+    padding:10px 14px;border-radius:12px;cursor:pointer;font-weight:600}
   button.primary{background:#1a2a4b}
   button:hover{background:#101a33}
   .grid{display:grid;gap:var(--gap)}
   .two{grid-template-columns:1fr 1fr}
-  .panel{
-    background:var(--panel);border:1px solid var(--border);
-    border-radius:var(--radius);padding:16px
-  }
+  .panel{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:16px}
   .panel h2{margin:0 0 10px;font-size:16px;font-weight:700}
   label{display:block;color:var(--muted);font-size:12px;margin-bottom:6px}
 
-  /* Pretty inputs (no white boxes) */
+  /* Pretty inputs */
   input[type="text"], input[type="tel"], input[type="number"], input[type="date"], textarea, select{
     width:100%; background:#0b1220; color:var(--ink);
     border:1px solid var(--border); border-radius:10px; padding:10px 12px; outline:none;
@@ -47,9 +40,29 @@
   .checks label{display:inline-flex;align-items:center;gap:8px;margin:0}
   .sig-row{display:grid;gap:10px;grid-template-columns:1.2fr 1fr 1.2fr;align-items:end}
   .row{display:grid;gap:10px;grid-template-columns:160px 1fr;align-items:center}
-
   .logo-box{display:flex;align-items:center;gap:8px}
   .logo-box img{height:28px;width:auto;object-fit:contain}
+
+  /* ===== Calibrate overlay ===== */
+  #calibWrap{display:none;margin-top:14px}
+  .page {
+    position: relative;
+    width: 1275px;   /* design frame (≈150 px/in) */
+    height: 1650px;  /* 8.5 x 11 in */
+    background:#fff url('assets/tdh-template.png') center/cover no-repeat;
+    border-radius:12px; overflow:hidden; box-shadow:0 10px 30px rgba(0,0,0,.35);
+  }
+  .field, .check {
+    position:absolute; color:#111;
+    font-family: "Times New Roman", Times, serif;
+    font-size: 20px; line-height:1.1;
+    white-space: pre;
+    user-select: none;
+  }
+  .check { font-weight: 800; font-size: 22px; }
+  .drag-on .field, .drag-on .check { outline:1px dashed rgba(0,0,0,.45); cursor:move; border-radius:6px; padding:1px 2px }
+  .calibBar{display:flex;gap:8px;align-items:center;margin:8px 0 12px}
+  .calibBar small{color:#94a3b8}
 </style>
 </head>
 <body>
@@ -62,8 +75,11 @@
       <div class="actions">
         <button type="button" id="loadExample">Load Example</button>
         <button type="button" id="clearForm">Clear</button>
-        <button type="button" id="saveJson">Save as JSON</button>
+        <button type="button" id="saveJson">Save JSON</button>
         <button type="button" class="primary" id="downloadPdf"><strong>Download PDF</strong></button>
+        <button type="button" id="toggleCalib">Calibrate</button>
+        <button type="button" id="saveLayout">Save Layout JSON</button>
+        <button type="button" id="resetLayout">Reset Layout</button>
       </div>
     </div>
 
@@ -105,7 +121,7 @@
           <div><label for="style">Style</label><input id="style" name="style" type="text" /></div>
           <div><label for="color">Color</label><input id="color" name="color" type="text" /></div>
           <div><label for="sqs">SQs</label><input id="sqs" name="sqs" type="text" /></div>
-          <div><label for="iceWater">Ice & Water Barrier (per code)</label><input id="iceWater" name="iceWater" type="text" /></div>
+          <div><label for="iceWater">Ice &amp; Water Barrier (per code)</label><input id="iceWater" name="iceWater" type="text" /></div>
           <div><label for="dripEdge">Drip Edge (Color)</label><input id="dripEdge" name="dripEdge" type="text" /></div>
           <div><label for="gutterApron">Gutter Apron (Color)</label><input id="gutterApron" name="gutterApron" type="text" /></div>
           <div><label for="vents">Vents (Color / Type / Qty)</label><input id="vents" name="vents" type="text" /></div>
@@ -221,227 +237,291 @@
         </div>
       </div>
     </form>
+
+    <!-- ===== Calibrate overlay ===== -->
+    <div id="calibWrap">
+      <div class="calibBar">
+        <button type="button" id="fillFromForm">Use Current Form Values</button>
+        <small>Drag the labels/X’s to line up with the template, then “Save Layout JSON”.</small>
+      </div>
+      <div class="page" id="calibPage"></div>
+    </div>
   </div>
 
-<!-- ===== Robust jsPDF loader (tries local first, then CDNs) ===== -->
+<!-- ===== jsPDF loader: local then CDNs ===== -->
 <script>
-  async function ensureJsPDFLoaded(){
-    if (window.jspdf && window.jspdf.jsPDF) return true;
-    const sources = [
-      "assets/jspdf.umd.min.js", // self-hosted fallback (upload this file to assets/)
-      "https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js",
-      "https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js",
-      "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"
-    ];
-    for (const src of sources) {
-      try {
-        // eslint-disable-next-line no-await-in-loop
-        await new Promise((res, rej) => {
-          const s = document.createElement('script');
-          s.src = src; s.async = true; s.onload = res; s.onerror = rej;
-          document.head.appendChild(s);
-        });
-        if (window.jspdf && window.jspdf.jsPDF) return true;
-      } catch (e) { /* try next */ }
-    }
-    alert("Couldn’t load the PDF engine (jsPDF). \n\nFix: upload jspdf.umd.min.js to assets/ or try again on a better connection.");
-    return false;
+async function ensureJsPDFLoaded(){
+  if (window.jspdf && window.jspdf.jsPDF) return true;
+  const sources = [
+    "assets/jspdf.umd.min.js",
+    "https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js",
+    "https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js",
+    "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"
+  ];
+  for (const src of sources) {
+    try {
+      await new Promise((res, rej)=>{ const s=document.createElement('script'); s.src=src; s.async=true; s.onload=res; s.onerror=rej; document.head.appendChild(s); });
+      if (window.jspdf && window.jspdf.jsPDF) return true;
+    } catch(e){}
   }
+  alert("Couldn’t load the PDF engine (jsPDF). Upload assets/jspdf.umd.min.js or try again.");
+  return false;
+}
+async function loadTemplateImage(){
+  const candidates = [
+    'assets/tdh-template.png',
+    './assets/tdh-template.png',
+    new URL('assets/tdh-template.png', document.baseURI).href
+  ];
+  for (const url of [...new Set(candidates)]) {
+    try {
+      const img = new Image(); img.crossOrigin='anonymous'; img.src=url;
+      await new Promise((res,rej)=>{ img.onload=res; img.onerror=rej; });
+      return img;
+    } catch(e){}
+  }
+  throw new Error('Template image not found. Ensure assets/tdh-template.png exists.');
+}
 </script>
 
 <script>
-  /* ------------ helpers ------------ */
-  function formToObject(form){
-    const data={};
-    new FormData(form).forEach((v,k)=>{
-      if (data[k]!==undefined){ if(!Array.isArray(data[k])) data[k]=[data[k]]; data[k].push(v); }
-      else data[k]=v;
-    });
-    return data;
-  }
-  function fillForm(form,obj){
-    for(const el of form.elements){
-      if(!el.name) continue;
-      const v=obj[el.name]; if(v===undefined) continue;
-      if(el.type==='checkbox') el.checked = Array.isArray(v) ? v.includes(el.value) : (v===el.value||v===true);
-      else if(el.type==='radio') el.checked = (String(v)===el.value);
-      else el.value = Array.isArray(v) ? v[0] : v;
-    }
-  }
-
-  // Example data (optional)
-  const example = {
-    name:"Carol Chinn", address:"1185 N 9th St", cityStateZip:"David City, NE 68632-1227",
-    primaryContactName:"Nate Wegner", primaryPhone:"(402) 707-7187",
-    insuranceCompany:"State Farm", claimNumber:"2788S499V",
-    roofingLocations:["House"], tearOffLayers:"1", underlayment:"Synthetic",
-    shinglesBrand:"CertainTeed", style:"Landmark", color:"Desert Tan",
-    sqs:"", iceWater:"", dripEdge:"White", gutterApron:"White",
-    vents:"9 Turtle Type; White", valleys:"Open; Painted", pipeJacks:"2 EA NC",
-    roofPitch:"4/12", stories:"1", roofSize:"1,050 SF", roofType:["Gable"],
-    ridgeCap:"", ridgeVent:"", sideWallFlashing:"82 LF White; Metal",
-    guttersSize:"6", guttersColor:"White", downspoutsSize:"3x4", downspoutsColor:"Bronze",
-    gutterGuards:["Leaf Free"], gutterNotes:"Gutter Guards are Leafguard Brand; 121 LF White",
-    materialDrop:"Driveway", redeck:"", interiorDamage:"", cleanup:"Mag Roll Sweeper; Clean and haul debris",
-    miscNotes:"Satellite needs detached and reset; R&R 1 EA 6\" Rain cap",
-    agreedAmount:"ACV", firstPayment:"RCV + Approved Supplements", finalPayment:"RCV + Approved Supplements",
-    sidingBrand:"", sidingStyle:"", sidingSqs:"", sidingColor:"",
-    elevations:["Front","Right","Left","Rear"], trim:"", fascia:"Smooth", fasciaColor:"",
-    soffit:"Vented", soffitColor:"", windowWraps:"Smooth", windowWrapsColor:"", blocks:["Light Blocks","Split Blocks"],
-    custDate:"", custSignature:"", tdhDate:"", tdhSignature:"", instructions:"2513 River Rd Dr, Waterloo, NE 68069"
-  };
-
-  const form = document.getElementById('tdhForm');
-  document.getElementById('loadExample').addEventListener('click', ()=> fillForm(form, example));
-  document.getElementById('clearForm').addEventListener('click', ()=> form.reset());
-  document.getElementById('saveJson').addEventListener('click', ()=>{
-    const data=formToObject(form);
-    const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
-    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='tdh-agreement.json'; a.click(); URL.revokeObjectURL(a.href);
+/* ---------- helpers ---------- */
+function formToObject(form){
+  const data={};
+  new FormData(form).forEach((v,k)=>{
+    if (data[k]!==undefined){ if(!Array.isArray(data[k])) data[k]=[data[k]]; data[k].push(v); }
+    else data[k]=v;
   });
-
-  // ---- mapping (same as before) ----
-  const PX_PER_IN = 150; // 1275px per 8.5in
-  const layout = [
-    {key:'name', x:180, y:230}, {key:'primaryContactName', x:780, y:230},
-    {key:'primaryPhone', x:180, y:275}, {key:'insuranceCompany', x:780, y:275},
-    {key:'claimNumber', x:180, y:320}, {key:'phone', x:780, y:320},
-    {key:'address', x:180, y:365}, {key:'cityStateZip', x:780, y:365},
-    {key:'x_roofing_House', x:160, y:430, mark:true},
-    {key:'x_roofing_Garage', x:265, y:430, mark:true},
-    {key:'x_roofing_Shed', x:370, y:430, mark:true},
-    {key:'x_roofing_Flat', x:455, y:430, mark:true},
-    {key:'tearOffLayers', x:220, y:465}, {key:'underlayment', x:780, y:465},
-    {key:'shinglesBrand', x:180, y:505}, {key:'style', x:620, y:505}, {key:'color', x:960, y:505}, {key:'sqs', x:1160, y:505},
-    {key:'iceWater', x:310, y:545},
-    {key:'dripEdge', x:180, y:585}, {key:'gutterApron', x:620, y:585},
-    {key:'vents', x:180, y:625}, {key:'valleys', x:620, y:625},
-    {key:'pipeJacks', x:180, y:665}, {key:'roofPitch', x:620, y:665}, {key:'stories', x:880, y:665}, {key:'roofSize', x:1060, y:665},
-    {key:'roofType', x:300, y:705}, {key:'ridgeCap', x:780, y:705}, {key:'ridgeVent', x:1060, y:705},
-    {key:'sideWallFlashing', x:360, y:745},
-    {key:'guttersSize', x:160, y:820}, {key:'guttersColor', x:420, y:820},
-    {key:'downspoutsSize', x:750, y:820}, {key:'downspoutsColor', x:1020, y:820},
-    {key:'gutterGuards', x:240, y:865}, {key:'gutterNotes', x:780, y:865},
-    {key:'materialDrop', x:240, y:940}, {key:'redeck', x:740, y:940},
-    {key:'interiorDamage', x:240, y:980}, {key:'cleanup', x:740, y:980},
-    {key:'miscNotes', x:240, y:1020, w:900},
-    {key:'agreedAmount', x:240, y:1085}, {key:'firstPayment', x:740, y:1085}, {key:'finalPayment', x:1040, y:1085},
-    {key:'sidingBrand', x:180, y:1150}, {key:'sidingStyle', x:620, y:1150}, {key:'sidingSqs', x:980, y:1150}, {key:'sidingColor', x:1160, y:1150},
-    {key:'elevations', x:240, y:1190}, {key:'trim', x:740, y:1190},
-    {key:'fascia', x:240, y:1230}, {key:'fasciaColor', x:620, y:1230},
-    {key:'soffit', x:920, y:1230}, {key:'soffitColor', x:1160, y:1230},
-    {key:'windowWraps', x:240, y:1270}, {key:'windowWrapsColor', x:620, y:1270},
-    {key:'blocks', x:240, y:1310},
-    {key:'custDate', x:320, y:1380}, {key:'custSignature', x:680, y:1380},
-    {key:'tdhDate', x:320, y:1415}, {key:'tdhSignature', x:680, y:1415},
-    {key:'instructions', x:360, y:1475}
-  ];
-
-  function computeValues(d){
-    const out = {};
-    const list = v => Array.isArray(v) ? v.join(', ') : (v || '');
-    Object.assign(out, {
-      name:d.name, primaryContactName:d.primaryContactName, primaryPhone:d.primaryPhone,
-      insuranceCompany:d.insuranceCompany, claimNumber:d.claimNumber, phone:d.phone,
-      address:d.address, cityStateZip:d.cityStateZip,
-      tearOffLayers:d.tearOffLayers||'', underlayment:d.underlayment||'',
-      shinglesBrand:d.shinglesBrand||'', style:d.style||'', color:d.color||'', sqs:d.sqs||'',
-      iceWater:d.iceWater||'', dripEdge:d.dripEdge||'', gutterApron:d.gutterApron||'',
-      vents:d.vents||'', valleys:d.valleys||'', pipeJacks:d.pipeJacks||'',
-      roofPitch:d.roofPitch||'', stories:d.stories||'', roofSize:d.roofSize||'',
-      roofType:list(d.roofType), ridgeCap:d.ridgeCap||'', ridgeVent:d.ridgeVent||'',
-      sideWallFlashing:d.sideWallFlashing||'',
-      guttersSize:d.guttersSize? d.guttersSize + '"' : '', guttersColor:d.guttersColor||'',
-      downspoutsSize:d.downspoutsSize||'', downspoutsColor:d.downspoutsColor||'',
-      gutterGuards:list(d.gutterGuards), gutterNotes:d.gutterNotes||'',
-      materialDrop:d.materialDrop||'', redeck:d.redeck||'', interiorDamage:d.interiorDamage||'',
-      cleanup:d.cleanup||'', miscNotes:d.miscNotes||'',
-      agreedAmount:d.agreedAmount||'', firstPayment:d.firstPayment||'', finalPayment:d.finalPayment||'',
-      sidingBrand:d.sidingBrand||'', sidingStyle:d.sidingStyle||'', sidingSqs:d.sidingSqs||'', sidingColor:d.sidingColor||'',
-      elevations:list(d.elevations), trim:d.trim||'', fascia:d.fascia||'', fasciaColor:d.fasciaColor||'',
-      soffit:d.soffit||'', soffitColor:d.soffitColor||'', windowWraps:d.windowWraps||'',
-      windowWrapsColor:d.windowWrapsColor||'', blocks:list(d.blocks),
-      custDate:d.custDate||'', custSignature:d.custSignature||'', tdhDate:d.tdhDate||'', tdhSignature:d.tdhSignature||'',
-      instructions:d.instructions||''
-    });
-    const loc = new Set([].concat(d.roofingLocations||[]));
-    out.x_roofing_House  = loc.has('House') ? 'X' : '';
-    out.x_roofing_Garage = loc.has('Garage') ? 'X' : '';
-    out.x_roofing_Shed   = loc.has('Shed') ? 'X' : '';
-    out.x_roofing_Flat   = loc.has('Flat') ? 'X' : '';
-    return out;
+  return data;
+}
+function fillForm(form,obj){
+  for(const el of form.elements){
+    if(!el.name) continue;
+    const v=obj[el.name]; if(v===undefined) continue;
+    if(el.type==='checkbox') el.checked = Array.isArray(v) ? v.includes(el.value) : (v===el.value||v===true);
+    else if(el.type==='radio') el.checked = (String(v)===el.value);
+    else el.value = Array.isArray(v) ? v[0] : v;
   }
-
-  // ---- DOWNLOAD: draw template + text directly into PDF (single page) ----
-  document.getElementById('downloadPdf').addEventListener('click', async ()=>{
-    try {
-      // 1) Ensure jsPDF is available
-      if (!(await ensureJsPDFLoaded())) return;
-      const { jsPDF } = window.jspdf;
-
-      // 2) Load template image (must exist at /assets/tdh-template.png)
-      const imgUrl = 'assets/tdh-template.png';
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.src = imgUrl;
-      await new Promise((res, rej)=>{
-        img.onload = res;
-        img.onerror = ()=> rej(new Error('Template image not found at ' + imgUrl));
-      });
-
-      // 3) Build PDF (always one US Letter page)
-      const doc = new jsPDF({ unit:'in', format:'letter', compress:true });
-
-      // 4) Background
-      doc.addImage(img, 'PNG', 0, 0, 8.5, 11);
-
-      // 5) Text overlay
-      const data = formToObject(form);
-      const v = computeValues(data);
-      doc.setTextColor(0,0,0);
-      doc.setFont('times', 'normal');
-      doc.setFontSize(11);
-
-      layout.forEach(item=>{
-        const val = v[item.key] || '';
-        if (!val) return;
-        const xIn = item.x / PX_PER_IN;
-        const yIn = item.y / PX_PER_IN;
-
-        if (item.mark) {
-          doc.setFont('helvetica','bold'); doc.setFontSize(12);
-          doc.text('X', xIn, yIn);
-          doc.setFont('times','normal'); doc.setFontSize(11);
-          return;
-        }
-        if (item.w) {
-          const wIn = item.w / PX_PER_IN;
-          const lines = doc.splitTextToSize(String(val), wIn);
-          doc.text(lines, xIn, yIn);
-        } else {
-          doc.text(String(val), xIn, yIn);
-        }
-      });
-
-      // 6) Save
-      const filename = `TDH_Agreement_${(data.name||'Filled').replace(/\s+/g,'_')}.pdf`;
-      doc.save(filename);
-    } catch (err) {
-      console.error(err);
-      alert(
-        "Couldn’t generate the PDF.\n\n" +
-        "Quick checks:\n" +
-        "• Is jsPDF available? Try uploading assets/jspdf.umd.min.js\n" +
-        "• Does assets/tdh-template.png exist (exact name/path)?\n" +
-        "• Hard-refresh the page (Cmd/Ctrl+Shift+R)."
-      );
-    }
+}
+function computeValues(d){
+  const out = {};
+  const list = v => Array.isArray(v) ? v.join(', ') : (v || '');
+  Object.assign(out, {
+    name:d.name, primaryContactName:d.primaryContactName, primaryPhone:d.primaryPhone,
+    insuranceCompany:d.insuranceCompany, claimNumber:d.claimNumber, phone:d.phone,
+    address:d.address, cityStateZip:d.cityStateZip,
+    tearOffLayers:d.tearOffLayers||'', underlayment:d.underlayment||'',
+    shinglesBrand:d.shinglesBrand||'', style:d.style||'', color:d.color||'', sqs:d.sqs||'',
+    iceWater:d.iceWater||'', dripEdge:d.dripEdge||'', gutterApron:d.gutterApron||'',
+    vents:d.vents||'', valleys:d.valleys||'', pipeJacks:d.pipeJacks||'',
+    roofPitch:d.roofPitch||'', stories:d.stories||'', roofSize:d.roofSize||'',
+    roofType:list(d.roofType), ridgeCap:d.ridgeCap||'', ridgeVent:d.ridgeVent||'',
+    sideWallFlashing:d.sideWallFlashing||'',
+    guttersSize:d.guttersSize? d.guttersSize + '"' : '', guttersColor:d.guttersColor||'',
+    downspoutsSize:d.downspoutsSize||'', downspoutsColor:d.downspoutsColor||'',
+    gutterGuards:list(d.gutterGuards), gutterNotes:d.gutterNotes||'',
+    materialDrop:d.materialDrop||'', redeck:d.redeck||'', interiorDamage:d.interiorDamage||'',
+    cleanup:d.cleanup||'', miscNotes:d.miscNotes||'',
+    agreedAmount:d.agreedAmount||'', firstPayment:d.firstPayment||'', finalPayment:d.finalPayment||'',
+    sidingBrand:d.sidingBrand||'', sidingStyle:d.sidingStyle||'', sidingSqs:d.sidingSqs||'', sidingColor:d.sidingColor||'',
+    elevations:list(d.elevations), trim:d.trim||'', fascia:d.fascia||'', fasciaColor:d.fasciaColor||'',
+    soffit:d.soffit||'', soffitColor:d.soffitColor||'', windowWraps:d.windowWraps||'',
+    windowWrapsColor:d.windowWrapsColor||'', blocks:list(d.blocks),
+    custDate:d.custDate||'', custSignature:d.custSignature||'', tdhDate:d.tdhDate||'', tdhSignature:d.tdhSignature||'',
+    instructions:d.instructions||''
   });
+  const loc = new Set([].concat(d.roofingLocations||[]));
+  out.x_roofing_House  = loc.has('House') ? 'X' : '';
+  out.x_roofing_Garage = loc.has('Garage') ? 'X' : '';
+  out.x_roofing_Shed   = loc.has('Shed') ? 'X' : '';
+  out.x_roofing_Flat   = loc.has('Flat') ? 'X' : '';
+  return out;
+}
 
-  // Autosave while typing (nice for mobile)
-  const KEY='tdh-agreement-autosave';
-  try { const saved=JSON.parse(localStorage.getItem(KEY)||'null'); if (saved) fillForm(form, saved); } catch {}
-  form.addEventListener('input', ()=> localStorage.setItem(KEY, JSON.stringify(formToObject(form))));
+/* ---------- layout model (drag to tweak) ---------- */
+const PAGE_W = 1275, PAGE_H = 1650; // design frame
+const LKEY='tdh-layout-v2';
+let layout = JSON.parse(localStorage.getItem(LKEY) || 'null') || [
+  // General Info
+  {key:'name', x:180, y:230}, {key:'primaryContactName', x:780, y:230},
+  {key:'primaryPhone', x:180, y:275}, {key:'insuranceCompany', x:780, y:275},
+  {key:'claimNumber', x:180, y:320}, {key:'phone', x:780, y:320},
+  {key:'address', x:180, y:365}, {key:'cityStateZip', x:780, y:365},
+  // Roofing location X's
+  {key:'x_roofing_House', x:160, y:430, cls:'check'},
+  {key:'x_roofing_Garage', x:265, y:430, cls:'check'},
+  {key:'x_roofing_Shed', x:370, y:430, cls:'check'},
+  {key:'x_roofing_Flat', x:455, y:430, cls:'check'},
+  // Roofing lines
+  {key:'tearOffLayers', x:220, y:465}, {key:'underlayment', x:780, y:465},
+  {key:'shinglesBrand', x:180, y:505}, {key:'style', x:620, y:505}, {key:'color', x:960, y:505}, {key:'sqs', x:1160, y:505},
+  {key:'iceWater', x:310, y:545},
+  {key:'dripEdge', x:180, y:585}, {key:'gutterApron', x:620, y:585},
+  {key:'vents', x:180, y:625}, {key:'valleys', x:620, y:625},
+  {key:'pipeJacks', x:180, y:665}, {key:'roofPitch', x:620, y:665}, {key:'stories', x:880, y:665}, {key:'roofSize', x:1060, y:665},
+  {key:'roofType', x:300, y:705}, {key:'ridgeCap', x:780, y:705}, {key:'ridgeVent', x:1060, y:705},
+  {key:'sideWallFlashing', x:360, y:745},
+  // Gutters
+  {key:'guttersSize', x:160, y:820}, {key:'guttersColor', x:420, y:820},
+  {key:'downspoutsSize', x:750, y:820}, {key:'downspoutsColor', x:1020, y:820},
+  {key:'gutterGuards', x:240, y:865}, {key:'gutterNotes', x:780, y:865},
+  // More / Siding / Payment / Signatures / Instructions
+  {key:'materialDrop', x:240, y:940}, {key:'redeck', x:740, y:940},
+  {key:'interiorDamage', x:240, y:980}, {key:'cleanup', x:740, y:980},
+  {key:'miscNotes', x:240, y:1020, w:900},
+  {key:'agreedAmount', x:240, y:1085}, {key:'firstPayment', x:740, y:1085}, {key:'finalPayment', x:1040, y:1085},
+  {key:'sidingBrand', x:180, y:1150}, {key:'sidingStyle', x:620, y:1150}, {key:'sidingSqs', x:980, y:1150}, {key:'sidingColor', x:1160, y:1150},
+  {key:'elevations', x:240, y:1190}, {key:'trim', x:740, y:1190},
+  {key:'fascia', x:240, y:1230}, {key:'fasciaColor', x:620, y:1230},
+  {key:'soffit', x:920, y:1230}, {key:'soffitColor', x:1160, y:1230},
+  {key:'windowWraps', x:240, y:1270}, {key:'windowWrapsColor', x:620, y:1270},
+  {key:'blocks', x:240, y:1310},
+  {key:'custDate', x:320, y:1380}, {key:'custSignature', x:680, y:1380},
+  {key:'tdhDate', x:320, y:1415}, {key:'tdhSignature', x:680, y:1415},
+  {key:'instructions', x:360, y:1475},
+];
+
+function saveLayout(){ localStorage.setItem(LKEY, JSON.stringify(layout)); }
+function resetLayout(){ localStorage.removeItem(LKEY); location.reload(); }
+
+/* ---------- Calibrate UI (drag-and-drop) ---------- */
+const calibWrap = document.getElementById('calibWrap');
+const calibPage = document.getElementById('calibPage');
+function mountOverlay(values){
+  calibPage.classList.add('drag-on');
+  calibPage.innerHTML=''; // clear
+  layout.forEach(item=>{
+    const el = document.createElement('div');
+    el.className = item.cls || 'field';
+    el.dataset.key = item.key;
+    el.style.left = (item.x||0)+'px';
+    el.style.top  = (item.y||0)+'px';
+    if(item.w) el.style.width=item.w+'px';
+    el.textContent = values[item.key] || '';
+    calibPage.appendChild(el);
+  });
+}
+let dragging = null, start = null;
+calibPage.addEventListener('mousedown', e=>{
+  const t=e.target.closest('.field,.check'); if (!t) return;
+  dragging = t;
+  start = {x:e.clientX, y:e.clientY, l:parseFloat(t.style.left||0), t:parseFloat(t.style.top||0)};
+  e.preventDefault();
+});
+window.addEventListener('mousemove', e=>{
+  if (!dragging) return;
+  const dx=e.clientX-start.x, dy=e.clientY-start.y;
+  dragging.style.left = Math.round(start.l+dx)+'px';
+  dragging.style.top  = Math.round(start.t+dy)+'px';
+});
+window.addEventListener('mouseup', ()=>{
+  if (!dragging) return;
+  const k=dragging.dataset.key;
+  const node = layout.find(it=>it.key===k);
+  node.x = Math.round(parseFloat(dragging.style.left||0));
+  node.y = Math.round(parseFloat(dragging.style.top||0));
+  saveLayout();
+  dragging=null;
+});
+
+document.getElementById('toggleCalib').addEventListener('click', ()=>{
+  calibWrap.style.display = (calibWrap.style.display==='none'||!calibWrap.style.display) ? 'block' : 'none';
+  if (calibWrap.style.display==='block') {
+    const v = computeValues(formToObject(document.getElementById('tdhForm')));
+    mountOverlay(v);
+  }
+});
+document.getElementById('fillFromForm').addEventListener('click', ()=>{
+  const v = computeValues(formToObject(document.getElementById('tdhForm')));
+  mountOverlay(v);
+});
+document.getElementById('saveLayout').addEventListener('click', ()=>{
+  const blob=new Blob([JSON.stringify(layout,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='tdh-layout.json'; a.click(); URL.revokeObjectURL(a.href);
+});
+document.getElementById('resetLayout').addEventListener('click', resetLayout);
+
+/* ---------- Example + JSON save ---------- */
+const example = {
+  name:"Carol Chinn", address:"1185 N 9th St", cityStateZip:"David City, NE 68632-1227",
+  primaryContactName:"Nate Wegner", primaryPhone:"(402) 707-7187",
+  insuranceCompany:"State Farm", claimNumber:"2788S499V",
+  roofingLocations:["House"], tearOffLayers:"1", underlayment:"Synthetic",
+  shinglesBrand:"CertainTeed", style:"Landmark", color:"Desert Tan",
+  sqs:"", iceWater:"", dripEdge:"White", gutterApron:"White",
+  vents:"9 Turtle Type; White", valleys:"Open; Painted", pipeJacks:"2 EA NC",
+  roofPitch:"4/12", stories:"1", roofSize:"1,050 SF", roofType:["Gable"],
+  ridgeCap:"", ridgeVent:"", sideWallFlashing:"82 LF White; Metal",
+  guttersSize:"6", guttersColor:"White", downspoutsSize:"3x4", downspoutsColor:"Bronze",
+  gutterGuards:["Leaf Free"], gutterNotes:"Gutter Guards are Leafguard Brand; 121 LF White",
+  materialDrop:"Driveway", redeck:"", interiorDamage:"", cleanup:"Mag Roll Sweeper; Clean and haul debris",
+  miscNotes:"Satellite needs detached and reset; R&R 1 EA 6\" Rain cap",
+  agreedAmount:"ACV", firstPayment:"RCV + Approved Supplements", finalPayment:"RCV + Approved Supplements",
+  sidingBrand:"", sidingStyle:"", sidingSqs:"", sidingColor:"",
+  elevations:["Front","Right","Left","Rear"], trim:"", fascia:"Smooth", fasciaColor:"",
+  soffit:"Vented", soffitColor:"", windowWraps:"Smooth", windowWrapsColor:"", blocks:["Light Blocks","Split Blocks"],
+  custDate:"", custSignature:"", tdhDate:"", tdhSignature:"", instructions:"2513 River Rd Dr, Waterloo, NE 68069"
+};
+
+const form = document.getElementById('tdhForm');
+document.getElementById('loadExample').addEventListener('click', ()=> fillForm(form, example));
+document.getElementById('clearForm').addEventListener('click', ()=> form.reset());
+document.getElementById('saveJson').addEventListener('click', ()=>{
+  const data=formToObject(form);
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='tdh-agreement.json'; a.click(); URL.revokeObjectURL(a.href);
+});
+
+/* ---------- Download: draw directly into PDF ---------- */
+document.getElementById('downloadPdf').addEventListener('click', async ()=>{
+  try {
+    if (!(await ensureJsPDFLoaded())) return;
+    const { jsPDF } = window.jspdf;
+    const img = await loadTemplateImage(); // must exist
+    const doc = new jsPDF({ unit:'in', format:'letter', compress:true });
+
+    // background template full page
+    doc.addImage(img, 'PNG', 0, 0, 8.5, 11);
+
+    // text values
+    const v = computeValues(formToObject(form));
+    doc.setTextColor(0,0,0);
+    doc.setFont('times','normal');
+    doc.setFontSize(11);
+
+    layout.forEach(item=>{
+      const val = v[item.key] || '';
+      if (!val) return;
+      const xIn = (item.x / PAGE_W) * 8.5;
+      const yIn = (item.y / PAGE_H) * 11;
+      if ((item.cls||'')==='check') {
+        doc.setFont('helvetica','bold'); doc.setFontSize(12);
+        doc.text('X', xIn, yIn);
+        doc.setFont('times','normal'); doc.setFontSize(11);
+        return;
+      }
+      if (item.w) {
+        const wIn = (item.w / PAGE_W) * 8.5;
+        const lines = doc.splitTextToSize(String(val), wIn);
+        doc.text(lines, xIn, yIn);
+      } else {
+        doc.text(String(val), xIn, yIn);
+      }
+    });
+
+    const data = v;
+    const filename = `TDH_Agreement_${(data.name||'Filled').replace(/\s+/g,'_')}.pdf`;
+    doc.save(filename);
+  } catch (err) {
+    console.error(err);
+    alert("PDF failed. Check that assets/tdh-template.png exists (exact path/filename) and hard-refresh.");
+  }
+});
+
+/* ---------- Autosave ---------- */
+const KEY='tdh-agreement-autosave';
+try { const saved=JSON.parse(localStorage.getItem(KEY)||'null'); if (saved) fillForm(form, saved); } catch{}
+form.addEventListener('input', ()=> localStorage.setItem(KEY, JSON.stringify(formToObject(form))));
 </script>
 </body>
 </html>
