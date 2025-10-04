@@ -2,15 +2,15 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>TDH Agreement – 3-Point Calibrated PDF</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>TDH Agreement – Standalone PDF (no template image)</title>
 <style>
   :root{ --bg:#0f172a; --panel:#111827; --ink:#e5e7eb; --muted:#94a3b8; --border:#1f2937; --gap:14px; --radius:14px; }
   *{ box-sizing:border-box }
   html,body{height:100%}
   body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
   .wrap{max-width:1100px;margin:20px auto;padding:0 12px 80px}
-  .toolbar{position:sticky;top:0;z-index:20;backdrop-filter:blur(6px);
+  .toolbar{position:sticky;top:0;z-index:10;backdrop-filter:blur(6px);
     background:color-mix(in oklab,var(--bg) 85%, transparent);
     display:flex;gap:8px;padding:10px 0 14px;align-items:center;flex-wrap:wrap}
   .toolbar h1{margin:0;font-size:18px;margin-right:auto}
@@ -21,16 +21,13 @@
   button:hover{background:#101a33}
   .grid{display:grid;gap:var(--gap)}
   .two{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
-  @media (min-width: 980px){ .two{grid-template-columns:repeat(2,minmax(0,1fr))} }
+  @media (min-width:980px){ .two{grid-template-columns:repeat(2,minmax(0,1fr))} }
   .panel{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:16px}
   .panel h2{margin:0 0 10px;font-size:16px;font-weight:700}
   label{display:block;color:var(--muted);font-size:12px;margin-bottom:6px}
-
-  /* Polished inputs */
   input[type="text"], input[type="tel"], input[type="number"], input[type="date"], textarea, select{
     width:100%; background:#0b1220; color:var(--ink);
     border:1px solid var(--border); border-radius:10px; padding:10px 12px; outline:none;
-    appearance:none; box-shadow:inset 0 0 0 1px rgba(255,255,255,.02);
     transition:border-color .2s, box-shadow .2s, background .2s
   }
   input::placeholder, textarea::placeholder{ color:#64748b; opacity:.9 }
@@ -41,37 +38,17 @@
   .checks label{display:inline-flex;align-items:center;gap:8px;margin:0}
   .sig-row{display:grid;gap:10px;grid-template-columns:1.2fr 1fr 1.2fr;align-items:end}
   .row{display:grid;gap:10px;grid-template-columns:180px 1fr;align-items:center}
-  .logo-box{display:flex;align-items:center;gap:8px}
-  .logo-box img{height:28px;width:auto;object-fit:contain}
-
-  /* ===== 3-point calibration ===== */
-  #affineWrap{display:none;margin-top:14px}
-  .page{
-    position:relative; width:1275px; height:1650px; /* design frame */
-    background:#fff url('assets/tdh-template.png') center/cover no-repeat;
-    border-radius:12px; overflow:hidden; box-shadow:0 10px 30px rgba(0,0,0,.35);
-  }
-  .anchor{position:absolute; width:22px; height:22px; border-radius:50%;
-    background:#3b82f6; border:2px solid #fff; box-shadow:0 4px 10px rgba(0,0,0,.35); cursor:move; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800}
-  .anchor small{font-size:12px; line-height:1}
-  .hint{color:#94a3b8; margin:.5rem 0 0}
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="toolbar">
-    <div class="logo-box">
-      <img src="assets/tdh-logo.png" alt="" onerror="this.style.display='none'">
-      <h1>TDH Agreement (Editable • 3-Point Calibrated)</h1>
-    </div>
+    <h1>TDH Agreement (Standalone PDF)</h1>
     <div class="actions">
-      <button type="button" id="loadExample">Load Example</button>
-      <button type="button" id="clearForm">Clear</button>
-      <button type="button" id="saveJson">Save JSON</button>
-      <button type="button" class="primary" id="downloadPdf"><strong>Download PDF</strong></button>
-      <button type="button" id="openAffine">3-pt Calibrate</button>
-      <button type="button" id="copyAffine">Copy 3-pt JSON</button>
-      <button type="button" id="resetAffine">Reset 3-pt</button>
+      <button id="loadExample">Load Example</button>
+      <button id="clearForm">Clear</button>
+      <button id="saveJson">Save JSON</button>
+      <button class="primary" id="downloadPdf"><strong>Download PDF</strong></button>
     </div>
   </div>
 
@@ -208,7 +185,6 @@
       </div>
     </div>
 
-    <!-- Siding Info ABOVE More Info -->
     <div class="panel">
       <h2>Siding Info</h2>
       <div class="grid two">
@@ -261,22 +237,22 @@
     </div>
 
     <div class="panel">
-      <h2>More Info</h2>
+      <h2>More & Payment & Instructions</h2>
       <div class="grid two">
         <div><label for="materialDrop">Material drop off</label><input id="materialDrop" name="materialDrop" type="text" /></div>
         <div><label for="redeck">Redeck (Partial or Full)</label><input id="redeck" name="redeck" type="text" /></div>
         <div><label for="interiorDamage">Interior damage</label><input id="interiorDamage" name="interiorDamage" type="text" /></div>
         <div><label for="cleanup">Cleanup</label><input id="cleanup" name="cleanup" type="text" /></div>
         <div style="grid-column:1/-1"><label for="miscNotes">Misc. Notes</label><textarea id="miscNotes" name="miscNotes"></textarea></div>
-      </div>
-    </div>
 
-    <div class="panel">
-      <h2>Payment Info</h2>
-      <div class="grid two">
         <div><label for="agreedAmount">Agreed Amount ($)</label><input id="agreedAmount" name="agreedAmount" type="text" /></div>
         <div><label for="firstPayment">First Payment ($)</label><input id="firstPayment" name="firstPayment" type="text" /></div>
         <div><label for="finalPayment">Final Payment ($)</label><input id="finalPayment" name="finalPayment" type="text" /></div>
+
+        <div style="grid-column:1/-1" class="row">
+          <label for="instructions">Instructions / Location</label>
+          <input id="instructions" name="instructions" type="text" value="2513 River Rd Dr, Waterloo, NE 68069" />
+        </div>
       </div>
     </div>
 
@@ -292,66 +268,29 @@
         <input id="tdhSignature" name="tdhSignature" type="text" placeholder="Sign here" />
       </div>
     </div>
-
-    <div class="panel">
-      <h2>Instructions</h2>
-      <div class="row">
-        <label for="instructions">Location</label>
-        <input id="instructions" name="instructions" type="text" value="2513 River Rd Dr, Waterloo, NE 68069" />
-      </div>
-    </div>
   </form>
-
-  <!-- ===== 3-POINT CALIBRATION OVERLAY ===== -->
-  <div id="affineWrap">
-    <div class="page" id="affinePage">
-      <!-- Draggable anchors -->
-      <div class="anchor" id="anchorA" style="left:180px; top:230px;"><small>A</small></div>
-      <div class="anchor" id="anchorB" style="left:870px; top:465px;"><small>B</small></div>
-      <div class="anchor" id="anchorC" style="left:680px; top:1380px;"><small>C</small></div>
-    </div>
-    <p class="hint">
-      Place <b>A</b> at the <u>start of the Name line</u>, <b>B</b> at the <u>center of the “Underlayment — Synthetic”</u> box,
-      and <b>C</b> at the <u>start of the “Customer Signature (typed)” line</u>.
-    </p>
-  </div>
 </div>
 
-<!-- ===== jsPDF loader ===== -->
+<!-- jsPDF loader (CDNs + optional local copy) -->
 <script>
 async function ensureJsPDFLoaded(){
   if (window.jspdf && window.jspdf.jsPDF) return true;
   const sources = [
-    "assets/jspdf.umd.min.js",
+    "assets/jspdf.umd.min.js", // optional local copy
     "https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js",
     "https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js",
     "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"
   ];
-  for (const src of sources) {
-    try {
-      await new Promise((res, rej)=>{ const s=document.createElement('script'); s.src=src; s.async=true; s.onload=res; s.onerror=rej; document.head.appendChild(s); });
-      if (window.jspdf && window.jspdf.jsPDF) return true;
-    } catch(e){}
+  for (const src of sources){
+    try{ await new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=rej;document.head.appendChild(s);}); if(window.jspdf&&window.jspdf.jsPDF) return true; }catch(e){}
   }
-  alert("Couldn’t load the PDF engine (jsPDF). Upload assets/jspdf.umd.min.js or try again.");
+  alert("Couldn’t load jsPDF.");
   return false;
-}
-async function loadTemplateImage(){
-  const candidates = ['assets/tdh-template.png','./assets/tdh-template.png',new URL('assets/tdh-template.png', document.baseURI).href];
-  for (const url of [...new Set(candidates)]) {
-    try {
-      const img = new Image(); img.crossOrigin='anonymous'; img.src=url;
-      await new Promise((res,rej)=>{ img.onload=res; img.onerror=rej; });
-      return img;
-    } catch(e){}
-  }
-  throw new Error('Template image not found. Ensure assets/tdh-template.png exists.');
 }
 </script>
 
 <script>
 /* ---------- helpers ---------- */
-const PAGE_W = 1275, PAGE_H = 1650; // design frame in px
 function formToObject(form){
   const data={};
   new FormData(form).forEach((v,k)=>{
@@ -372,46 +311,53 @@ function fillForm(form,obj){
 </script>
 
 <script>
-/* ---------- values → printed text + X markers ---------- */
+/* ---------- values → printed text + markers ---------- */
 function computeValues(d){
   const out = {};
   const list = v => Array.isArray(v) ? v.join(', ') : (v || '');
   const num = n => (n===undefined || n===null || n==='') ? '' : String(n);
 
   Object.assign(out, {
-    name:d.name, primaryContactName:d.primaryContactName, primaryPhone:d.primaryPhone,
-    insuranceCompany:d.insuranceCompany, claimNumber:d.claimNumber, phone:d.phone,
-    address:d.address, cityStateZip:d.cityStateZip,
+    // general
+    name:d.name||'', primaryContactName:d.primaryContactName||'', primaryPhone:d.primaryPhone||'',
+    insuranceCompany:d.insuranceCompany||'', claimNumber:d.claimNumber||'', phone:d.phone||'',
+    address:d.address||'', cityStateZip:d.cityStateZip||'',
+
+    // roofing
+    tearOffLayers:d.tearOffLayers||'',
     shinglesBrand:d.shinglesBrand||'', style:d.style||'', color:d.color||'', sqs:d.sqs||'',
     iceWater:d.iceWater||'', dripEdge:d.dripEdge||'', gutterApron:d.gutterApron||'',
     roofPitch:d.roofPitch||'', stories:d.stories||'', roofSize:d.roofSize||'',
     ridgeCap:d.ridgeCap||'', ridgeVent:d.ridgeVent||'',
-    guttersColor:d.guttersColor||'', downspoutsColor:d.downspoutsColor||'',
-    gutterNotes:d.gutterNotes||'',
-    materialDrop:d.materialDrop||'', redeck:d.redeck||'', interiorDamage:d.interriorDamage||d.interiorDamage||'',
-    cleanup:d.cleanup||'', miscNotes:d.miscNotes||'',
-    agreedAmount:d.agreedAmount||'', firstPayment:d.firstPayment||'', finalPayment:d.finalPayment||'',
+
+    // gutters/downspouts
+    guttersColor:d.guttersColor||'', downspoutsColor:d.downspoutsColor||'', gutterNotes:d.gutterNotes||'',
+
+    // siding
     sidingBrand:d.sidingBrand||'', sidingStyle:d.sidingStyle||'', sidingSqs:d.sidingSqs||'', sidingColor:d.sidingColor||'',
     trim:d.trim||'', fasciaColor:d.fasciaColor||'', soffitColor:d.soffitColor||'',
     windowWrapsColor:d.windowWrapsColor||'',
+
+    // more/payment/signatures/etc
+    materialDrop:d.materialDrop||'', redeck:d.redeck||'', interiorDamage:d.interiorDamage||'',
+    cleanup:d.cleanup||'', miscNotes:d.miscNotes||'',
+    agreedAmount:d.agreedAmount||'', firstPayment:d.firstPayment||'', finalPayment:d.finalPayment||'',
     custDate:d.custDate||'', custSignature:d.custSignature||'', tdhDate:d.tdhDate||'', tdhSignature:d.tdhSignature||'',
     instructions:d.instructions||'',
   });
 
-  // Combined strings from split fields
+  // combined fields
   const ventTypeRaw = (d.ventsType==='Other' ? d.ventsTypeOther : d.ventsType) || '';
   const ventType = ventTypeRaw.trim();
   const ventQty = num(d.ventsQty);
   const ventColor = (d.ventsColor||'').trim();
   const turtleRe = /\bturtle\b/i;
-  out.vents = [ [ventQty, ventType && (turtleRe.test(ventType) && !/type/i.test(ventType) ? ventType + ' Type' : ventType)]
-                .filter(Boolean).join(' '), ventColor && ('; ' + ventColor) ].filter(Boolean).join('');
+  out.vents = [ [ventQty, ventType].filter(Boolean).join(' '), ventColor && ('; ' + ventColor) ].filter(Boolean).join('');
   out.x_vents_Turtle = turtleRe.test(ventType) ? 'X' : '';
 
   const vm = d.valleyMode || '';
   out.x_valley_Open   = vm==='Open'   ? 'X' : '';
   out.x_valley_Closed = vm==='Closed' ? 'X' : '';
-  out.valleys_text = (d.valleysColor||'').trim();
 
   const pjQty = num(d.pipeJacksQty);
   const pjType = (d.pipeJacksType||'').trim();
@@ -422,6 +368,7 @@ function computeValues(d){
   const swMat = (d.sideWallMaterial||'').trim();
   out.sideWallFlashing = [ [swQty && (swQty + ' LF'), swColor].filter(Boolean).join(' '), swMat && ('; ' + swMat) ].filter(Boolean).join('');
 
+  // checkboxes
   const roofingLoc = new Set([].concat(d.roofingLocations||[]));
   out.x_roofing_House  = roofingLoc.has('House')  ? 'X' : '';
   out.x_roofing_Garage = roofingLoc.has('Garage') ? 'X' : '';
@@ -434,7 +381,6 @@ function computeValues(d){
 
   out.x_gutters_5 = d.guttersSize==='5' ? 'X' : '';
   out.x_gutters_6 = d.guttersSize==='6' ? 'X' : '';
-
   out.x_downspouts_2x3 = d.downspoutsSize==='2x3' ? 'X' : '';
   out.x_downspouts_3x4 = d.downspoutsSize==='3x4' ? 'X' : '';
 
@@ -450,219 +396,248 @@ function computeValues(d){
 
   out.x_fascia_Smooth = d.fascia==='Smooth' ? 'X' : '';
   out.x_fascia_PVC    = d.fascia==='PVC'    ? 'X' : '';
-
   out.x_soffit_Solid  = d.soffit==='Solid'  ? 'X' : '';
   out.x_soffit_Vented = d.soffit==='Vented' ? 'X' : '';
+  out.x_wraps_Smooth  = d.windowWraps==='Smooth' ? 'X' : '';
+  out.x_wraps_PVC     = d.windowWraps==='PVC'    ? 'X' : '';
 
-  out.x_wraps_Smooth = d.windowWraps==='Smooth' ? 'X' : '';
-  out.x_wraps_PVC    = d.windowWraps==='PVC'    ? 'X' : '';
-
-  out.tearOffLayers = d.tearOffLayers||'';
   return out;
 }
 </script>
 
 <script>
-/* ---------- default layout (design coordinates) ---------- */
-const LAYOUT = [
-  // General Info
-  {key:'name', x:180, y:230}, {key:'primaryContactName', x:780, y:230},
-  {key:'primaryPhone', x:180, y:275}, {key:'insuranceCompany', x:780, y:275},
-  {key:'claimNumber', x:180, y:320}, {key:'phone', x:780, y:320},
-  {key:'address', x:180, y:365}, {key:'cityStateZip', x:780, y:365},
+/* ---------- PDF DRAWING (no background image) ---------- */
+document.getElementById('downloadPdf').addEventListener('click', async ()=>{
+  if (!(await ensureJsPDFLoaded())) return;
+  const { jsPDF } = window.jspdf;
 
-  // Roofing locations (X)
-  {key:'x_roofing_House',  x:160, y:430, cls:'check'},
-  {key:'x_roofing_Garage', x:265, y:430, cls:'check'},
-  {key:'x_roofing_Shed',   x:370, y:430, cls:'check'},
-  {key:'x_roofing_Flat',   x:455, y:430, cls:'check'},
+  // page units in inches for easy spacing
+  const doc = new jsPDF({ unit:'in', format:'letter' });
+  const M = 0.5; // margin
+  const W = 8.5, H = 11;
 
-  // Tear off
-  {key:'tearOffLayers', x:220, y:465},
+  // helpers
+  const line = (x1,y1,x2,y2,w=0.015)=>{ doc.setLineWidth(w); doc.line(x1,y1,x2,y2); };
+  const hline = (x,y,wid,w=0.015)=> line(x,y,x+wid,y,w);
+  const vline = (x,y,hei,w=0.015)=> line(x,y,x,y+hei,w);
+  const label = (x,y,t,fs=10,bold=false)=>{ doc.setFont('helvetica', bold?'bold':'normal'); doc.setFontSize(fs); doc.text(t,x,y); };
+  const text = (x,y,t,fs=11)=>{ doc.setFont('times','normal'); doc.setFontSize(fs); doc.text(String(t),x,y); };
+  const box = (x,y,w,h)=>{ doc.rect(x,y,w,h); };
+  const check = (x,y,checked)=>{ doc.rect(x,y-0.14,0.18,0.18); if(checked){ doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.text('X', x+0.02, y-0.02); } };
 
-  // Underlayment (X)
-  {key:'x_underlayment_15lb',      x:620, y:465, cls:'check'},
-  {key:'x_underlayment_30lb',      x:725, y:465, cls:'check'},
-  {key:'x_underlayment_Synthetic', x:870, y:465, cls:'check'},
+  // Title
+  doc.setFont('helvetica','bold'); doc.setFontSize(20);
+  doc.text('TDH Agreement', W/2, M+0.25, {align:'center'});
+  doc.setFont('helvetica','normal'); doc.setFontSize(10);
+  doc.text('2513 River Rd Dr, Waterloo, NE 68069', W/2, M+0.5, {align:'center'});
 
-  // Shingles / misc
-  {key:'shinglesBrand', x:180, y:505}, {key:'style', x:620, y:505}, {key:'color', x:960, y:505}, {key:'sqs', x:1160, y:505},
-  {key:'iceWater', x:310, y:545},
-  {key:'dripEdge', x:180, y:585}, {key:'gutterApron', x:620, y:585},
+  // General Info table (two columns, 4 rows)
+  const gi = {x:M, y:M+0.7, w:W-2*M, h:1.7};
+  box(gi.x,gi.y,gi.w,gi.h);
+  vline(gi.x+gi.w/2, gi.y, gi.h);
+  // horizontal row lines
+  const rH = gi.h/4;
+  hline(gi.x, gi.y+rH, gi.w); hline(gi.x, gi.y+2*rH, gi.w); hline(gi.x, gi.y+3*rH, gi.w);
 
-  // Vents (text + Turtle X)
-  {key:'vents', x:180, y:625}, {key:'x_vents_Turtle', x:520, y:625, cls:'check'},
+  label(gi.x+0.08, gi.y+0.22, 'Name:', 9, true);
+  label(gi.x+gi.w/2+0.08, gi.y+0.22, 'Primary Contact Name:', 9, true);
 
-  // Valleys (Open/Closed X + color text)
-  {key:'x_valley_Open', x:900, y:625, cls:'check'}, {key:'x_valley_Closed', x:1040, y:625, cls:'check'},
-  {key:'valleys_text', x:1120, y:625},
+  label(gi.x+0.08, gi.y+rH+0.22, 'Address:', 9, true);
+  label(gi.x+gi.w/2+0.08, gi.y+rH+0.22, 'Primary Contact Phone Number:', 9, true);
 
-  // Next row
-  {key:'pipeJacks', x:180, y:665}, {key:'roofPitch', x:620, y:665}, {key:'stories', x:880, y:665}, {key:'roofSize', x:1060, y:665},
+  label(gi.x+0.08, gi.y+2*rH+0.22, 'City, State, Zip:', 9, true);
+  label(gi.x+gi.w/2+0.08, gi.y+2*rH+0.22, 'Insurance Company:', 9, true);
 
-  // Roof Type (X)
-  {key:'x_roofType_Hip', x:300, y:705, cls:'check'}, {key:'x_roofType_Gable', x:360, y:705, cls:'check'}, {key:'x_roofType_Both', x:430, y:705, cls:'check'},
+  label(gi.x+0.08, gi.y+3*rH+0.22, 'Phone:', 9, true);
+  label(gi.x+gi.w/2+0.08, gi.y+3*rH+0.22, 'Claim Number:', 9, true);
 
-  {key:'ridgeCap', x:780, y:705}, {key:'ridgeVent', x:1060, y:705},
+  const v = computeValues(formToObject(document.getElementById('tdhForm')));
 
-  // Side Wall Flashing (combined text)
-  {key:'sideWallFlashing', x:360, y:745},
+  // Fill General Info values
+  text(gi.x+0.9, gi.y+0.22, v.name);
+  text(gi.x+gi.w/2+1.4, gi.y+0.22, v.primaryContactName);
+  text(gi.x+0.75, gi.y+rH+0.22, v.address);
+  text(gi.x+gi.w/2+2.1, gi.y+rH+0.22, v.primaryPhone);
+  text(gi.x+1.1, gi.y+2*rH+0.22, v.cityStateZip);
+  text(gi.x+gi.w/2+1.6, gi.y+2*rH+0.22, v.insuranceCompany);
+  text(gi.x+0.6, gi.y+3*rH+0.22, v.phone);
+  text(gi.x+gi.w/2+1.3, gi.y+3*rH+0.22, v.claimNumber);
 
-  // Gutters & Downspouts (sizes as X; colors as text)
-  {key:'x_gutters_5', x:160, y:820, cls:'check'}, {key:'x_gutters_6', x:210, y:820, cls:'check'},
-  {key:'guttersColor', x:420, y:820},
-  {key:'x_downspouts_2x3', x:750, y:820, cls:'check'}, {key:'x_downspouts_3x4', x:820, y:820, cls:'check'},
-  {key:'downspoutsColor', x:1020, y:820},
+  // Two-column body: left column width
+  const L = {x:M, y:gi.y+gi.h+0.35, w:4.9};
+  const R = {x:M+L.w+0.2, y:L.y, w:W - (M+L.w+0.2) - M};
 
-  // Gutter Guards (X) + Notes
-  {key:'x_guard_Plastic', x:240, y:865, cls:'check'}, {key:'x_guard_RX', x:320, y:865, cls:'check'}, {key:'x_guard_LeafFree', x:420, y:865, cls:'check'},
-  {key:'gutterNotes', x:780, y:865},
+  // ---- LEFT: Roofing Info
+  label(L.x, L.y, 'Roofing Info', 14, true);
 
-  // More / Siding / Payment / Signatures / Instructions
-  {key:'materialDrop', x:240, y:940}, {key:'redeck', x:740, y:940},
-  {key:'interiorDamage', x:240, y:980}, {key:'cleanup', x:740, y:980},
-  {key:'miscNotes', x:240, y:1020, w:900},
-  {key:'agreedAmount', x:240, y:1085}, {key:'firstPayment', x:740, y:1085}, {key:'finalPayment', x:1040, y:1085},
-  {key:'sidingBrand', x:180, y:1150}, {key:'sidingStyle', x:620, y:1150}, {key:'sidingSqs', x:980, y:1150}, {key:'sidingColor', x:1160, y:1150},
-  {key:'elevations', x:240, y:1190}, {key:'trim', x:740, y:1190},
-  {key:'x_fascia_Smooth', x:240, y:1230, cls:'check'}, {key:'x_fascia_PVC', x:300, y:1230, cls:'check'},
-  {key:'x_soffit_Solid', x:920, y:1230, cls:'check'}, {key:'x_soffit_Vented', x:1000, y:1230, cls:'check'},
-  {key:'x_wraps_Smooth', x:240, y:1270, cls:'check'}, {key:'x_wraps_PVC', x:300, y:1270, cls:'check'},
-  {key:'blocks', x:240, y:1310},
-  {key:'custDate', x:320, y:1380}, {key:'custSignature', x:680, y:1380},
-  {key:'tdhDate', x:320, y:1415}, {key:'tdhSignature', x:680, y:1415},
-  {key:'instructions', x:360, y:1475},
-];
+  let y = L.y+0.25;
+  label(L.x, y, 'Roofing location/s:', 10, true);
+  check(L.x+1.35, y+0.05, !!v.x_roofing_House);  text(L.x+1.6, y+0.05, 'House',10);
+  check(L.x+2.4,  y+0.05, !!v.x_roofing_Garage); text(L.x+2.65,y+0.05, 'Garage',10);
+  check(L.x+3.5,  y+0.05, !!v.x_roofing_Shed);   text(L.x+3.75,y+0.05, 'Shed',10);
+  check(L.x+4.4,  y+0.05, !!v.x_roofing_Flat);   text(L.x+4.65,y+0.05, 'Flat',10);
+  y+=0.35;
 
-/* 3 anchor base points (design coordinates) */
-const ANCHOR_BASE = {
-  A:{ x:180, y:230 },   // start of "Name" value
-  B:{ x:870, y:465 },   // center of Underlayment "Synthetic" box
-  C:{ x:680, y:1380 },  // start of "Customer Signature (typed)" line  <-- NEW
-};
+  label(L.x, y, 'Roof Type:',10,true);
+  check(L.x+0.75,y+0.05, !!v.x_roofType_Hip);   text(L.x+1.0,y+0.05,'Hip',10);
+  check(L.x+1.6, y+0.05, !!v.x_roofType_Gable); text(L.x+1.85,y+0.05,'Gable',10);
+  check(L.x+2.7, y+0.05, !!v.x_roofType_Both);  text(L.x+2.95,y+0.05,'Both',10);
+
+  label(L.x+3.7, y, 'Roof Pitch:',10,true); hline(L.x+4.45,y,0.9); text(L.x+4.5,y,v.roofPitch,10);
+  label(L.x+5.5, y, 'Stories:',10,true); hline(L.x+6.1,y,0.6); text(L.x+6.15,y,v.stories,10);
+  y+=0.35;
+
+  check(L.x, y+0.05, false); label(L.x+0.22, y, 'Tear off layers:',10,true); hline(L.x+1.6,y,0.5); text(L.x+1.65,y,v.tearOffLayers,10);
+  y+=0.35;
+
+  check(L.x, y+0.05, false); label(L.x+0.22,y,'Underlayment:',10,true);
+  check(L.x+1.15,y+0.05, !!v.x_underlayment_15lb); text(L.x+1.4,y+0.05,'15lb',10);
+  check(L.x+1.9, y+0.05, !!v.x_underlayment_30lb); text(L.x+2.15,y+0.05,'30lb',10);
+  check(L.x+2.7, y+0.05, !!v.x_underlayment_Synthetic); text(L.x+2.95,y+0.05,'Synthetic',10);
+  y+=0.35;
+
+  check(L.x, y+0.05, false); label(L.x+0.22,y,'Ice and water Barrier (per code):',10,true);
+  hline(L.x+2.8,y,2.1); text(L.x+2.85,y,v.iceWater,10);
+  y+=0.35;
+
+  check(L.x, y+0.05, false); label(L.x+0.22,y,'Shingles Brand:',10,true); hline(L.x+1.6,y,1.1); text(L.x+1.65,y,v.shinglesBrand,10);
+  label(L.x+2.9,y,'Style:',10,true); hline(L.x+3.35,y,0.9); text(L.x+3.4,y,v.style,10);
+  label(L.x+4.4,y,'Color:',10,true); hline(L.x+4.85,y,0.9); text(L.x+4.9,y,v.color,10);
+  label(L.x+5.85,y,'SQs:',10,true); hline(L.x+6.2,y,0.6); text(L.x+6.25,y,v.sqs,10);
+  y+=0.35;
+
+  check(L.x, y+0.05, false); label(L.x+0.22,y,'Drip Edge:',10,true); hline(L.x+1.2,y,1.3); text(L.x+1.25,y,v.dripEdge,10);
+  label(L.x+2.7,y,'Gutter Apron:',10,true); hline(L.x+3.6,y,1.25); text(L.x+3.65,y,v.gutterApron,10);
+  y+=0.35;
+
+  check(L.x, y+0.05, !!v.x_vents_Turtle); label(L.x+0.22,y,'Vents:',10,true); hline(L.x+0.9,y,2.0); text(L.x+0.95,y,v.vents,10);
+  label(L.x+3.0,y,'Color:',10,true); hline(L.x+3.45,y,1.2); text(L.x+3.5,y,v.ventsColor||'',10);
+  y+=0.35;
+
+  check(L.x, y+0.05, false); label(L.x+0.22,y,'Valleys:',10,true); hline(L.x+0.95,y,1.5); text(L.x+1.0,y,v.valleys_text||'',10);
+  label(L.x+2.6,y,'Color:',10,true);
+  label(L.x+3.1,y,'Open or Closed',10,true);
+  check(L.x+3.95,y+0.05, !!v.x_valley_Open);  text(L.x+4.2,y+0.05,'Open',10);
+  check(L.x+4.9,y+0.05,  !!v.x_valley_Closed);text(L.x+5.15,y+0.05,'Closed',10);
+  y+=0.35;
+
+  check(L.x, y+0.05, false); label(L.x+0.22,y,'Pipe Jacks QTY:',10,true); hline(L.x+1.5,y,0.8); text(L.x+1.55,y,(v.pipeJacks||'').split(' EA')[0]||'',10);
+  label(L.x+2.5,y,'Type:',10,true); hline(L.x+2.9,y,0.9); text(L.x+2.95,y,(v.pipeJacks||'').split(' EA ')[1]||v.pipeJacks||'',10);
+  label(L.x+4.0,y,'Size:',10,true); hline(L.x+4.35,y,1.0); text(L.x+4.4,y,v.roofSize,10);
+  y+=0.35;
+
+  check(L.x, y+0.05, false); label(L.x+0.22,y,'Ridge Cap:',10,true); hline(L.x+1.1,y,1.2); text(L.x+1.15,y,v.ridgeCap,10);
+  label(L.x+2.5,y,'Ridge Vent:',10,true); hline(L.x+3.35,y,1.5); text(L.x+3.4,y,v.ridgeVent,10);
+  y+=0.35;
+
+  check(L.x, y+0.05, false); label(L.x+0.22,y,'Side Wall Flashing:',10,true); hline(L.x+1.75,y,2.0); text(L.x+1.8,y,v.sideWallFlashing,10);
+  label(L.x+3.9,y,'Color:',10,true); hline(L.x+4.3,y,1.1);
+  label(L.x+5.5,y,'Metal or Plastic',10,true);
+  check(L.x+6.4,y+0.05, v.sideWallFlashing.includes('; Metal'));  text(L.x+6.65,y+0.05,'Metal',10);
+  check(L.x+7.25,y+0.05, v.sideWallFlashing.includes('; Plastic'));text(L.x+7.5,y+0.05,'Plastic',10);
+
+  // ---- RIGHT: More Info / Payment / Instructions
+  let ry = R.y;
+  label(R.x, ry, 'More Info', 14, true); ry+=0.3;
+  check(R.x, ry+0.05, !!v.redeck);  text(R.x+0.25, ry+0.05, 'Redeck: Partial or Full',10);
+  ry+=0.3;
+  check(R.x, ry+0.05, !!v.interiorDamage); text(R.x+0.25, ry+0.05, 'Interior damage',10);
+  ry+=0.3;
+  check(R.x, ry+0.05, !!v.cleanup); text(R.x+0.25, ry+0.05, 'Mag Roll Sweeper',10);
+  ry+=0.3;
+  check(R.x, ry+0.05, !!v.materialDrop); text(R.x+0.25, ry+0.05, 'Clean and haul Debris',10);
+  ry+=0.35;
+  label(R.x, ry, 'Material drop off:',10,true); hline(R.x+1.4,ry, R.w-1.6); text(R.x+1.45,ry,v.materialDrop,10);
+  ry+=0.45;
+
+  label(R.x, ry, 'Payment Info',14,true); ry+=0.35;
+  label(R.x, ry,'Agreed Amount:',10,true); hline(R.x+1.3,ry, R.w-1.5); text(R.x+1.35,ry,v.agreedAmount,10); ry+=0.35;
+  label(R.x, ry,'First Payment:',10,true); hline(R.x+1.25,ry, R.w-1.45); text(R.x+1.3,ry,v.firstPayment,10); ry+=0.35;
+  label(R.x, ry,'Final Payment:',10,true); hline(R.x+1.25,ry, R.w-1.45); text(R.x+1.3,ry,v.finalPayment,10); ry+=0.55;
+
+  label(R.x, ry, 'Instructions',14,true); ry+=0.3;
+  hline(R.x, ry, R.w); ry+=0.35;
+  hline(R.x, ry, R.w); ry+=0.35;
+  hline(R.x, ry, R.w); text(R.x+0.05, ry-0.55, v.instructions,10); ry+=0.5;
+
+  // ---- Siding info (single-line summaries to fit page)
+  const sy = L.y + 4.4;
+  label(L.x, sy, 'Gutters and downspouts Info',14,true);
+  let gy = sy+0.3;
+  check(L.x, gy+0.05, v.x_gutters_5==='X'||v.x_gutters_6==='X'); label(L.x+0.22,gy,'Gutters:',10,true);
+  check(L.x+0.85,gy+0.05, v.x_gutters_5==='X'); text(L.x+1.1,gy+0.05,'5"',10);
+  check(L.x+1.5,gy+0.05, v.x_gutters_6==='X'); text(L.x+1.75,gy+0.05,'6"',10);
+  label(L.x+2.2,gy,'Color:',10,true); hline(L.x+2.6,gy,1.2); text(L.x+2.65,gy,v.guttersColor,10);
+  label(L.x+4.0,gy,'Downspouts:',10,true);
+  check(L.x+5.05,gy+0.05, v.x_downspouts_2x3==='X'); text(L.x+5.3,gy+0.05,'2x3',10);
+  check(L.x+5.9,gy+0.05, v.x_downspouts_3x4==='X'); text(L.x+6.15,gy+0.05,'3x4',10);
+  label(L.x+6.7,gy,'Color:',10,true); hline(L.x+7.05,gy,0.9); text(L.x+7.1,gy,v.downspoutsColor,10);
+  gy+=0.35;
+  check(L.x, gy+0.05, (v.x_guard_Plastic||v.x_guard_RX||v.x_guard_LeafFree)==='X'); label(L.x+0.22,gy,'Gutter Guards:',10,true);
+  check(L.x+1.3,gy+0.05, v.x_guard_Plastic==='X'); text(L.x+1.55,gy+0.05,'Plastic',10);
+  check(L.x+2.3,gy+0.05, v.x_guard_RX==='X'); text(L.x+2.55,gy+0.05,'RX',10);
+  check(L.x+3.05,gy+0.05, v.x_guard_LeafFree==='X'); text(L.x+3.3,gy+0.05,'Leaf Free',10);
+  label(L.x+4.2,gy,'Notes:',10,true); hline(L.x+4.6,gy,2.8); text(L.x+4.65,gy,v.gutterNotes,10);
+
+  const si = {y: sy+1.1};
+  label(L.x, si.y, 'Siding Info',14,true);
+  let sy2 = si.y+0.3;
+  label(L.x,sy2,'Brand:',10,true); hline(L.x+0.55,sy2,1.1); text(L.x+0.6,sy2,v.sidingBrand,10);
+  label(L.x+1.9,sy2,'Style:',10,true); hline(L.x+2.35,sy2,1.4); text(L.x+2.4,sy2,v.sidingStyle,10);
+  label(L.x+4.0,sy2,'SQs:',10,true); hline(L.x+4.3,sy2,0.7); text(L.x+4.35,sy2,v.sidingSqs,10);
+  label(L.x+5.1,sy2,'Color:',10,true); hline(L.x+5.55,sy2,1.1); text(L.x+5.6,sy2,v.sidingColor,10);
+  sy2+=0.35;
+
+  label(L.x,sy2,'Elevations:',10,true);
+  check(L.x+0.95,sy2+0.05, (v.elevations||'').includes('Front')); text(L.x+1.2,sy2+0.05,'Front',10);
+  check(L.x+1.9,sy2+0.05, (v.elevations||'').includes('Right')); text(L.x+2.15,sy2+0.05,'Right',10);
+  check(L.x+2.8,sy2+0.05, (v.elevations||'').includes('Left'));  text(L.x+3.05,sy2+0.05,'Left',10);
+  check(L.x+3.7,sy2+0.05, (v.elevations||'').includes('Rear'));  text(L.x+3.95,sy2+0.05,'Rear',10);
+  label(L.x+4.6,sy2,'Trim:',10,true); hline(L.x+5.0,sy2,1.7); text(L.x+5.05,sy2,v.trim,10);
+  sy2+=0.35;
+
+  label(L.x,sy2,'Fascia:',10,true);
+  check(L.x+0.6,sy2+0.05, v.x_fascia_Smooth==='X'); text(L.x+0.85,sy2+0.05,'Smooth',10);
+  check(L.x+1.8,sy2+0.05, v.x_fascia_PVC==='X');    text(L.x+2.05,sy2+0.05,'PVC',10);
+  label(L.x+2.8,sy2,'Color:',10,true); hline(L.x+3.2,sy2,1.3); text(L.x+3.25,sy2,v.fasciaColor,10);
+
+  label(L.x+4.7,sy2,'Soffit:',10,true);
+  check(L.x+5.25,sy2+0.05, v.x_soffit_Solid==='X');  text(L.x+5.5,sy2+0.05,'Solid',10);
+  check(L.x+6.25,sy2+0.05, v.x_soffit_Vented==='X'); text(L.x+6.5,sy2+0.05,'Vented',10);
+  label(L.x+7.3,sy2,'Color:',10,true); hline(L.x+7.65,sy2,0.7); text(L.x+7.7,sy2,v.soffitColor,10);
+  sy2+=0.35;
+
+  label(L.x,sy2,'Window Wraps:',10,true);
+  check(L.x+1.25,sy2+0.05, v.x_wraps_Smooth==='X'); text(L.x+1.5,sy2+0.05,'Smooth',10);
+  check(L.x+2.6,sy2+0.05,  v.x_wraps_PVC==='X');    text(L.x+2.85,sy2+0.05,'PVC',10);
+  label(L.x+3.6,sy2,'Color:',10,true); hline(L.x+4.0,sy2,1.4); text(L.x+4.05,sy2,v.windowWrapsColor,10);
+
+  label(L.x+5.7,sy2,'Blocks:',10,true);
+  check(L.x+6.25,sy2+0.05, (v.blocks||'').includes('Light Blocks')); text(L.x+6.5,sy2+0.05,'Light Blocks',10);
+  check(L.x+7.5,sy2+0.05, (v.blocks||'').includes('Split Blocks'));  text(L.x+7.75,sy2+0.05,'Split Blocks',10);
+
+  // ---- Signatures
+  const sigY = H - 1.1;
+  label(M, sigY, 'Agreed to by Customer on date:',10,true);
+  hline(M+2.0, sigY, 1.1); text(M+2.05, sigY, v.custDate,10);
+  label(M+3.2, sigY, 'Signature:',10,true);
+  hline(M+3.9, sigY, 2.2); text(M+3.95, sigY, v.custSignature,10);
+
+  const sigY2 = sigY + 0.4;
+  label(M, sigY2, 'Agreed to by TDH Representative on date:',10,true);
+  hline(M+3.2, sigY2, 1.1); text(M+3.25, sigY2, v.tdhDate,10);
+  label(M+4.4, sigY2, 'Signature:',10,true);
+  hline(M+5.1, sigY2, 2.0); text(M+5.15, sigY2, v.tdhSignature,10);
+
+  // Done
+  const filename = `TDH_Agreement_${(v.name||'Filled').replace(/\s+/g,'_')}.pdf`;
+  doc.save(filename);
+});
 </script>
 
 <script>
-/* ---------- 3-point affine calibration (drag A/B/C once) ---------- */
-const AFFINE_KEY = 'tdh-affine-v1';
-let affineTargets = JSON.parse(localStorage.getItem(AFFINE_KEY) || 'null') || null;
-
-const affineWrap = document.getElementById('affineWrap');
-const anchorA = document.getElementById('anchorA');
-const anchorB = document.getElementById('anchorB');
-const anchorC = document.getElementById('anchorC');
-
-function setAnchor(el,x,y){ el.style.left = x+'px'; el.style.top = y+'px'; }
-function getAnchor(el){ return { x: parseFloat(el.style.left), y: parseFloat(el.style.top) }; }
-
-function openAffine(){
-  if (affineTargets){
-    setAnchor(anchorA, affineTargets.A.x, affineTargets.A.y);
-    setAnchor(anchorB, affineTargets.B.x, affineTargets.B.y);
-    setAnchor(anchorC, affineTargets.C.x, affineTargets.C.y);
-  } else {
-    setAnchor(anchorA, ANCHOR_BASE.A.x, ANCHOR_BASE.A.y);
-    setAnchor(anchorB, ANCHOR_BASE.B.x, ANCHOR_BASE.B.y);
-    setAnchor(anchorC, ANCHOR_BASE.C.x, ANCHOR_BASE.C.y);
-  }
-  affineWrap.style.display = 'block';
-}
-function closeAffine(){
-  affineTargets = { A:getAnchor(anchorA), B:getAnchor(anchorB), C:getAnchor(anchorC) };
-  localStorage.setItem(AFFINE_KEY, JSON.stringify(affineTargets));
-  affineWrap.style.display = 'none';
-}
-function resetAffine(){
-  localStorage.removeItem(AFFINE_KEY);
-  affineTargets = null;
-  setAnchor(anchorA, ANCHOR_BASE.A.x, ANCHOR_BASE.A.y);
-  setAnchor(anchorB, ANCHOR_BASE.B.x, ANCHOR_BASE.B.y);
-  setAnchor(anchorC, ANCHOR_BASE.C.x, ANCHOR_BASE.C.y);
-}
-
-function makeDraggable(el){
-  let start=null;
-  el.addEventListener('mousedown', e=>{
-    start = { x:e.clientX, y:e.clientY, l:parseFloat(el.style.left||0), t:parseFloat(el.style.top||0) };
-    e.preventDefault();
-  });
-  window.addEventListener('mousemove', e=>{
-    if(!start) return;
-    const dx=e.clientX-start.x, dy=e.clientY-start.y;
-    setAnchor(el, Math.round(start.l+dx), Math.round(start.t+dy));
-  });
-  window.addEventListener('mouseup', ()=>{ start=null; });
-}
-[anchorA,anchorB,anchorC].forEach(makeDraggable);
-
-document.getElementById('openAffine').addEventListener('click', ()=>{
-  if (affineWrap.style.display!=='block') openAffine(); else closeAffine();
-});
-document.getElementById('resetAffine').addEventListener('click', ()=>{
-  resetAffine(); alert('3-pt calibration cleared.');
-});
-document.getElementById('copyAffine').addEventListener('click', async ()=>{
-  const json = JSON.stringify(affineTargets || {A:getAnchor(anchorA),B:getAnchor(anchorB),C:getAnchor(anchorC)}, null, 2);
-  try { await navigator.clipboard.writeText(json); alert('3-pt JSON copied. Paste it here if you want me to bake it in.'); }
-  catch(e){
-    const w=window.open('', '_blank','width=600,height=400');
-    w.document.write('<pre style="white-space:pre-wrap;word-break:break-word;font:12px/1.3 monospace">'+
-      json.replace(/[&<>]/g, s=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[s]))+'</pre>');
-  }
-});
-
-/* Affine math */
-function invert3(m){
-  const m00=m[0][0], m01=m[0][1], m02=m[0][2];
-  const m10=m[1][0], m11=m[1][1], m12=m[1][2];
-  const m20=m[2][0], m21=m[2][1], m22=m[2][2];
-  const c00 =  (m11*m22 - m12*m21);
-  const c01 = -(m10*m22 - m12*m20);
-  const c02 =  (m10*m21 - m11*m20);
-  const c10 = -(m01*m22 - m02*m21);
-  const c11 =  (m00*m22 - m02*m20);
-  const c12 = -(m00*m21 - m01*m20);
-  const c20 =  (m01*m12 - m02*m11);
-  const c21 = -(m00*m12 - m02*m10);
-  const c22 =  (m00*m11 - m01*m10);
-  const det = m00*c00 + m01*c01 + m02*c02;
-  if (!isFinite(det) || Math.abs(det)<1e-8) return null;
-  const invDet = 1/det;
-  return [
-    [c00*invDet, c10*invDet, c20*invDet],
-    [c01*invDet, c11*invDet, c21*invDet],
-    [c02*invDet, c12*invDet, c22*invDet]
-  ];
-}
-function mul3x3_3x2(A,B){
-  return [
-    [A[0][0]*B[0][0]+A[0][1]*B[1][0]+A[0][2]*B[2][0], A[0][0]*B[0][1]+A[0][1]*B[1][1]+A[0][2]*B[2][1]],
-    [A[1][0]*B[0][0]+A[1][1]*B[1][0]+A[1][2]*B[2][0], A[1][0]*B[0][1]+A[1][1]*B[1][1]+A[1][2]*B[2][1]],
-    [A[2][0]*B[0][0]+A[2][1]*B[1][0]+A[2][2]*B[2][0], A[2][0]*B[0][1]+A[2][1]*B[1][1]+A[2][2]*B[2][1]],
-  ];
-}
-function computeAffineMatrix(){
-  const base = [ANCHOR_BASE.A, ANCHOR_BASE.B, ANCHOR_BASE.C];
-  const targ = affineTargets ? [affineTargets.A, affineTargets.B, affineTargets.C]
-                             : [ANCHOR_BASE.A, ANCHOR_BASE.B, ANCHOR_BASE.C];
-  const P = [ [base[0].x, base[0].y, 1],
-              [base[1].x, base[1].y, 1],
-              [base[2].x, base[2].y, 1] ];
-  const U = [ [targ[0].x, targ[0].y],
-              [targ[1].x, targ[1].y],
-              [targ[2].x, targ[2].y] ];
-  const Pinv = invert3(P);
-  if (!Pinv) return {a:1,b:0,c:0,d:0,e:1,f:0};
-  const B = mul3x3_3x2(Pinv, U);
-  return { a:B[0][0], d:B[0][1], b:B[1][0], e:B[1][1], c:B[2][0], f:B[2][1] };
-}
-function applyAffine(pt, M){
-  return { x: M.a*pt.x + M.b*pt.y + M.c, y: M.d*pt.x + M.e*pt.y + M.f };
-}
-</script>
-
-<script>
-/* ---------- Example + JSON save ---------- */
+/* ---------- Example + utilities ---------- */
+const form = document.getElementById('tdhForm');
 const example = {
   name:"Jordan Sample", address:"7425 Oak Meadow Ct", cityStateZip:"Prairie City, NE 68000",
   primaryContactName:"Taylor North", primaryPhone:"(555) 010-7744",
@@ -696,8 +671,6 @@ const example = {
   custDate:"", custSignature:"", tdhDate:"", tdhSignature:"",
   instructions:"2513 River Rd Dr, Waterloo, NE 68069"
 };
-
-const form = document.getElementById('tdhForm');
 document.getElementById('loadExample').addEventListener('click', ()=> fillForm(form, example));
 document.getElementById('clearForm').addEventListener('click', ()=> form.reset());
 document.getElementById('saveJson').addEventListener('click', ()=>{
@@ -705,67 +678,8 @@ document.getElementById('saveJson').addEventListener('click', ()=>{
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='tdh-agreement.json'; a.click(); URL.revokeObjectURL(a.href);
 });
-</script>
 
-<script>
-/* ---------- Generate PDF (uses 3-pt transform if available) ---------- */
-document.getElementById('downloadPdf').addEventListener('click', async ()=>{
-  try {
-    if (!(await ensureJsPDFLoaded())) return;
-    const { jsPDF } = window.jspdf;
-    const img = await loadTemplateImage();
-
-    const doc = new jsPDF({ unit:'in', format:'letter', compress:true });
-    doc.addImage(img, 'PNG', 0, 0, 8.5, 11);
-
-    const v = computeValues(formToObject(form));
-    const M = computeAffineMatrix();
-
-    doc.setTextColor(0,0,0);
-    doc.setFont('times','normal');
-    doc.setFontSize(11);
-
-    for (const item of LAYOUT){
-      const val = v[item.key] || '';
-      if (!val) continue;
-      const p = applyAffine({x:item.x, y:item.y}, M);
-      const xIn = (p.x / PAGE_W) * 8.5;
-      const yIn = (p.y / PAGE_H) * 11;
-      if ((item.cls||'')==='check'){
-        doc.setFont('helvetica','bold'); doc.setFontSize(12);
-        doc.text('X', xIn, yIn);
-        doc.setFont('times','normal'); doc.setFontSize(11);
-      } else if (item.w){
-        const wIn = (item.w / PAGE_W) * 8.5;
-        const lines = doc.splitTextToSize(String(val), wIn);
-        doc.text(lines, xIn, yIn);
-      } else {
-        doc.text(String(val), xIn, yIn);
-      }
-    }
-
-    const filename = `TDH_Agreement_${(v.name||'Filled').replace(/\s+/g,'_')}.pdf`;
-    doc.save(filename);
-  } catch (err) {
-    console.error(err);
-    alert("Couldn’t generate the PDF.\n\nChecks:\n• Is assets/tdh-template.png uploaded?\n• Do 3-pt anchors sit on the right spots?\n• Hard-refresh (Ctrl/Cmd+Shift+R).");
-  }
-});
-
-/* ---------- 3-pt UI open/close saved state ---------- */
-window.addEventListener('load', ()=>{
-  if (affineTargets){
-    setAnchor(anchorA, affineTargets.A.x, affineTargets.A.y);
-    setAnchor(anchorB, affineTargets.B.x, affineTargets.B.y);
-    setAnchor(anchorC, affineTargets.C.x, affineTargets.C.y);
-  }
-});
-document.addEventListener('keydown', (e)=>{
-  if (e.key==='Escape' && affineWrap.style.display==='block') closeAffine();
-});
-affineWrap.addEventListener('dblclick', closeAffine);
-
-/* ---------- Autosave form ---------- */
+/* autosave */
 const KEY='tdh-agreement-autosave';
 try { const saved=JSON.parse(localStorage.getItem(KEY)||'null'); if (saved) fillForm(form, saved); } catch{}
 form.addEventListener('input', ()=> localStorage.setItem(KEY, JSON.stringify(formToObject(form))));
