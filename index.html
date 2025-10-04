@@ -9,18 +9,25 @@
   html,body{height:100%}
   body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.35 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
   .wrap{max-width:1100px;margin:20px auto;padding:0 12px 80px}
-  .toolbar{position:sticky;top:0;z-index:20;backdrop-filter:blur(6px);
+  .toolbar{
+    position:sticky;top:0;z-index:20;backdrop-filter:blur(6px);
     background:color-mix(in oklab,var(--bg) 85%, transparent);
-    display:flex;gap:8px;padding:10px 0 14px;align-items:center;flex-wrap:wrap}
+    display:flex;gap:8px;padding:10px 0 14px;align-items:center;flex-wrap:wrap
+  }
   .toolbar h1{margin:0;font-size:18px;margin-right:auto}
   .actions{display:flex;gap:8px;flex-wrap:wrap}
-  button{border:1px solid var(--border);background:#0b1324;color:var(--ink);
-    padding:10px 14px;border-radius:12px;cursor:pointer;font-weight:600}
+  button{
+    border:1px solid var(--border);background:#0b1324;color:var(--ink);
+    padding:10px 14px;border-radius:12px;cursor:pointer;font-weight:600
+  }
   button.primary{background:#1a2a4b}
   button:hover{background:#101a33}
   .grid{display:grid;gap:var(--gap)}
   .two{grid-template-columns:1fr 1fr}
-  .panel{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:16px}
+  .panel{
+    background:var(--panel);border:1px solid var(--border);
+    border-radius:var(--radius);padding:16px
+  }
   .panel h2{margin:0 0 10px;font-size:16px;font-weight:700}
   label{display:block;color:var(--muted);font-size:12px;margin-bottom:6px}
 
@@ -60,9 +67,8 @@
     user-select: none;
   }
   .check { font-weight: 800; font-size: 22px; }
-  .drag-on .field, .drag-on .check { outline:1px dashed rgba(0,0,0,.45); cursor:move; border-radius:6px; padding:1px 2px }
-  .calibBar{display:flex;gap:8px;align-items:center;margin:8px 0 12px}
-  .calibBar small{color:#94a3b8}
+  .calib-selected { outline:2px solid rgba(59,130,246,.9) !important; border-radius:6px; }
+  .calib-draggable { outline:1px dashed rgba(0,0,0,.45); cursor:move; padding:1px 2px; border-radius:4px; }
 </style>
 </head>
 <body>
@@ -78,12 +84,14 @@
         <button type="button" id="saveJson">Save JSON</button>
         <button type="button" class="primary" id="downloadPdf"><strong>Download PDF</strong></button>
         <button type="button" id="toggleCalib">Calibrate</button>
-        <button type="button" id="saveLayout">Save Layout JSON</button>
+        <button type="button" id="fillFromForm">Use Current Form Values</button>
+        <button type="button" id="copyLayout">Copy Layout JSON</button>
+        <button type="button" id="saveLayout">Download Layout JSON</button>
         <button type="button" id="resetLayout">Reset Layout</button>
       </div>
     </div>
 
-    <!-- ===== FORM (Siding Info above More Info) ===== -->
+    <!-- ===== FORM (Siding Info above More Info + Gutters panel) ===== -->
     <form id="tdhForm" class="grid" autocomplete="on">
       <div class="panel">
         <h2>General Info</h2>
@@ -124,8 +132,8 @@
           <div><label for="iceWater">Ice &amp; Water Barrier (per code)</label><input id="iceWater" name="iceWater" type="text" /></div>
           <div><label for="dripEdge">Drip Edge (Color)</label><input id="dripEdge" name="dripEdge" type="text" /></div>
           <div><label for="gutterApron">Gutter Apron (Color)</label><input id="gutterApron" name="gutterApron" type="text" /></div>
-          <div><label for="vents">Vents (Color / Type / Qty)</label><input id="vents" name="vents" type="text" /></div>
-          <div><label for="valleys">Valleys (Color / Open or Closed)</label><input id="valleys" name="valleys" type="text" /></div>
+          <div><label for="vents">Vents (Color / Type / Qty)</label><input id="vents" name="vents" type="text" placeholder="e.g., 9 Turtle Type; White" /></div>
+          <div><label for="valleys">Valleys (Color / Open or Closed)</label><input id="valleys" name="valleys" type="text" placeholder="e.g., Painted; Open" /></div>
           <div><label for="pipeJacks">Pipe Jacks (QTY / Type)</label><input id="pipeJacks" name="pipeJacks" type="text" /></div>
           <div><label for="roofPitch">Roof Pitch</label><input id="roofPitch" name="roofPitch" type="text" /></div>
           <div><label for="stories">Stories</label><input id="stories" name="stories" type="number" min="0" step="1" /></div>
@@ -141,6 +149,37 @@
           <div><label for="ridgeCap">Ridge Cap</label><input id="ridgeCap" name="ridgeCap" type="text" /></div>
           <div><label for="ridgeVent">Ridge Vent</label><input id="ridgeVent" name="ridgeVent" type="text" /></div>
           <div><label for="sideWallFlashing">Side Wall Flashing (Color / Metal or Plastic)</label><input id="sideWallFlashing" name="sideWallFlashing" type="text" /></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Gutters</h2>
+        <div class="grid two">
+          <div>
+            <label>Gutters Size</label>
+            <div class="checks">
+              <label><input type="radio" name="guttersSize" value="5">5"</label>
+              <label><input type="radio" name="guttersSize" value="6">6"</label>
+            </div>
+          </div>
+          <div><label for="guttersColor">Gutters Color</label><input id="guttersColor" name="guttersColor" type="text" /></div>
+          <div>
+            <label>Downspouts Size</label>
+            <div class="checks">
+              <label><input type="radio" name="downspoutsSize" value="2x3">2×3</label>
+              <label><input type="radio" name="downspoutsSize" value="3x4">3×4</label>
+            </div>
+          </div>
+          <div><label for="downspoutsColor">Downspouts Color</label><input id="downspoutsColor" name="downspoutsColor" type="text" /></div>
+          <div>
+            <label>Gutter Guards</label>
+            <div class="checks">
+              <label><input type="checkbox" name="gutterGuards" value="Plastic">Plastic</label>
+              <label><input type="checkbox" name="gutterGuards" value="RX">RX</label>
+              <label><input type="checkbox" name="gutterGuards" value="Leaf Free">Leaf Free</label>
+            </div>
+          </div>
+          <div><label for="gutterNotes">Gutter Notes</label><input id="gutterNotes" name="gutterNotes" type="text" /></div>
         </div>
       </div>
 
@@ -240,11 +279,10 @@
 
     <!-- ===== Calibrate overlay ===== -->
     <div id="calibWrap">
-      <div class="calibBar">
-        <button type="button" id="fillFromForm">Use Current Form Values</button>
-        <small>Drag the labels/X’s to line up with the template, then “Save Layout JSON”.</small>
-      </div>
       <div class="page" id="calibPage"></div>
+      <p style="color:#94a3b8;margin:.5rem 0 0">
+        Tip: Drag labels/X’s to align. Use arrow keys to nudge (Shift = 10px). When done, Copy or Download Layout JSON and send it to me if you want it baked in.
+      </p>
     </div>
   </div>
 
@@ -303,96 +341,207 @@ function fillForm(form,obj){
     else el.value = Array.isArray(v) ? v[0] : v;
   }
 }
+
+/* ---------- values → printed text + X markers ---------- */
 function computeValues(d){
   const out = {};
   const list = v => Array.isArray(v) ? v.join(', ') : (v || '');
+
+  // Plain text lines
   Object.assign(out, {
     name:d.name, primaryContactName:d.primaryContactName, primaryPhone:d.primaryPhone,
     insuranceCompany:d.insuranceCompany, claimNumber:d.claimNumber, phone:d.phone,
     address:d.address, cityStateZip:d.cityStateZip,
-    tearOffLayers:d.tearOffLayers||'', underlayment:d.underlayment||'',
     shinglesBrand:d.shinglesBrand||'', style:d.style||'', color:d.color||'', sqs:d.sqs||'',
     iceWater:d.iceWater||'', dripEdge:d.dripEdge||'', gutterApron:d.gutterApron||'',
-    vents:d.vents||'', valleys:d.valleys||'', pipeJacks:d.pipeJacks||'',
-    roofPitch:d.roofPitch||'', stories:d.stories||'', roofSize:d.roofSize||'',
-    roofType:list(d.roofType), ridgeCap:d.ridgeCap||'', ridgeVent:d.ridgeVent||'',
+    pipeJacks:d.pipeJacks||'', roofPitch:d.roofPitch||'', stories:d.stories||'',
+    roofSize:d.roofSize||'', ridgeCap:d.ridgeCap||'', ridgeVent:d.ridgeVent||'',
     sideWallFlashing:d.sideWallFlashing||'',
-    guttersSize:d.guttersSize? d.guttersSize + '"' : '', guttersColor:d.guttersColor||'',
-    downspoutsSize:d.downspoutsSize||'', downspoutsColor:d.downspoutsColor||'',
-    gutterGuards:list(d.gutterGuards), gutterNotes:d.gutterNotes||'',
+    guttersColor:d.guttersColor||'', downspoutsColor:d.downspoutsColor||'',
+    gutterNotes:d.gutterNotes||'',
     materialDrop:d.materialDrop||'', redeck:d.redeck||'', interiorDamage:d.interiorDamage||'',
     cleanup:d.cleanup||'', miscNotes:d.miscNotes||'',
     agreedAmount:d.agreedAmount||'', firstPayment:d.firstPayment||'', finalPayment:d.finalPayment||'',
     sidingBrand:d.sidingBrand||'', sidingStyle:d.sidingStyle||'', sidingSqs:d.sidingSqs||'', sidingColor:d.sidingColor||'',
-    elevations:list(d.elevations), trim:d.trim||'', fascia:d.fascia||'', fasciaColor:d.fasciaColor||'',
-    soffit:d.soffit||'', soffitColor:d.soffitColor||'', windowWraps:d.windowWraps||'',
-    windowWrapsColor:d.windowWrapsColor||'', blocks:list(d.blocks),
+    trim:d.trim||'', fasciaColor:d.fasciaColor||'', soffitColor:d.soffitColor||'',
+    windowWrapsColor:d.windowWrapsColor||'',
     custDate:d.custDate||'', custSignature:d.custSignature||'', tdhDate:d.tdhDate||'', tdhSignature:d.tdhSignature||'',
-    instructions:d.instructions||''
+    instructions:d.instructions||'',
   });
-  const loc = new Set([].concat(d.roofingLocations||[]));
-  out.x_roofing_House  = loc.has('House') ? 'X' : '';
-  out.x_roofing_Garage = loc.has('Garage') ? 'X' : '';
-  out.x_roofing_Shed   = loc.has('Shed') ? 'X' : '';
-  out.x_roofing_Flat   = loc.has('Flat') ? 'X' : '';
+
+  // Roofing locations → X
+  const roofingLoc = new Set([].concat(d.roofingLocations||[]));
+  out.x_roofing_House  = roofingLoc.has('House')  ? 'X' : '';
+  out.x_roofing_Garage = roofingLoc.has('Garage') ? 'X' : '';
+  out.x_roofing_Shed   = roofingLoc.has('Shed')   ? 'X' : '';
+  out.x_roofing_Flat   = roofingLoc.has('Flat')   ? 'X' : '';
+
+  // Underlayment radios → X (no word output)
+  out.x_underlayment_15lb      = d.underlayment==='15lb'      ? 'X' : '';
+  out.x_underlayment_30lb      = d.underlayment==='30lb'      ? 'X' : '';
+  out.x_underlayment_Synthetic = d.underlayment==='Synthetic' ? 'X' : '';
+
+  // Gutters sizes → X
+  out.x_gutters_5 = d.guttersSize==='5' ? 'X' : '';
+  out.x_gutters_6 = d.guttersSize==='6' ? 'X' : '';
+
+  // Downspouts sizes → X
+  out.x_downspouts_2x3 = d.downspoutsSize==='2x3' ? 'X' : '';
+  out.x_downspouts_3x4 = d.downspoutsSize==='3x4' ? 'X' : '';
+
+  // Roof Type checkboxes → X
+  const roofType = new Set([].concat(d.roofType||[]));
+  out.x_roofType_Hip   = roofType.has('Hip')   ? 'X' : '';
+  out.x_roofType_Gable = roofType.has('Gable') ? 'X' : '';
+  out.x_roofType_Both  = roofType.has('Both')  ? 'X' : '';
+
+  // Gutter Guards → X
+  const guards = new Set([].concat(d.gutterGuards||[]));
+  out.x_guard_Plastic  = guards.has('Plastic')   ? 'X' : '';
+  out.x_guard_RX       = guards.has('RX')        ? 'X' : '';
+  out.x_guard_LeafFree = guards.has('Leaf Free') ? 'X' : '';
+
+  // Fascia → X
+  out.x_fascia_Smooth = d.fascia==='Smooth' ? 'X' : '';
+  out.x_fascia_PVC    = d.fascia==='PVC'    ? 'X' : '';
+
+  // Soffit → X
+  out.x_soffit_Solid  = d.soffit==='Solid'  ? 'X' : '';
+  out.x_soffit_Vented = d.soffit==='Vented' ? 'X' : '';
+
+  // Window Wraps → X
+  out.x_wraps_Smooth = d.windowWraps==='Smooth' ? 'X' : '';
+  out.x_wraps_PVC    = d.windowWraps==='PVC'    ? 'X' : '';
+
+  // Vents: print your text AND X "Turtle" if mentioned
+  const ventsStr = String(d.vents || '');
+  out.vents = ventsStr;
+  const turtleRe = /\b(turtle\s*vents?|turtle\s*type|turtle)\b/i;
+  out.x_vents_Turtle = turtleRe.test(ventsStr) ? 'X' : '';
+
+  // Valleys: X Open/Closed + print remaining (e.g., color)
+  const valleysStr = String(d.valleys || '');
+  const hasOpen   = /(^|\b)open\b/i.test(valleysStr);
+  const hasClosed = /(^|\b)closed\b/i.test(valleysStr);
+  out.x_valley_Open   = hasOpen   ? 'X' : '';
+  out.x_valley_Closed = hasClosed ? 'X' : '';
+  out.valleys_text = valleysStr.replace(/\b(open|closed)\b/ig, '').replace(/^\s*;?\s*|\s*;?\s*$/g,'').trim();
+
+  // Keep as text:
+  out.tearOffLayers = d.tearOffLayers||'';
+
   return out;
 }
+</script>
 
-/* ---------- layout model (drag to tweak) ---------- */
+<script>
+/* ---------- layout (defaults) + persist ---------- */
 const PAGE_W = 1275, PAGE_H = 1650; // design frame
-const LKEY='tdh-layout-v2';
+const LKEY='tdh-layout-v3';
 let layout = JSON.parse(localStorage.getItem(LKEY) || 'null') || [
   // General Info
   {key:'name', x:180, y:230}, {key:'primaryContactName', x:780, y:230},
   {key:'primaryPhone', x:180, y:275}, {key:'insuranceCompany', x:780, y:275},
   {key:'claimNumber', x:180, y:320}, {key:'phone', x:780, y:320},
   {key:'address', x:180, y:365}, {key:'cityStateZip', x:780, y:365},
-  // Roofing location X's
-  {key:'x_roofing_House', x:160, y:430, cls:'check'},
+
+  // Roofing locations (X)
+  {key:'x_roofing_House',  x:160, y:430, cls:'check'},
   {key:'x_roofing_Garage', x:265, y:430, cls:'check'},
-  {key:'x_roofing_Shed', x:370, y:430, cls:'check'},
-  {key:'x_roofing_Flat', x:455, y:430, cls:'check'},
-  // Roofing lines
-  {key:'tearOffLayers', x:220, y:465}, {key:'underlayment', x:780, y:465},
+  {key:'x_roofing_Shed',   x:370, y:430, cls:'check'},
+  {key:'x_roofing_Flat',   x:455, y:430, cls:'check'},
+
+  // Tear off (text)
+  {key:'tearOffLayers', x:220, y:465},
+
+  // Underlayment (X)
+  {key:'x_underlayment_15lb',      x:620, y:465, cls:'check'},
+  {key:'x_underlayment_30lb',      x:725, y:465, cls:'check'},
+  {key:'x_underlayment_Synthetic', x:870, y:465, cls:'check'},
+
+  // Shingles / misc (text)
   {key:'shinglesBrand', x:180, y:505}, {key:'style', x:620, y:505}, {key:'color', x:960, y:505}, {key:'sqs', x:1160, y:505},
   {key:'iceWater', x:310, y:545},
   {key:'dripEdge', x:180, y:585}, {key:'gutterApron', x:620, y:585},
-  {key:'vents', x:180, y:625}, {key:'valleys', x:620, y:625},
+
+  // Vents (text + Turtle X)
+  {key:'vents', x:180, y:625},
+  {key:'x_vents_Turtle', x:520, y:625, cls:'check'},
+
+  // Valleys (Open/Closed X + color text)
+  {key:'x_valley_Open',   x:900,  y:625, cls:'check'},
+  {key:'x_valley_Closed', x:1040, y:625, cls:'check'},
+  {key:'valleys_text',    x:1120, y:625},
+
   {key:'pipeJacks', x:180, y:665}, {key:'roofPitch', x:620, y:665}, {key:'stories', x:880, y:665}, {key:'roofSize', x:1060, y:665},
-  {key:'roofType', x:300, y:705}, {key:'ridgeCap', x:780, y:705}, {key:'ridgeVent', x:1060, y:705},
+
+  // Roof Type (X)
+  {key:'x_roofType_Hip',   x:300, y:705, cls:'check'},
+  {key:'x_roofType_Gable', x:360, y:705, cls:'check'},
+  {key:'x_roofType_Both',  x:430, y:705, cls:'check'},
+
+  {key:'ridgeCap', x:780, y:705}, {key:'ridgeVent', x:1060, y:705},
   {key:'sideWallFlashing', x:360, y:745},
-  // Gutters
-  {key:'guttersSize', x:160, y:820}, {key:'guttersColor', x:420, y:820},
-  {key:'downspoutsSize', x:750, y:820}, {key:'downspoutsColor', x:1020, y:820},
-  {key:'gutterGuards', x:240, y:865}, {key:'gutterNotes', x:780, y:865},
+
+  // Gutters & Downspouts (sizes as X; colors as text)
+  {key:'x_gutters_5', x:160, y:820, cls:'check'},
+  {key:'x_gutters_6', x:210, y:820, cls:'check'},
+  {key:'guttersColor', x:420, y:820},
+
+  {key:'x_downspouts_2x3', x:750, y:820, cls:'check'},
+  {key:'x_downspouts_3x4', x:820, y:820, cls:'check'},
+  {key:'downspoutsColor', x:1020, y:820},
+
+  // Gutter Guards (X) + Notes
+  {key:'x_guard_Plastic',  x:240, y:865, cls:'check'},
+  {key:'x_guard_RX',       x:320, y:865, cls:'check'},
+  {key:'x_guard_LeafFree', x:420, y:865, cls:'check'},
+  {key:'gutterNotes', x:780, y:865},
+
   // More / Siding / Payment / Signatures / Instructions
   {key:'materialDrop', x:240, y:940}, {key:'redeck', x:740, y:940},
   {key:'interiorDamage', x:240, y:980}, {key:'cleanup', x:740, y:980},
   {key:'miscNotes', x:240, y:1020, w:900},
+
   {key:'agreedAmount', x:240, y:1085}, {key:'firstPayment', x:740, y:1085}, {key:'finalPayment', x:1040, y:1085},
+
   {key:'sidingBrand', x:180, y:1150}, {key:'sidingStyle', x:620, y:1150}, {key:'sidingSqs', x:980, y:1150}, {key:'sidingColor', x:1160, y:1150},
   {key:'elevations', x:240, y:1190}, {key:'trim', x:740, y:1190},
-  {key:'fascia', x:240, y:1230}, {key:'fasciaColor', x:620, y:1230},
-  {key:'soffit', x:920, y:1230}, {key:'soffitColor', x:1160, y:1230},
-  {key:'windowWraps', x:240, y:1270}, {key:'windowWrapsColor', x:620, y:1270},
+
+  {key:'x_fascia_Smooth', x:240, y:1230, cls:'check'},
+  {key:'x_fascia_PVC',    x:300, y:1230, cls:'check'},
+
+  {key:'x_soffit_Solid',  x:920, y:1230, cls:'check'},
+  {key:'x_soffit_Vented', x:1000, y:1230, cls:'check'},
+
+  {key:'x_wraps_Smooth', x:240, y:1270, cls:'check'},
+  {key:'x_wraps_PVC',    x:300, y:1270, cls:'check'},
+
   {key:'blocks', x:240, y:1310},
+
   {key:'custDate', x:320, y:1380}, {key:'custSignature', x:680, y:1380},
-  {key:'tdhDate', x:320, y:1415}, {key:'tdhSignature', x:680, y:1415},
+  {key:'tdhDate',  x:320, y:1415}, {key:'tdhSignature', x:680, y:1415},
   {key:'instructions', x:360, y:1475},
 ];
-
-function saveLayout(){ localStorage.setItem(LKEY, JSON.stringify(layout)); }
+function saveLayout(){ try { localStorage.setItem(LKEY, JSON.stringify(layout)); } catch {} }
 function resetLayout(){ localStorage.removeItem(LKEY); location.reload(); }
+</script>
 
-/* ---------- Calibrate UI (drag-and-drop) ---------- */
+<script>
+/* ---------- Calibrate UI (drag / nudge / copy) ---------- */
 const calibWrap = document.getElementById('calibWrap');
 const calibPage = document.getElementById('calibPage');
+const btnCalib   = document.getElementById('toggleCalib');
+const btnUseForm = document.getElementById('fillFromForm');
+const btnCopy    = document.getElementById('copyLayout');
+const btnSave    = document.getElementById('saveLayout');
+const btnReset   = document.getElementById('resetLayout');
+
 function mountOverlay(values){
-  calibPage.classList.add('drag-on');
   calibPage.innerHTML=''; // clear
   layout.forEach(item=>{
     const el = document.createElement('div');
-    el.className = item.cls || 'field';
+    el.className = (item.cls || 'field') + ' calib-draggable';
     el.dataset.key = item.key;
     el.style.left = (item.x||0)+'px';
     el.style.top  = (item.y||0)+'px';
@@ -401,46 +550,78 @@ function mountOverlay(values){
     calibPage.appendChild(el);
   });
 }
-let dragging = null, start = null;
+let active = null, start = null;
 calibPage.addEventListener('mousedown', e=>{
   const t=e.target.closest('.field,.check'); if (!t) return;
-  dragging = t;
+  if (active) active.classList.remove('calib-selected');
+  active = t; active.classList.add('calib-selected');
   start = {x:e.clientX, y:e.clientY, l:parseFloat(t.style.left||0), t:parseFloat(t.style.top||0)};
   e.preventDefault();
 });
 window.addEventListener('mousemove', e=>{
-  if (!dragging) return;
+  if (!active || !start) return;
   const dx=e.clientX-start.x, dy=e.clientY-start.y;
-  dragging.style.left = Math.round(start.l+dx)+'px';
-  dragging.style.top  = Math.round(start.t+dy)+'px';
+  active.style.left = Math.round(start.l+dx)+'px';
+  active.style.top  = Math.round(start.t+dy)+'px';
 });
 window.addEventListener('mouseup', ()=>{
-  if (!dragging) return;
-  const k=dragging.dataset.key;
+  if (!active || !start) return;
+  const k=active.dataset.key;
   const node = layout.find(it=>it.key===k);
-  node.x = Math.round(parseFloat(dragging.style.left||0));
-  node.y = Math.round(parseFloat(dragging.style.top||0));
+  node.x = Math.round(parseFloat(active.style.left||0));
+  node.y = Math.round(parseFloat(active.style.top||0));
   saveLayout();
-  dragging=null;
+  start=null;
+});
+window.addEventListener('keydown', (e)=>{
+  if (!active || calibWrap.style.display!=='block') return;
+  const step = e.shiftKey ? 10 : 1;
+  const left = parseFloat(active.style.left||0);
+  const top  = parseFloat(active.style.top||0);
+  if (e.key==='ArrowLeft')  active.style.left = (left - step) + 'px';
+  if (e.key==='ArrowRight') active.style.left = (left + step) + 'px';
+  if (e.key==='ArrowUp')    active.style.top  = (top  - step) + 'px';
+  if (e.key==='ArrowDown')  active.style.top  = (top  + step) + 'px';
+  const k=active.dataset.key;
+  const node = layout.find(it=>it.key===k);
+  node.x = Math.round(parseFloat(active.style.left||0));
+  node.y = Math.round(parseFloat(active.style.top||0));
+  saveLayout();
 });
 
-document.getElementById('toggleCalib').addEventListener('click', ()=>{
-  calibWrap.style.display = (calibWrap.style.display==='none'||!calibWrap.style.display) ? 'block' : 'none';
-  if (calibWrap.style.display==='block') {
+btnCalib.addEventListener('click', ()=>{
+  const show = calibWrap.style.display !== 'block';
+  calibWrap.style.display = show ? 'block' : 'none';
+  if (show) {
     const v = computeValues(formToObject(document.getElementById('tdhForm')));
     mountOverlay(v);
   }
 });
-document.getElementById('fillFromForm').addEventListener('click', ()=>{
+btnUseForm.addEventListener('click', ()=>{
   const v = computeValues(formToObject(document.getElementById('tdhForm')));
   mountOverlay(v);
 });
-document.getElementById('saveLayout').addEventListener('click', ()=>{
+btnCopy.addEventListener('click', async ()=>{
+  const json = JSON.stringify(layout, null, 2);
+  try { await navigator.clipboard.writeText(json); alert('Layout copied. Paste it to me here in chat.'); }
+  catch {
+    const w = window.open('', '_blank', 'width=600,height=400');
+    w.document.write('<pre style="white-space:pre-wrap;word-break:break-word;font:12px/1.3 monospace">'+
+      json.replace(/[&<>]/g, s=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[s]))+'</pre>');
+  }
+});
+btnSave.addEventListener('click', ()=>{
   const blob=new Blob([JSON.stringify(layout,null,2)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='tdh-layout.json'; a.click(); URL.revokeObjectURL(a.href);
 });
-document.getElementById('resetLayout').addEventListener('click', resetLayout);
+btnReset.addEventListener('click', ()=>{
+  localStorage.removeItem('tdh-layout-v3');
+  alert('Layout cleared from this browser. Reloading defaults.');
+  location.reload();
+});
+</script>
 
+<script>
 /* ---------- Example + JSON save ---------- */
 const example = {
   name:"Carol Chinn", address:"1185 N 9th St", cityStateZip:"David City, NE 68632-1227",
@@ -471,15 +652,17 @@ document.getElementById('saveJson').addEventListener('click', ()=>{
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='tdh-agreement.json'; a.click(); URL.revokeObjectURL(a.href);
 });
+</script>
 
-/* ---------- Download: draw directly into PDF ---------- */
+<script>
+/* ---------- Download: draw directly into a single-page PDF ---------- */
 document.getElementById('downloadPdf').addEventListener('click', async ()=>{
   try {
     if (!(await ensureJsPDFLoaded())) return;
     const { jsPDF } = window.jspdf;
     const img = await loadTemplateImage(); // must exist
-    const doc = new jsPDF({ unit:'in', format:'letter', compress:true });
 
+    const doc = new jsPDF({ unit:'in', format:'letter', compress:true });
     // background template full page
     doc.addImage(img, 'PNG', 0, 0, 8.5, 11);
 
@@ -491,7 +674,7 @@ document.getElementById('downloadPdf').addEventListener('click', async ()=>{
 
     layout.forEach(item=>{
       const val = v[item.key] || '';
-      if (!val) return;
+      if (!val) return; // skip empty
       const xIn = (item.x / PAGE_W) * 8.5;
       const yIn = (item.y / PAGE_H) * 11;
       if ((item.cls||'')==='check') {
@@ -509,12 +692,11 @@ document.getElementById('downloadPdf').addEventListener('click', async ()=>{
       }
     });
 
-    const data = v;
-    const filename = `TDH_Agreement_${(data.name||'Filled').replace(/\s+/g,'_')}.pdf`;
+    const filename = `TDH_Agreement_${(v.name||'Filled').replace(/\s+/g,'_')}.pdf`;
     doc.save(filename);
   } catch (err) {
     console.error(err);
-    alert("PDF failed. Check that assets/tdh-template.png exists (exact path/filename) and hard-refresh.");
+    alert("Couldn’t generate the PDF.\n\nChecks:\n• Is assets/tdh-template.png uploaded?\n• Hard-refresh the page (Ctrl/Cmd+Shift+R).");
   }
 });
 
