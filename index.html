@@ -48,7 +48,6 @@
   .sig-row{display:grid;gap:10px;grid-template-columns:1.2fr 1fr 1.2fr;align-items:end}
   .row{display:grid;gap:10px;grid-template-columns:160px 1fr;align-items:center}
 
-  /* Optional quick logo in header (not used in the PDF) */
   .logo-box{display:flex;align-items:center;gap:8px}
   .logo-box img{height:28px;width:auto;object-fit:contain}
 </style>
@@ -106,7 +105,7 @@
           <div><label for="style">Style</label><input id="style" name="style" type="text" /></div>
           <div><label for="color">Color</label><input id="color" name="color" type="text" /></div>
           <div><label for="sqs">SQs</label><input id="sqs" name="sqs" type="text" /></div>
-          <div><label for="iceWater">Ice &amp; Water Barrier (per code)</label><input id="iceWater" name="iceWater" type="text" /></div>
+          <div><label for="iceWater">Ice & Water Barrier (per code)</label><input id="iceWater" name="iceWater" type="text" /></div>
           <div><label for="dripEdge">Drip Edge (Color)</label><input id="dripEdge" name="dripEdge" type="text" /></div>
           <div><label for="gutterApron">Gutter Apron (Color)</label><input id="gutterApron" name="gutterApron" type="text" /></div>
           <div><label for="vents">Vents (Color / Type / Qty)</label><input id="vents" name="vents" type="text" /></div>
@@ -224,27 +223,30 @@
     </form>
   </div>
 
-<!-- jsPDF (no html2canvas) -->
+<!-- ===== Robust jsPDF loader (tries local first, then CDNs) ===== -->
 <script>
-  // Load jsPDF (UMD) from a CDN with 2 fallbacks
-  (async function loadJsPDF(){
-    const srcs = [
+  async function ensureJsPDFLoaded(){
+    if (window.jspdf && window.jspdf.jsPDF) return true;
+    const sources = [
+      "assets/jspdf.umd.min.js", // self-hosted fallback (upload this file to assets/)
       "https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js",
       "https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js",
       "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"
     ];
-    for (const s of srcs) {
+    for (const src of sources) {
       try {
+        // eslint-disable-next-line no-await-in-loop
         await new Promise((res, rej) => {
-          const el = document.createElement('script');
-          el.src = s; el.async = true; el.onload = res; el.onerror = rej;
-          document.head.appendChild(el);
+          const s = document.createElement('script');
+          s.src = src; s.async = true; s.onload = res; s.onerror = rej;
+          document.head.appendChild(s);
         });
-        if (window.jspdf && window.jspdf.jsPDF) return;
-      } catch (e) {}
+        if (window.jspdf && window.jspdf.jsPDF) return true;
+      } catch (e) { /* try next */ }
     }
-    alert("Couldn’t load the PDF engine (jsPDF). Check your internet and try again.");
-  })();
+    alert("Couldn’t load the PDF engine (jsPDF). \n\nFix: upload jspdf.umd.min.js to assets/ or try again on a better connection.");
+    return false;
+  }
 </script>
 
 <script>
@@ -267,7 +269,7 @@
     }
   }
 
-  // Example data (you can delete)
+  // Example data (optional)
   const example = {
     name:"Carol Chinn", address:"1185 N 9th St", cityStateZip:"David City, NE 68632-1227",
     primaryContactName:"Nate Wegner", primaryPhone:"(402) 707-7187",
@@ -289,7 +291,6 @@
     custDate:"", custSignature:"", tdhDate:"", tdhSignature:"", instructions:"2513 River Rd Dr, Waterloo, NE 68069"
   };
 
-  // UI wiring
   const form = document.getElementById('tdhForm');
   document.getElementById('loadExample').addEventListener('click', ()=> fillForm(form, example));
   document.getElementById('clearForm').addEventListener('click', ()=> form.reset());
@@ -299,26 +300,17 @@
     const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='tdh-agreement.json'; a.click(); URL.revokeObjectURL(a.href);
   });
 
-  // ---- FIELD → TEXT MAPPING (values only; no labels) ----
-  // Coordinates are in **pixels on a 1275×1650 layout** (≈150 px/in for Letter).
-  // We convert to inches for the PDF (jsPDF unit='in', format='letter' 8.5×11 in).
-  const PX_PER_IN = 150; // 1275px / 8.5in
-  // Each item: {key, x, y, w?} where x,y are the baseline position on the template.
-  // Tweak once if needed; then you're set. (Defaults are reasonable for a typical layout.)
+  // ---- mapping (same as before) ----
+  const PX_PER_IN = 150; // 1275px per 8.5in
   const layout = [
-    // General Info
     {key:'name', x:180, y:230}, {key:'primaryContactName', x:780, y:230},
     {key:'primaryPhone', x:180, y:275}, {key:'insuranceCompany', x:780, y:275},
     {key:'claimNumber', x:180, y:320}, {key:'phone', x:780, y:320},
     {key:'address', x:180, y:365}, {key:'cityStateZip', x:780, y:365},
-
-    // Roofing locations (X marks)
     {key:'x_roofing_House', x:160, y:430, mark:true},
     {key:'x_roofing_Garage', x:265, y:430, mark:true},
     {key:'x_roofing_Shed', x:370, y:430, mark:true},
     {key:'x_roofing_Flat', x:455, y:430, mark:true},
-
-    // Roofing lines
     {key:'tearOffLayers', x:220, y:465}, {key:'underlayment', x:780, y:465},
     {key:'shinglesBrand', x:180, y:505}, {key:'style', x:620, y:505}, {key:'color', x:960, y:505}, {key:'sqs', x:1160, y:505},
     {key:'iceWater', x:310, y:545},
@@ -327,25 +319,19 @@
     {key:'pipeJacks', x:180, y:665}, {key:'roofPitch', x:620, y:665}, {key:'stories', x:880, y:665}, {key:'roofSize', x:1060, y:665},
     {key:'roofType', x:300, y:705}, {key:'ridgeCap', x:780, y:705}, {key:'ridgeVent', x:1060, y:705},
     {key:'sideWallFlashing', x:360, y:745},
-
-    // Gutters
     {key:'guttersSize', x:160, y:820}, {key:'guttersColor', x:420, y:820},
     {key:'downspoutsSize', x:750, y:820}, {key:'downspoutsColor', x:1020, y:820},
     {key:'gutterGuards', x:240, y:865}, {key:'gutterNotes', x:780, y:865},
-
-    // More / Siding / Payment / Signatures / Instructions
     {key:'materialDrop', x:240, y:940}, {key:'redeck', x:740, y:940},
     {key:'interiorDamage', x:240, y:980}, {key:'cleanup', x:740, y:980},
     {key:'miscNotes', x:240, y:1020, w:900},
     {key:'agreedAmount', x:240, y:1085}, {key:'firstPayment', x:740, y:1085}, {key:'finalPayment', x:1040, y:1085},
-
     {key:'sidingBrand', x:180, y:1150}, {key:'sidingStyle', x:620, y:1150}, {key:'sidingSqs', x:980, y:1150}, {key:'sidingColor', x:1160, y:1150},
     {key:'elevations', x:240, y:1190}, {key:'trim', x:740, y:1190},
     {key:'fascia', x:240, y:1230}, {key:'fasciaColor', x:620, y:1230},
     {key:'soffit', x:920, y:1230}, {key:'soffitColor', x:1160, y:1230},
     {key:'windowWraps', x:240, y:1270}, {key:'windowWrapsColor', x:620, y:1270},
     {key:'blocks', x:240, y:1310},
-
     {key:'custDate', x:320, y:1380}, {key:'custSignature', x:680, y:1380},
     {key:'tdhDate', x:320, y:1415}, {key:'tdhSignature', x:680, y:1415},
     {key:'instructions', x:360, y:1475}
@@ -388,60 +374,71 @@
 
   // ---- DOWNLOAD: draw template + text directly into PDF (single page) ----
   document.getElementById('downloadPdf').addEventListener('click', async ()=>{
-    const { jsPDF } = window.jspdf || {};
-    if (!jsPDF) { alert("PDF engine not loaded yet. Please try again."); return; }
+    try {
+      // 1) Ensure jsPDF is available
+      if (!(await ensureJsPDFLoaded())) return;
+      const { jsPDF } = window.jspdf;
 
-    // 1) Load the template image (same-origin: /assets/tdh-template.png)
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.src = 'assets/tdh-template.png';
-    await new Promise((res, rej)=>{
-      img.onload = res;
-      img.onerror = ()=> rej(new Error('Missing assets/tdh-template.png'));
-    });
+      // 2) Load template image (must exist at /assets/tdh-template.png)
+      const imgUrl = 'assets/tdh-template.png';
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.src = imgUrl;
+      await new Promise((res, rej)=>{
+        img.onload = res;
+        img.onerror = ()=> rej(new Error('Template image not found at ' + imgUrl));
+      });
 
-    // 2) Create the PDF (letter, inches) — always one page
-    const doc = new jsPDF({ unit:'in', format:'letter', compress:true, hotfixes:[] });
+      // 3) Build PDF (always one US Letter page)
+      const doc = new jsPDF({ unit:'in', format:'letter', compress:true });
 
-    // 3) Draw the background template to full page
-    doc.addImage(img, 'PNG', 0, 0, 8.5, 11);
+      // 4) Background
+      doc.addImage(img, 'PNG', 0, 0, 8.5, 11);
 
-    // 4) Compute values and draw them at precise positions
-    const data = formToObject(form);
-    const v = computeValues(data);
+      // 5) Text overlay
+      const data = formToObject(form);
+      const v = computeValues(data);
+      doc.setTextColor(0,0,0);
+      doc.setFont('times', 'normal');
+      doc.setFontSize(11);
 
-    doc.setTextColor(0,0,0);
-    doc.setFont('times', 'normal');  // built-in font; reliable on mobile
-    doc.setFontSize(11);             // adjust if you need slightly larger
+      layout.forEach(item=>{
+        const val = v[item.key] || '';
+        if (!val) return;
+        const xIn = item.x / PX_PER_IN;
+        const yIn = item.y / PX_PER_IN;
 
-    layout.forEach(item=>{
-      const val = v[item.key] || '';
-      if (!val) return;
-      const xIn = item.x / PX_PER_IN;
-      const yIn = item.y / PX_PER_IN;
-      if (item.mark) {
-        doc.setFont('helvetica','bold');
-        doc.setFontSize(12);
-        doc.text('X', xIn, yIn);
-        doc.setFont('times','normal');
-        doc.setFontSize(11);
-        return;
-      }
-      if (item.w) {
-        const wIn = item.w / PX_PER_IN;
-        const lines = doc.splitTextToSize(String(val), wIn);
-        doc.text(lines, xIn, yIn);
-      } else {
-        doc.text(String(val), xIn, yIn);
-      }
-    });
+        if (item.mark) {
+          doc.setFont('helvetica','bold'); doc.setFontSize(12);
+          doc.text('X', xIn, yIn);
+          doc.setFont('times','normal'); doc.setFontSize(11);
+          return;
+        }
+        if (item.w) {
+          const wIn = item.w / PX_PER_IN;
+          const lines = doc.splitTextToSize(String(val), wIn);
+          doc.text(lines, xIn, yIn);
+        } else {
+          doc.text(String(val), xIn, yIn);
+        }
+      });
 
-    // 5) Save
-    const filename = `TDH_Agreement_${(data.name||'Filled').replace(/\s+/g,'_')}.pdf`;
-    doc.save(filename);
+      // 6) Save
+      const filename = `TDH_Agreement_${(data.name||'Filled').replace(/\s+/g,'_')}.pdf`;
+      doc.save(filename);
+    } catch (err) {
+      console.error(err);
+      alert(
+        "Couldn’t generate the PDF.\n\n" +
+        "Quick checks:\n" +
+        "• Is jsPDF available? Try uploading assets/jspdf.umd.min.js\n" +
+        "• Does assets/tdh-template.png exist (exact name/path)?\n" +
+        "• Hard-refresh the page (Cmd/Ctrl+Shift+R)."
+      );
+    }
   });
 
-  // Autosave while typing (so nothing gets lost on mobile)
+  // Autosave while typing (nice for mobile)
   const KEY='tdh-agreement-autosave';
   try { const saved=JSON.parse(localStorage.getItem(KEY)||'null'); if (saved) fillForm(form, saved); } catch {}
   form.addEventListener('input', ()=> localStorage.setItem(KEY, JSON.stringify(formToObject(form))));
