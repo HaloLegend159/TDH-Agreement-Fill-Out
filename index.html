@@ -2,8 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>TDH Agreement – Clean PDF (no prefill)</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>TDH Agreement – Final Align (no prefill)</title>
+<meta name="color-scheme" content="dark light" />
 <style>
   :root{ --bg:#0f172a; --panel:#111827; --ink:#e5e7eb; --muted:#94a3b8; --border:#1f2937; --gap:14px; --radius:14px; }
   *{ box-sizing:border-box }
@@ -19,6 +20,7 @@
     padding:10px 14px;border-radius:12px;cursor:pointer;font-weight:600}
   button.primary{background:#1a2a4b}
   button:hover{background:#101a33}
+
   .grid{display:grid;gap:var(--gap)}
   .two{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
   @media (min-width:980px){ .two{grid-template-columns:repeat(2,minmax(0,1fr))} }
@@ -43,32 +45,31 @@
 <body>
 <div class="wrap">
   <div class="toolbar">
-    <h1>TDH Agreement (Clean PDF)</h1>
+    <h1>TDH Agreement (Final Align)</h1>
     <div class="actions">
       <button id="loadExample" type="button" title="Fills with fake demo data">Load Example</button>
       <button id="clearForm"   type="button">Clear</button>
-      <button id="saveJson"    type="button">Save JSON</button>
       <button id="downloadPdf" type="button" class="primary"><strong>Download PDF</strong></button>
     </div>
   </div>
 
-  <!-- HONEYPOT (blocks browser autofill) -->
+  <!-- HONEYPOT (blocks browser profile autofill) -->
   <form style="position:absolute;left:-9999px;top:-9999px">
     <input type="text" autocomplete="username">
     <input type="password" autocomplete="new-password">
   </form>
 
-  <!-- ===== FORM ===== -->
+  <!-- ===== FORM (no prefill, no autosave) ===== -->
   <form id="tdhForm" class="grid" autocomplete="off">
     <div class="panel">
       <h2>General Info</h2>
       <div class="grid two">
         <div><label for="name">Name</label><input id="name" name="name" type="text" autocomplete="off" /></div>
         <div><label for="primaryContactName">Primary Contact Name</label><input id="primaryContactName" name="primaryContactName" type="text" autocomplete="off" /></div>
-        <div><label for="primaryPhone">Primary Contact Phone Number</label><input id="primaryPhone" name="primaryPhone" type="tel" autocomplete="off" placeholder="(555) 010-0000" /></div>
+        <div><label for="primaryPhone">Primary Contact Phone Number</label><input id="primaryPhone" name="primaryPhone" type="tel" autocomplete="off" /></div>
         <div><label for="insuranceCompany">Insurance Company</label><input id="insuranceCompany" name="insuranceCompany" type="text" autocomplete="off" /></div>
         <div><label for="claimNumber">Claim Number</label><input id="claimNumber" name="claimNumber" type="text" autocomplete="off" /></div>
-        <div><label for="phone">Phone</label><input id="phone" name="phone" type="tel" autocomplete="off" placeholder="(555) 010-0000" /></div>
+        <div><label for="phone">Phone</label><input id="phone" name="phone" type="tel" autocomplete="off" /></div>
         <div><label for="address">Address</label><input id="address" name="address" type="text" autocomplete="off" /></div>
         <div><label for="cityStateZip">City, State, Zip</label><input id="cityStateZip" name="cityStateZip" type="text" autocomplete="off" /></div>
       </div>
@@ -257,7 +258,7 @@
 
         <div style="grid-column:1/-1" class="row">
           <label for="instructions">Instructions / Location</label>
-          <input id="instructions" name="instructions" type="text" autocomplete="off" value="" />
+          <input id="instructions" name="instructions" type="text" autocomplete="off" />
         </div>
       </div>
     </div>
@@ -277,7 +278,7 @@
   </form>
 </div>
 
-<!-- jsPDF loader -->
+<!-- jsPDF -->
 <script>
 async function ensureJsPDFLoaded(){
   if (window.jspdf && window.jspdf.jsPDF) return true;
@@ -315,7 +316,7 @@ function fillForm(form,obj){
 </script>
 
 <script>
-/* values → print strings + markers */
+/* values → printable strings + flags */
 function computeValues(d){
   const out = {};
   const num = n => (n===undefined || n===null || n==='') ? '' : String(n);
@@ -344,11 +345,11 @@ function computeValues(d){
     instructions:d.instructions||'',
   });
 
-  // Vents (Qty + Type) + Color + "X" if Turtle
+  // Vents
   const ventTypeRaw = (d.ventsType==='Other' ? d.ventsTypeOther : d.ventsType) || '';
   const ventType = ventTypeRaw.trim();
-  const ventQty = num(d.ventsQty);
-  out.vents_text = [ventQty, ventType].filter(Boolean).join(' ');
+  out.ventsQty = num(d.ventsQty);
+  out.ventsType = ventType;
   out.ventsColor = (d.ventsColor||'').trim();
   out.x_vents_Turtle = /\bturtle\b/i.test(ventType) ? 'X' : '';
 
@@ -356,9 +357,9 @@ function computeValues(d){
   const vm = d.valleyMode || '';
   out.x_valley_Open   = vm==='Open'   ? 'X' : '';
   out.x_valley_Closed = vm==='Closed' ? 'X' : '';
-  out.valleys_text = (d.valleysColor||'').trim();
+  out.valleysColor = (d.valleysColor||'').trim();
 
-  // Pipe jacks (split fields)
+  // Pipe jacks
   out.pipeJacksQty = num(d.pipeJacksQty);
   out.pipeJacksType = (d.pipeJacksType||'').trim();
 
@@ -369,7 +370,7 @@ function computeValues(d){
   out.x_sideWall_Metal   = d.sideWallMaterial==='Metal'   ? 'X' : '';
   out.x_sideWall_Plastic = d.sideWallMaterial==='Plastic' ? 'X' : '';
 
-  // Location + types
+  // Locations & types
   const loc = new Set([].concat(d.roofingLocations||[]));
   out.x_loc_House  = loc.has('House')  ? 'X' : '';
   out.x_loc_Garage = loc.has('Garage') ? 'X' : '';
@@ -403,17 +404,17 @@ function computeValues(d){
   out.x_wrap_PVC   = d.windowWraps==='PVC'    ? 'X' : '';
 
   // “More Info” checkmarks show if any text is provided
-  out.x_more_Redeck         = !!d.redeck;
-  out.x_more_Interior       = !!d.interiorDamage;
-  out.x_more_MagRoll        = !!d.cleanup;
-  out.x_more_CleanHaul      = !!d.materialDrop;
+  out.x_more_Redeck    = !!d.redeck;
+  out.x_more_Interior  = !!d.interiorDamage;
+  out.x_more_MagRoll   = !!d.cleanup;
+  out.x_more_CleanHaul = !!d.materialDrop;
 
   return out;
 }
 </script>
 
 <script>
-/* PDF drawing (cleaned + aligned) */
+/* PDF drawing — adjusted to match your blank more tightly */
 document.getElementById('downloadPdf').addEventListener('click', async ()=>{
   if (!(await ensureJsPDFLoaded())) return;
   const { jsPDF } = window.jspdf;
@@ -421,7 +422,6 @@ document.getElementById('downloadPdf').addEventListener('click', async ()=>{
   const doc = new jsPDF({ unit:'in', format:'letter' });
   const M = 0.5, W = 8.5, H = 11;
   const LCOL_W = 4.9, GAP = 0.2;
-  const RCOLOR = [20,20,20], GY = [120,120,120];
   const v = computeValues(formToObject(document.getElementById('tdhForm')));
 
   // helpers
@@ -439,12 +439,12 @@ document.getElementById('downloadPdf').addEventListener('click', async ()=>{
   doc.setFont('helvetica','normal'); doc.setFontSize(10);
   doc.text('2513 River Rd Dr, Waterloo, NE 68069', W/2, M+0.52, {align:'center'});
 
-  // General Info table (closer to template layout)
-  const gi = {x:M, y:M+0.8, w:W-2*M, h:1.7};
+  // General Info (4 rows x 2 cols)
+  const gi = {x:M, y:M+0.8, w:W-2*M, h:1.70};
   rect(gi.x,gi.y,gi.w,gi.h,0.02);
   vline(gi.x+gi.w/2, gi.y, gi.h, 0.015);
   const rH = gi.h/4;
-  [1,2,3].forEach(i => hline(gi.x, gi.y+i*rH, gi.w, 0.015));
+  [1,2,3].forEach(i=>hline(gi.x, gi.y+i*rH, gi.w, 0.015));
 
   label(gi.x+0.1, gi.y+0.24, 'Name:', 9, true);
   label(gi.x+gi.w/2+0.1, gi.y+0.24, 'Primary Contact Name:', 9, true);
@@ -464,13 +464,13 @@ document.getElementById('downloadPdf').addEventListener('click', async ()=>{
   text(gi.x+0.7, gi.y+3*rH+0.24, v.phone);
   text(gi.x+gi.w/2+1.4, gi.y+3*rH+0.24, v.claimNumber);
 
-  // Two columns
+  // Two-column body
   const L = {x:M, y:gi.y+gi.h+0.35, w:LCOL_W};
   const R = {x:M+LCOL_W+GAP, y:L.y, w:W-2*M-LCOL_W-GAP};
 
-  /* LEFT: Roofing */
+  /* LEFT — Roofing */
   label(L.x, L.y, 'Roofing Info', 13, true);
-  let y = L.y+0.3;
+  let y = L.y+0.30;
 
   label(L.x, y, 'Roofing location/s:',10,true);
   check(L.x+1.35, y+0.05, !!v.x_loc_House);  text(L.x+1.6, y+0.05, 'House',10);
@@ -510,13 +510,15 @@ document.getElementById('downloadPdf').addEventListener('click', async ()=>{
   label(L.x+2.55,y,'Gutter Apron:',10,true); hline(L.x+3.55,y,1.2); text(L.x+3.6,y,v.gutterApron,10);
   y+=0.33;
 
+  // Vents
   check(L.x, y+0.05, !!v.x_vents_Turtle); label(L.x+0.22,y,'Vents:',10,true);
-  hline(L.x+0.85,y,1.9); text(L.x+0.9,y,v.vents_text,10);
+  hline(L.x+0.85,y,1.9); text(L.x+0.9,y,[v.ventsQty, v.ventsType].filter(Boolean).join(' '),10);
   label(L.x+2.9,y,'Color:',10,true); hline(L.x+3.35,y,1.0); text(L.x+3.4,y,v.ventsColor,10);
   y+=0.33;
 
+  // Valleys
   check(L.x, y+0.05, false); label(L.x+0.22,y,'Valleys:',10,true);
-  label(L.x+0.9,y,'Color:',10,true); hline(L.x+1.3,y,1.1); text(L.x+1.35,y,v.valleys_text,10);
+  label(L.x+0.9,y,'Color:',10,true); hline(L.x+1.3,y,1.1); text(L.x+1.35,y,v.valleysColor,10);
   label(L.x+2.6,y,'Open or Closed',10,true);
   check(L.x+3.8,y+0.05, !!v.x_valley_Open);  text(L.x+4.05,y+0.05,'Open',10);
   check(L.x+4.8,y+0.05, !!v.x_valley_Closed);text(L.x+5.05,y+0.05,'Closed',10);
@@ -530,21 +532,73 @@ document.getElementById('downloadPdf').addEventListener('click', async ()=>{
 
   check(L.x, y+0.05, false); label(L.x+0.22,y,'Ridge Cap:',10,true); hline(L.x+1.1,y,1.2); text(L.x+1.15,y,v.ridgeCap,10);
   label(L.x+2.5,y,'Ridge Vent:',10,true); hline(L.x+3.35,y,1.5); text(L.x+3.4,y,v.ridgeVent,10);
-  y+=0.33;
 
-  check(L.x, y+0.05, false); label(L.x+0.22,y,'Side Wall Flashing:',10,true);
-  hline(L.x+1.7,y,1.9); text(L.x+1.75,y,v.sideWallMain,10);
-  label(L.x+3.75,y,'Material',10,true);
-  check(L.x+4.5,y+0.05, !!v.x_sideWall_Metal);   text(L.x+4.75,y+0.05,'Metal',10);
-  check(L.x+5.4,y+0.05, !!v.x_sideWall_Plastic); text(L.x+5.65,y+0.05,'Plastic',10);
+  // Gutters/Downspouts
+  const gY = L.y + 4.45;
+  label(L.x, gY, 'Gutters and Downspouts Info', 13, true);
+  let gy = gY+0.3;
 
-  /* RIGHT: More / Payment / Instructions */
+  check(L.x, gy+0.05, (v.x_gut_5||v.x_gut_6)); label(L.x+0.22,gy,'Gutters:',10,true);
+  check(L.x+0.9,gy+0.05, !!v.x_gut_5); text(L.x+1.15,gy+0.05,'5"',10);
+  check(L.x+1.6,gy+0.05, !!v.x_gut_6); text(L.x+1.85,gy+0.05,'6"',10);
+  label(L.x+2.35,gy,'Color:',10,true); hline(L.x+2.75,gy,1.1); text(L.x+2.8,gy,v.guttersColor,10);
+  label(L.x+4.05,gy,'Downspouts:',10,true);
+  check(L.x+5.1,gy+0.05, !!v.x_ds_23); text(L.x+5.35,gy+0.05,'2×3',10);
+  check(L.x+5.95,gy+0.05, !!v.x_ds_34); text(L.x+6.2,gy+0.05,'3×4',10);
+  label(L.x+6.75,gy,'Color:',10,true); hline(L.x+7.12,gy,0.8); text(L.x+7.17,gy,v.downspoutsColor,10);
+  gy+=0.33;
+
+  check(L.x, gy+0.05, (v.x_guard_Plastic||v.x_guard_RX||v.x_guard_LeafFree)); label(L.x+0.22,gy,'Gutter Guards:',10,true);
+  check(L.x+1.25,gy+0.05, !!v.x_guard_Plastic); text(L.x+1.5,gy+0.05,'Plastic',10);
+  check(L.x+2.2, gy+0.05, !!v.x_guard_RX);      text(L.x+2.45,gy+0.05,'RX',10);
+  check(L.x+2.9, gy+0.05, !!v.x_guard_LeafFree);text(L.x+3.15,gy+0.05,'Leaf Free',10);
+  label(L.x+4.1,gy,'Notes:',10,true); hline(L.x+4.45,gy,3.1); text(L.x+4.5,gy,v.gutterNotes,10);
+
+  // Siding
+  const sY = gY + 1.1;
+  label(L.x, sY, 'Siding Info', 13, true);
+  let sy = sY+0.3;
+
+  label(L.x,sy,'Brand:',10,true); hline(L.x+0.55,sy,1.1); text(L.x+0.6,sy,v.sidingBrand,10);
+  label(L.x+1.85,sy,'Style:',10,true); hline(L.x+2.3,sy,1.4); text(L.x+2.35,sy,v.sidingStyle,10);
+  label(L.x+3.9,sy,'SQs:',10,true); hline(L.x+4.2,sy,0.7); text(L.x+4.25,sy,v.sidingSqs,10);
+  label(L.x+5.0,sy,'Color:',10,true); hline(L.x+5.45,sy,1.1); text(L.x+5.5,sy,v.sidingColor,10);
+  sy+=0.33;
+
+  label(L.x,sy,'Elevations:',10,true);
+  check(L.x+0.95,sy+0.05, (v.elevations||'').includes('Front')); text(L.x+1.2,sy+0.05,'Front',10);
+  check(L.x+1.9,sy+0.05, (v.elevations||'').includes('Right')); text(L.x+2.15,sy+0.05,'Right',10);
+  check(L.x+2.8,sy+0.05, (v.elevations||'').includes('Left'));  text(L.x+3.05,sy+0.05,'Left',10);
+  check(L.x+3.7,sy+0.05, (v.elevations||'').includes('Rear'));  text(L.x+3.95,sy+0.05,'Rear',10);
+  label(L.x+4.6,sy,'Trim:',10,true); hline(L.x+4.95,sy,1.6); text(L.x+5.0,sy,v.trim,10);
+  sy+=0.33;
+
+  label(L.x,sy,'Fascia:',10,true);
+  check(L.x+0.6,sy+0.05, !!v.x_fas_Smooth); text(L.x+0.85,sy+0.05,'Smooth',10);
+  check(L.x+1.8,sy+0.05, !!v.x_fas_PVC);    text(L.x+2.05,sy+0.05,'PVC',10);
+  label(L.x+2.8,sy,'Color:',10,true); hline(L.x+3.2,sy,1.25); text(L.x+3.25,sy,v.fasciaColor,10);
+
+  label(L.x+4.7,sy,'Soffit:',10,true);
+  check(L.x+5.25,sy+0.05, !!v.x_sof_Solid);  text(L.x+5.5,sy+0.05,'Solid',10);
+  check(L.x+6.25,sy+0.05, !!v.x_sof_Vented); text(L.x+6.5,sy+0.05,'Vented',10);
+  label(L.x+7.3,sy,'Color:',10,true); hline(L.x+7.65,sy,0.7); text(L.x+7.7,sy,v.soffitColor,10);
+  sy+=0.33;
+
+  label(L.x,sy,'Window Wraps:',10,true);
+  check(L.x+1.25,sy+0.05, !!v.x_wrap_Smooth); text(L.x+1.5,sy+0.05,'Smooth',10);
+  check(L.x+2.6,sy+0.05,  !!v.x_wrap_PVC);    text(L.x+2.85,sy+0.05,'PVC',10);
+  label(L.x+3.6,sy,'Color:',10,true); hline(L.x+4.0,sy,1.4); text(L.x+4.05,sy,v.windowWrapsColor,10);
+  label(L.x+5.7,sy,'Blocks:',10,true);
+  check(L.x+6.25,sy+0.05, (v.blocks||'').includes('Light Blocks')); text(L.x+6.5,sy+0.05,'Light Blocks',10);
+  check(L.x+7.5,sy+0.05, (v.blocks||'').includes('Split Blocks'));  text(L.x+7.75,sy+0.05,'Split Blocks',10);
+
+  /* RIGHT — More / Payment / Instructions */
   let ry = R.y;
   label(R.x, ry, 'More Info', 13, true); ry+=0.3;
   check(R.x, ry+0.05, v.x_more_Redeck);   text(R.x+0.25, ry+0.05, 'Redeck: Partial or Full',10); ry+=0.3;
   check(R.x, ry+0.05, v.x_more_Interior); text(R.x+0.25, ry+0.05, 'Interior damage',10); ry+=0.3;
   check(R.x, ry+0.05, v.x_more_MagRoll);  text(R.x+0.25, ry+0.05, 'Mag Roll Sweeper',10); ry+=0.3;
-  check(R.x, ry+0.05, v.x_more_CleanHaul);text(R.x+0.25, ry+0.05, 'Clean and haul Debris',10); ry+=0.4;
+  check(R.x, ry+0.05, v.x_more_CleanHaul);text(R.x+0.25, ry+0.05, 'Clean and haul Debris',10); ry+=0.42;
 
   label(R.x, ry, 'Material drop off:',10,true); hline(R.x+1.4,ry, R.w-1.6); text(R.x+1.45,ry,v.materialDrop,10);
   ry+=0.5;
@@ -552,35 +606,39 @@ document.getElementById('downloadPdf').addEventListener('click', async ()=>{
   label(R.x, ry, 'Payment Info', 13, true); ry+=0.35;
   label(R.x, ry, 'Agreed Amount:',10,true); hline(R.x+1.3,ry, R.w-1.5); text(R.x+1.35,ry,v.agreedAmount,10); ry+=0.35;
   label(R.x, ry, 'First Payment:',10,true); hline(R.x+1.25,ry, R.w-1.45); text(R.x+1.3,ry,v.firstPayment,10); ry+=0.35;
-  label(R.x, ry, 'Final Payment:',10,true); hline(R.x+1.25,ry, R.w-1.45); text(R.x+1.3,ry,v.finalPayment,10); ry+=0.55;
+  label(R.x, ry, 'Final Payment:',10,true); hline(R.x+1.25,ry, R.w-1.45); text(R.x+1.3,ry,v.finalPayment,10); ry+=0.60;
 
   label(R.x, ry, 'Instructions', 13, true); ry+=0.3;
-  doc.setDrawColor(...GY); hline(R.x, ry, R.w, 0.012); ry+=0.35; hline(R.x, ry, R.w, 0.012); ry+=0.35; hline(R.x, ry, R.w, 0.012);
-  doc.setDrawColor(...RCOLOR);
+  // 3 ruled lines (slightly higher to avoid awkward wrap)
+  hline(R.x, ry, R.w, 0.012); ry+=0.35;
+  hline(R.x, ry, R.w, 0.012); ry+=0.35;
+  hline(R.x, ry, R.w, 0.012);
+  // Place first line of instructions on the first ruled line only (no forced wrap)
   if (v.instructions){
     doc.setFont('times','normal'); doc.setFontSize(11);
-    const lines = doc.splitTextToSize(v.instructions, R.w-0.1);
-    const base = ry-0.7;
-    lines.slice(0,3).forEach((ln,i)=> doc.text(ln, R.x+0.05, base+i*0.35));
+    const oneLine = doc.splitTextToSize(v.instructions, R.w-0.1)[0];
+    doc.text(oneLine, R.x+0.05, ry-0.70);
   }
 
   // Signatures
-  const sigY = H - 1.1;
+  const sigY = H - 1.08;
   label(M, sigY, 'Agreed to by Customer on date:',10,true);
   hline(M+2.0, sigY, 1.1); text(M+2.05, sigY, v.custDate,10);
-  label(M+3.3, sigY, 'Signature:',10,true); hline(M+4.0, sigY, 2.2); text(M+4.05, sigY, v.custSignature,10);
-  const sigY2 = sigY + 0.4;
+  label(M+3.25, sigY, 'Signature:',10,true); hline(M+3.95, sigY, 2.2); text(M+4.0, sigY, v.custSignature,10);
+
+  const sigY2 = sigY + 0.40;
   label(M, sigY2, 'Agreed to by TDH Representative on date:',10,true);
   hline(M+3.2, sigY2, 1.1); text(M+3.25, sigY2, v.tdhDate,10);
-  label(M+4.45, sigY2, 'Signature:',10,true); hline(M+5.15, sigY2, 2.0); text(M+5.2, sigY2, v.tdhSignature,10);
+  label(M+4.4, sigY2, 'Signature:',10,true); hline(M+5.1, sigY2, 2.0); text(M+5.15, sigY2, v.tdhSignature,10);
 
+  // Save
   const filename = `TDH_Agreement_${(v.name||'Filled').replace(/\s+/g,'_')}.pdf`;
   doc.save(filename);
 });
 </script>
 
 <script>
-/* DEMO BUTTONS ONLY — no autosave, no default fill */
+/* DEMO ONLY — no autosave, no default fill */
 const form = document.getElementById('tdhForm');
 const example = {
   name:"Jordan Sample", address:"7425 Oak Meadow Ct", cityStateZip:"Prairie City, NE 68000",
@@ -617,11 +675,6 @@ const example = {
 };
 document.getElementById('loadExample').addEventListener('click', ()=> fillForm(form, example));
 document.getElementById('clearForm').addEventListener('click', ()=> form.reset());
-document.getElementById('saveJson').addEventListener('click', ()=>{
-  const data=formToObject(form);
-  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
-  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='tdh-agreement.json'; a.click(); URL.revokeObjectURL(a.href);
-});
 </script>
 </body>
 </html>
