@@ -25,6 +25,8 @@
   .panel{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:16px}
   .panel h2{margin:0 0 10px;font-size:16px;font-weight:700}
   label{display:block;color:var(--muted);font-size:12px;margin-bottom:6px}
+
+  /* Polished inputs */
   input[type="text"], input[type="tel"], input[type="number"], input[type="date"], textarea, select{
     width:100%; background:#0b1220; color:var(--ink);
     border:1px solid var(--border); border-radius:10px; padding:10px 12px; outline:none;
@@ -306,10 +308,10 @@
       <!-- Draggable anchors -->
       <div class="anchor" id="anchorA" style="left:180px; top:230px;"><small>A</small></div>
       <div class="anchor" id="anchorB" style="left:870px; top:465px;"><small>B</small></div>
-      <div class="anchor" id="anchorC" style="left:360px; top:1475px;"><small>C</small></div>
+      <div class="anchor" id="anchorC" style="left:240px; top:1085px;"><small>C</small></div>
     </div>
     <p class="hint">
-      Place <b>A</b> at the <u>start of the Name line</u>, <b>B</b> at the <u>center of the “Underlayment — Synthetic” box</u>, and <b>C</b> at the <u>start of the Location line</u> near the bottom.
+      Place <b>A</b> at the <u>start of the Name line</u>, <b>B</b> at the <u>center of the “Underlayment — Synthetic”</u> box, and <b>C</b> at the <u>start of the “Agreed Amount ($)” value line</u>.
     </p>
   </div>
 </div>
@@ -535,7 +537,7 @@ const LAYOUT = [
 const ANCHOR_BASE = {
   A:{ x:180, y:230 },   // start of "Name" value
   B:{ x:870, y:465 },   // center of Underlayment "Synthetic" box
-  C:{ x:360, y:1475 },  // start of "Instructions / Location" line
+  C:{ x:240, y:1085 },  // start of "Agreed Amount ($)" value line  <-- CHANGED
 };
 </script>
 
@@ -755,18 +757,24 @@ document.getElementById('downloadPdf').addEventListener('click', async ()=>{
 
 /* ---------- 3-pt UI open/close saved state ---------- */
 window.addEventListener('load', ()=>{
-  // if saved, keep wrap hidden; user can open to adjust
   if (affineTargets){
     setAnchor(anchorA, affineTargets.A.x, affineTargets.A.y);
     setAnchor(anchorB, affineTargets.B.x, affineTargets.B.y);
     setAnchor(anchorC, affineTargets.C.x, affineTargets.C.y);
   }
 });
-/* Close overlay when clicking outside anchors */
 document.addEventListener('keydown', (e)=>{
-  if (e.key==='Escape' && affineWrap.style.display==='block') closeAffine();
+  if (e.key==='Escape' && affineWrap.style.display==='block') {
+    // Save & close with Esc
+    const prev = JSON.stringify(affineTargets||{});
+    closeAffine();
+    const curr = JSON.stringify(affineTargets||{});
+    if (prev!==curr) console.log('3-pt calibration saved.');
+  }
 });
-affineWrap.addEventListener('dblclick', closeAffine);
+affineWrap.addEventListener('dblclick', ()=>{
+  closeAffine();
+});
 
 /* ---------- Autosave form ---------- */
 const KEY='tdh-agreement-autosave';
