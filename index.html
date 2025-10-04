@@ -1,0 +1,574 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>TDH Agreement – Editable + PDF</title>
+<style>
+  :root {
+    --bg: #0f172a; --panel:#111827; --ink:#e5e7eb; --muted:#94a3b8;
+    --border:#1f2937; --brand:#111827; --accent:#111827;
+    --radius: 14px; --gap:14px;
+  }
+  html,body{height:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:14px/1.35 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+  .wrap{max-width:1100px;margin:28px auto;padding:0 16px 80px}
+  .toolbar{position:sticky;top:0;z-index:20;backdrop-filter:blur(6px);
+    background:color-mix(in oklab,var(--bg) 85%,transparent);
+    display:flex;gap:10px;padding:10px 0 14px;align-items:center}
+  .toolbar h1{margin:0;font-size:20px;letter-spacing:.3px;margin-right:auto}
+  button{border:1px solid var(--border);background:#0b1324;color:var(--ink);
+    padding:8px 12px;border-radius:10px;cursor:pointer}
+  button:hover{background:#101a33}
+  .grid{display:grid;gap:var(--gap)}
+  .two{grid-template-columns:1fr 1fr}
+  .panel{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:16px}
+  .panel h2{margin:0 0 10px;font-size:16px;font-weight:700;letter-spacing:.3px}
+  label{display:block;color:var(--muted);font-size:12px;margin-bottom:6px}
+  input[type="text"],input[type="tel"],input[type="number"],input[type="date"],textarea,select{
+    width:100%;border:1px solid var(--border);background:#0a1020;color:var(--ink);
+    padding:8px 10px;border-radius:8px;outline:none}
+  textarea{min-height:72px;resize:vertical}
+  .checks{display:flex;flex-wrap:wrap;gap:10px 16px}
+  .checks label{display:inline-flex;align-items:center;gap:8px;margin:0}
+  .sig-row{display:grid;gap:10px;grid-template-columns:1.2fr 1fr 1.2fr;align-items:end}
+  .row{display:grid;gap:10px;grid-template-columns:160px 1fr;align-items:center}
+  .hint{font-size:12px;color:var(--muted);margin-top:6px}
+  /* PRINT/PDF look: make it white, minimal borders, inputs appear as text on lines */
+  .pdf-skin input, .pdf-skin textarea { 
+    border: none !important; background: transparent !important; color: #111 !important; 
+    padding: 2px 0 !important; 
+  }
+  .pdf-skin .panel{border-color:#e5e7eb;background:#fff}
+  .pdf-skin h2{color:#111}
+  /* Underlines for text areas to mimic the form lines */
+  .pdf-line{border-bottom:1px solid #111; padding-bottom:2px; min-height:20px}
+  .pdf-header{
+    display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;
+    border-bottom:2px solid #111; padding-bottom:8px;
+  }
+  .pdf-title{font-size:20px; font-weight:800; color:#111}
+  .pdf-meta{font-size:12px; color:#111}
+  .logo-box{width:140px;height:48px;border:1px solid #111;display:flex;align-items:center;justify-content:center;font-weight:700;color:#111}
+  /* PDF-only container (hidden on screen) */
+  #pdfView{display:none}
+  @media print {
+    body{background:#fff;color:#111}
+    .toolbar{display:none}
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="toolbar">
+      <h1>TDH Agreement (Editable)</h1>
+      <button type="button" id="loadExample">Load Example</button>
+      <button type="button" id="clearForm">Clear</button>
+      <button type="button" id="saveJson">Save as JSON</button>
+      <button type="button" onclick="window.print()">Print / Save PDF</button>
+      <button type="button" id="downloadPdf"><strong>Download PDF</strong></button>
+    </div>
+
+    <!-- ====== EDITABLE FORM (SCREEN) ====== -->
+    <form id="tdhForm" class="grid" autocomplete="on">
+      <div class="panel">
+        <h2>General Info</h2>
+        <div class="grid two">
+          <div><label for="name">Name</label><input id="name" name="name" type="text" /></div>
+          <div><label for="primaryContactName">Primary Contact Name</label><input id="primaryContactName" name="primaryContactName" type="text" /></div>
+          <div><label for="primaryPhone">Primary Contact Phone Number</label><input id="primaryPhone" name="primaryPhone" type="tel" /></div>
+          <div><label for="insuranceCompany">Insurance Company</label><input id="insuranceCompany" name="insuranceCompany" type="text" /></div>
+          <div><label for="claimNumber">Claim Number</label><input id="claimNumber" name="claimNumber" type="text" /></div>
+          <div><label for="phone">Phone</label><input id="phone" name="phone" type="tel" /></div>
+          <div><label for="address">Address</label><input id="address" name="address" type="text" /></div>
+          <div><label for="cityStateZip">City, State, Zip</label><input id="cityStateZip" name="cityStateZip" type="text" /></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Roofing Info</h2>
+        <div class="checks" id="roofingLocations">
+          <label><input type="checkbox" name="roofingLocations" value="House">House</label>
+          <label><input type="checkbox" name="roofingLocations" value="Garage">Garage</label>
+          <label><input type="checkbox" name="roofingLocations" value="Shed">Shed</label>
+          <label><input type="checkbox" name="roofingLocations" value="Flat">Flat</label>
+        </div>
+        <div class="grid two" style="margin-top:10px">
+          <div><label for="tearOffLayers">Tear off layers</label><input id="tearOffLayers" name="tearOffLayers" type="number" min="0" step="1" /></div>
+          <div>
+            <label>Underlayment</label>
+            <div class="checks">
+              <label><input type="radio" name="underlayment" value="15lb">15lb</label>
+              <label><input type="radio" name="underlayment" value="30lb">30lb</label>
+              <label><input type="radio" name="underlayment" value="Synthetic">Synthetic</label>
+            </div>
+          </div>
+          <div><label for="shinglesBrand">Shingles Brand</label><input id="shinglesBrand" name="shinglesBrand" type="text" /></div>
+          <div><label for="style">Style</label><input id="style" name="style" type="text" /></div>
+          <div><label for="color">Color</label><input id="color" name="color" type="text" /></div>
+          <div><label for="sqs">SQs</label><input id="sqs" name="sqs" type="text" /></div>
+          <div><label for="iceWater">Ice &amp; Water Barrier (per code)</label><input id="iceWater" name="iceWater" type="text" /></div>
+          <div><label for="dripEdge">Drip Edge (Color)</label><input id="dripEdge" name="dripEdge" type="text" /></div>
+          <div><label for="gutterApron">Gutter Apron (Color)</label><input id="gutterApron" name="gutterApron" type="text" /></div>
+          <div><label for="vents">Vents (Color / Type / Qty)</label><input id="vents" name="vents" type="text" /></div>
+          <div><label for="valleys">Valleys (Color / Open or Closed)</label><input id="valleys" name="valleys" type="text" /></div>
+          <div><label for="pipeJacks">Pipe Jacks (QTY / Type)</label><input id="pipeJacks" name="pipeJacks" type="text" /></div>
+          <div><label for="roofPitch">Roof Pitch</label><input id="roofPitch" name="roofPitch" type="text" /></div>
+          <div><label for="stories">Stories</label><input id="stories" name="stories" type="number" min="0" step="1" /></div>
+          <div><label for="roofSize">Size</label><input id="roofSize" name="roofSize" type="text" /></div>
+          <div>
+            <label>Roof Type</label>
+            <div class="checks">
+              <label><input type="checkbox" name="roofType" value="Hip">Hip</label>
+              <label><input type="checkbox" name="roofType" value="Gable">Gable</label>
+              <label><input type="checkbox" name="roofType" value="Both">Both</label>
+            </div>
+          </div>
+          <div><label for="ridgeCap">Ridge Cap</label><input id="ridgeCap" name="ridgeCap" type="text" /></div>
+          <div><label for="ridgeVent">Ridge Vent</label><input id="ridgeVent" name="ridgeVent" type="text" /></div>
+          <div><label for="sideWallFlashing">Side Wall Flashing (Color / Metal or Plastic)</label><input id="sideWallFlashing" name="sideWallFlashing" type="text" /></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Gutters and Downspouts Info</h2>
+        <div class="grid two">
+          <div>
+            <label>Gutters</label>
+            <div class="checks">
+              <label><input type="radio" name="guttersSize" value="5">5"</label>
+              <label><input type="radio" name="guttersSize" value="6">6"</label>
+            </div>
+          </div>
+          <div><label for="guttersColor">Gutters Color</label><input id="guttersColor" name="guttersColor" type="text" /></div>
+          <div>
+            <label>Downspouts</label>
+            <div class="checks">
+              <label><input type="radio" name="downspoutsSize" value="2x3">2x3</label>
+              <label><input type="radio" name="downspoutsSize" value="3x4">3x4</label>
+            </div>
+          </div>
+          <div><label for="downspoutsColor">Downspouts Color</label><input id="downspoutsColor" name="downspoutsColor" type="text" /></div>
+          <div>
+            <label>Gutter Guards</label>
+            <div class="checks">
+              <label><input type="checkbox" name="gutterGuards" value="Plastic">Plastic</label>
+              <label><input type="checkbox" name="gutterGuards" value="RX">RX</label>
+              <label><input type="checkbox" name="gutterGuards" value="Leaf Free">Leaf Free</label>
+            </div>
+          </div>
+          <div><label for="gutterNotes">Notes</label><input id="gutterNotes" name="gutterNotes" type="text" /></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>More Info</h2>
+        <div class="grid two">
+          <div><label for="materialDrop">Material drop off</label><input id="materialDrop" name="materialDrop" type="text" /></div>
+          <div><label for="redeck">Redeck (Partial or Full)</label><input id="redeck" name="redeck" type="text" /></div>
+          <div><label for="interiorDamage">Interior damage</label><input id="interiorDamage" name="interiorDamage" type="text" /></div>
+          <div><label for="cleanup">Cleanup</label><input id="cleanup" name="cleanup" type="text" /></div>
+          <div style="grid-column:1/-1"><label for="miscNotes">Misc. Notes</label><textarea id="miscNotes" name="miscNotes"></textarea></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Payment Info</h2>
+        <div class="grid two">
+          <div><label for="agreedAmount">Agreed Amount ($)</label><input id="agreedAmount" name="agreedAmount" type="text" /></div>
+          <div><label for="firstPayment">First Payment ($)</label><input id="firstPayment" name="firstPayment" type="text" /></div>
+          <div><label for="finalPayment">Final Payment ($)</label><input id="finalPayment" name="finalPayment" type="text" /></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Siding Info</h2>
+        <div class="grid two">
+          <div><label for="sidingBrand">Brand</label><input id="sidingBrand" name="sidingBrand" type="text" /></div>
+          <div><label for="sidingStyle">Style</label><input id="sidingStyle" name="sidingStyle" type="text" /></div>
+          <div><label for="sidingSqs">SQs</label><input id="sidingSqs" name="sidingSqs" type="text" /></div>
+          <div><label for="sidingColor">Color</label><input id="sidingColor" name="sidingColor" type="text" /></div>
+          <div>
+            <label>Elevations</label>
+            <div class="checks">
+              <label><input type="checkbox" name="elevations" value="Front">Front</label>
+              <label><input type="checkbox" name="elevations" value="Right">Right</label>
+              <label><input type="checkbox" name="elevations" value="Left">Left</label>
+              <label><input type="checkbox" name="elevations" value="Rear">Rear</label>
+            </div>
+          </div>
+          <div><label for="trim">Trim</label><input id="trim" name="trim" type="text" /></div>
+          <div>
+            <label>Fascia</label>
+            <div class="checks">
+              <label><input type="radio" name="fascia" value="Smooth">Smooth</label>
+              <label><input type="radio" name="fascia" value="PVC">PVC</label>
+            </div>
+          </div>
+          <div><label for="fasciaColor">Fascia Color</label><input id="fasciaColor" name="fasciaColor" type="text" /></div>
+          <div>
+            <label>Soffit</label>
+            <div class="checks">
+              <label><input type="radio" name="soffit" value="Solid">Solid</label>
+              <label><input type="radio" name="soffit" value="Vented">Vented</label>
+            </div>
+          </div>
+          <div><label for="soffitColor">Soffit Color</label><input id="soffitColor" name="soffitColor" type="text" /></div>
+          <div>
+            <label>Window Wraps</label>
+            <div class="checks">
+              <label><input type="radio" name="windowWraps" value="Smooth">Smooth</label>
+              <label><input type="radio" name="windowWraps" value="PVC">PVC</label>
+            </div>
+          </div>
+          <div><label for="windowWrapsColor">Window Wraps Color</label><input id="windowWrapsColor" name="windowWrapsColor" type="text" /></div>
+          <div>
+            <label>Blocks</label>
+            <div class="checks">
+              <label><input type="checkbox" name="blocks" value="Light Blocks">Light Blocks</label>
+              <label><input type="checkbox" name="blocks" value="Split Blocks">Split Blocks</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Signatures</h2>
+        <div class="sig-row">
+          <div><label for="custDate">Agreed to by Customer on date</label><input id="custDate" name="custDate" type="date" /></div>
+          <div><label for="custSignature">Customer Signature (typed)</label><input id="custSignature" name="custSignature" type="text" placeholder="Sign here" /></div>
+          <div><label for="tdhDate">Agreed to by TDH Representative on date</label><input id="tdhDate" name="tdhDate" type="date" /></div>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <label for="tdhSignature">TDH Representative Signature (typed)</label>
+          <input id="tdhSignature" name="tdhSignature" type="text" placeholder="Sign here" />
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Instructions</h2>
+        <div class="row">
+          <label for="instructions">Location</label>
+          <input id="instructions" name="instructions" type="text" value="2513 River Rd Dr, Waterloo, NE 68069" />
+        </div>
+      </div>
+    </form>
+
+    <!-- ====== HIDDEN PDF RENDER VIEW (auto-filled from the form) ====== -->
+    <div id="pdfView" class="pdf-skin">
+      <div class="pdf-header">
+        <div class="logo-box">TDH LOGO</div>
+        <div class="pdf-title">TDH AGREEMENT</div>
+        <div class="pdf-meta">
+          2513 River Rd Dr, Waterloo, NE 68069<br/>
+          (402) 707-7187
+        </div>
+      </div>
+
+      <!-- Each section will be populated by JS with spans/lines -->
+      <div id="pdfContent"></div>
+
+      <div style="margin-top:18px;border-top:2px solid #111;padding-top:8px;font-size:12px;color:#111">
+        * By signing, customer agrees to scope and payment terms listed herein.
+      </div>
+    </div>
+  </div>
+
+  <!-- html2pdf bundle (html2canvas + jsPDF) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-YcsIP7K4K8bQG0mktQkQpAM1u9+7u7xT4z6f2Q3QvV7QmD6Q8s6r5uQ3mYwCzTQh2c8ZrHh0o0E3xK9zQ6Y0wA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<script>
+  // Helpers
+  function formToObject(form) {
+    const data = {};
+    new FormData(form).forEach((value, key) => {
+      if (data[key] !== undefined) {
+        if (!Array.isArray(data[key])) data[key] = [data[key]];
+        data[key].push(value);
+      } else {
+        data[key] = value;
+      }
+    });
+    return data;
+  }
+
+  function textOrDash(v){ return (v!==undefined && v!==null && String(v).trim()!=="") ? String(v) : "—"; }
+
+  // Build a PDF-looking block for a field
+  function addField(container, label, value) {
+    const row = document.createElement('div');
+    row.style.display = 'grid';
+    row.style.gridTemplateColumns = '220px 1fr';
+    row.style.alignItems = 'center';
+    row.style.gap = '10px';
+    row.style.margin = '6px 0';
+    const l = document.createElement('div');
+    l.textContent = label;
+    l.style.fontSize = '12px';
+    l.style.color = '#111';
+    const v = document.createElement('div');
+    v.className = 'pdf-line';
+    v.textContent = textOrDash(value);
+    container.appendChild(row);
+    row.appendChild(l);
+    row.appendChild(v);
+  }
+
+  // Add a titled section
+  function addSection(parent, title) {
+    const box = document.createElement('div');
+    box.style.border = '1px solid #111';
+    box.style.borderRadius = '8px';
+    box.style.padding = '10px 12px';
+    box.style.margin = '10px 0';
+    const h = document.createElement('div');
+    h.textContent = title;
+    h.style.fontWeight = '800';
+    h.style.marginBottom = '8px';
+    h.style.color = '#111';
+    parent.appendChild(box);
+    box.appendChild(h);
+    return box;
+  }
+
+  // Convert checkbox/radio arrays to display string
+  function asList(v) {
+    if (Array.isArray(v)) return v.join(', ');
+    return v || '';
+  }
+
+  // Build the PDF view from form data
+  function rebuildPdfView(data) {
+    const pdfContent = document.getElementById('pdfContent');
+    pdfContent.innerHTML = '';
+
+    // General Info
+    const g = addSection(pdfContent, 'General Info');
+    addField(g, 'Name', data.name);
+    addField(g, 'Primary Contact Name', data.primaryContactName);
+    addField(g, 'Primary Contact Phone', data.primaryPhone);
+    addField(g, 'Insurance Company', data.insuranceCompany);
+    addField(g, 'Claim Number', data.claimNumber);
+    addField(g, 'Phone', data.phone);
+    addField(g, 'Address', data.address);
+    addField(g, 'City, State, Zip', data.cityStateZip);
+
+    // Roofing
+    const r = addSection(pdfContent, 'Roofing Info');
+    addField(r, 'Locations', asList(data.roofingLocations));
+    addField(r, 'Tear off layers', data.tearOffLayers);
+    addField(r, 'Underlayment', data.underlayment);
+    addField(r, 'Shingles Brand', data.shinglesBrand);
+    addField(r, 'Style', data.style);
+    addField(r, 'Color', data.color);
+    addField(r, 'SQs', data.sqs);
+    addField(r, 'Ice & Water Barrier', data.iceWater);
+    addField(r, 'Drip Edge (Color)', data.dripEdge);
+    addField(r, 'Gutter Apron (Color)', data.gutterApron);
+    addField(r, 'Vents (Color/Type/Qty)', data.vents);
+    addField(r, 'Valleys', data.valleys);
+    addField(r, 'Pipe Jacks', data.pipeJacks);
+    addField(r, 'Roof Pitch', data.roofPitch);
+    addField(r, 'Stories', data.stories);
+    addField(r, 'Size', data.roofSize);
+    addField(r, 'Roof Type', asList(data.roofType));
+    addField(r, 'Ridge Cap', data.ridgeCap);
+    addField(r, 'Ridge Vent', data.ridgeVent);
+    addField(r, 'Side Wall Flashing', data.sideWallFlashing);
+
+    // Gutters
+    const gds = addSection(pdfContent, 'Gutters and Downspouts Info');
+    addField(gds, 'Gutters', data.guttersSize ? data.guttersSize + '"' : '');
+    addField(gds, 'Gutters Color', data.guttersColor);
+    addField(gds, 'Downspouts', data.downspoutsSize);
+    addField(gds, 'Downspouts Color', data.downspoutsColor);
+    addField(gds, 'Gutter Guards', asList(data.gutterGuards));
+    addField(gds, 'Notes', data.gutterNotes);
+
+    // More Info
+    const mi = addSection(pdfContent, 'More Info');
+    addField(mi, 'Material drop off', data.materialDrop);
+    addField(mi, 'Redeck (Partial/Full)', data.redeck);
+    addField(mi, 'Interior damage', data.interiorDamage);
+    addField(mi, 'Cleanup', data.cleanup);
+    addField(mi, 'Misc. Notes', data.miscNotes);
+
+    // Payment
+    const pay = addSection(pdfContent, 'Payment Info');
+    addField(pay, 'Agreed Amount ($)', data.agreedAmount);
+    addField(pay, 'First Payment ($)', data.firstPayment);
+    addField(pay, 'Final Payment ($)', data.finalPayment);
+
+    // Siding
+    const s = addSection(pdfContent, 'Siding Info');
+    addField(s, 'Brand', data.sidingBrand);
+    addField(s, 'Style', data.sidingStyle);
+    addField(s, 'SQs', data.sidingSqs);
+    addField(s, 'Color', data.sidingColor);
+    addField(s, 'Elevations', asList(data.elevations));
+    addField(s, 'Trim', data.trim);
+    addField(s, 'Fascia', data.fascia);
+    addField(s, 'Fascia Color', data.fasciaColor);
+    addField(s, 'Soffit', data.soffit);
+    addField(s, 'Soffit Color', data.soffitColor);
+    addField(s, 'Window Wraps', data.windowWraps);
+    addField(s, 'Window Wraps Color', data.windowWrapsColor);
+    addField(s, 'Blocks', asList(data.blocks));
+
+    // Signatures
+    const sig = addSection(pdfContent, 'Signatures');
+    addField(sig, 'Agreed to by Customer on date', data.custDate);
+    addField(sig, 'Customer Signature', data.custSignature);
+    addField(sig, 'Agreed to by TDH Representative on date', data.tdhDate);
+    addField(sig, 'TDH Representative Signature', data.tdhSignature);
+
+    // Instructions
+    const inst = addSection(pdfContent, 'Instructions');
+    addField(inst, 'Location', data.instructions);
+  }
+
+  // Example (from your Carol Chinn sample)
+  const example = {
+    name: "Carol Chinn",
+    address: "1185 N 9th St",
+    cityStateZip: "David City, NE 68632-1227",
+    primaryContactName: "Nate Wegner",
+    primaryPhone: "(402) 707-7187",
+    insuranceCompany: "State Farm",
+    claimNumber: "2788S499V",
+    roofingLocations: ["House"],
+    tearOffLayers: "1",
+    underlayment: "Synthetic",
+    shinglesBrand: "CertainTeed",
+    style: "Landmark",
+    color: "Desert Tan",
+    sqs: "",
+    iceWater: "",
+    dripEdge: "White",
+    gutterApron: "White",
+    vents: "9 Turtle Type; White",
+    valleys: "Open; Painted",
+    pipeJacks: "2 EA NC",
+    roofPitch: "4/12",
+    stories: "1",
+    roofSize: "1,050 SF",
+    roofType: ["Gable"],
+    ridgeCap: "",
+    ridgeVent: "",
+    sideWallFlashing: "82 LF White; Metal",
+    guttersSize: "6",
+    guttersColor: "White",
+    downspoutsSize: "3x4",
+    downspoutsColor: "Bronze",
+    gutterGuards: ["Leaf Free"],
+    gutterNotes: "Gutter Guards are Leafguard Brand; 121 LF White",
+    materialDrop: "Driveway",
+    redeck: "",
+    interiorDamage: "",
+    cleanup: "Mag Roll Sweeper; Clean and haul debris",
+    miscNotes: "Satellite needs detached and reset; R&R 1 EA 6\" Rain cap",
+    agreedAmount: "ACV",
+    firstPayment: "RCV + Approved Supplements",
+    finalPayment: "RCV + Approved Supplements",
+    sidingBrand: "",
+    sidingStyle: "",
+    sidingSqs: "",
+    sidingColor: "",
+    elevations: ["Front", "Right", "Left", "Rear"],
+    trim: "",
+    fascia: "Smooth",
+    fasciaColor: "",
+    soffit: "Vented",
+    soffitColor: "",
+    windowWraps: "Smooth",
+    windowWrapsColor: "",
+    blocks: ["Light Blocks", "Split Blocks"],
+    custDate: "",
+    custSignature: "",
+    tdhDate: "",
+    tdhSignature: "",
+    instructions: "2513 River Rd Dr, Waterloo, NE 68069"
+  };
+
+  // Wire up UI
+  const form = document.getElementById('tdhForm');
+
+  document.getElementById('loadExample').addEventListener('click', () => {
+    // fill the form with example values
+    for (const el of form.elements) {
+      if (!el.name) continue;
+      const v = example[el.name];
+      if (v === undefined) continue;
+      if (el.type === 'checkbox') {
+        if (Array.isArray(v)) el.checked = v.includes(el.value);
+        else el.checked = (v === el.value) || v === true;
+      } else if (el.type === 'radio') {
+        el.checked = (String(v) === el.value);
+      } else {
+        el.value = Array.isArray(v) ? v[0] : v;
+      }
+    }
+  });
+
+  document.getElementById('clearForm').addEventListener('click', () => form.reset());
+
+  document.getElementById('saveJson').addEventListener('click', () => {
+    const data = formToObject(form);
+    const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'tdh-agreement.json';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+
+  // Build & Download PDF
+  document.getElementById('downloadPdf').addEventListener('click', async () => {
+    const data = formToObject(form);
+    rebuildPdfView(data);
+
+    const pdfNode = document.getElementById('pdfView');
+    pdfNode.style.display = 'block';   // temporarily show for capture
+
+    const opt = {
+      margin:       [0.5, 0.5, 0.6, 0.5], // top, left, bottom, right (inches)
+      filename:     `TDH_Agreement_${(data.name||'').replace(/\s+/g,'_') || 'Filled'}.pdf`,
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { scale: 2, useCORS: true, letterRendering: true },
+      jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+    };
+
+    try {
+      await html2pdf().set(opt).from(pdfNode).save();
+    } finally {
+      pdfNode.style.display = 'none';  // hide again
+    }
+  });
+
+  // Optional autosave
+  const KEY = 'tdh-agreement-autosave';
+  form.addEventListener('input', () => localStorage.setItem(KEY, JSON.stringify(formToObject(form))));
+  window.addEventListener('DOMContentLoaded', () => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(KEY) || 'null');
+      if (saved) {
+        for (const [k,v] of Object.entries(saved)) {
+          const els = [...form.elements].filter(e => e.name===k);
+          for (const el of els) {
+            if (el.type === 'checkbox') {
+              if (Array.isArray(v)) el.checked = v.includes(el.value);
+              else el.checked = (v === el.value) || v === true;
+            } else if (el.type === 'radio') {
+              el.checked = (String(v) === el.value);
+            } else {
+              el.value = Array.isArray(v) ? v[0] : v;
+            }
+          }
+        }
+      }
+    } catch {}
+  });
+</script>
+</body>
+</html>
