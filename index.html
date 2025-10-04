@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>TDH Agreement – Single Page (Template Fields)</title>
+<title>TDH Agreement – Readable PDF</title>
 <meta name="color-scheme" content="dark light" />
 <style>
   :root{ --bg:#0f172a; --panel:#111827; --ink:#e5e7eb; --muted:#94a3b8; --border:#1f2937; --gap:14px; --radius:14px; }
@@ -20,7 +20,6 @@
     padding:10px 14px;border-radius:12px;cursor:pointer;font-weight:600}
   button.primary{background:#1a2a4b}
   button:hover{background:#101a33}
-
   .grid{display:grid;gap:var(--gap)}
   .two{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
   @media (min-width:980px){ .two{grid-template-columns:repeat(2,minmax(0,1fr))} }
@@ -45,7 +44,7 @@
 <body>
 <div class="wrap">
   <div class="toolbar">
-    <h1>TDH Agreement (Template Fields)</h1>
+    <h1>TDH Agreement (Readable PDF)</h1>
     <div class="actions">
       <button id="loadExample" type="button" title="Fills with fake demo data">Load Example</button>
       <button id="clearForm"   type="button">Clear</button>
@@ -59,7 +58,7 @@
     <input type="password" autocomplete="new-password">
   </form>
 
-  <!-- ===== FORM (same info as template; no prefill/autosave) ===== -->
+  <!-- ===== FORM (unchanged) ===== -->
   <form id="tdhForm" class="grid" autocomplete="off">
     <div class="panel">
       <h2>General Info</h2>
@@ -104,7 +103,6 @@
         <div><label for="dripEdge">Drip Edge (Color)</label><input id="dripEdge" name="dripEdge" type="text" autocomplete="off" /></div>
         <div><label for="gutterApron">Gutter Apron (Color)</label><input id="gutterApron" name="gutterApron" type="text" autocomplete="off" /></div>
 
-        <!-- Vents split -->
         <div><label for="ventsQty">Vents — Qty</label><input id="ventsQty" name="ventsQty" type="number" min="0" step="1" autocomplete="off" /></div>
         <div>
           <label for="ventsType">Vents — Type</label>
@@ -118,7 +116,6 @@
         <div><label for="ventsTypeOther">If Other, type</label><input id="ventsTypeOther" name="ventsTypeOther" type="text" autocomplete="off" placeholder="e.g., O’Hagin" /></div>
         <div><label for="ventsColor">Vents — Color</label><input id="ventsColor" name="ventsColor" type="text" autocomplete="off" /></div>
 
-        <!-- Valleys -->
         <div>
           <label>Valleys</label>
           <div class="checks">
@@ -128,7 +125,6 @@
         </div>
         <div><label for="valleysColor">Valleys — Color</label><input id="valleysColor" name="valleysColor" type="text" autocomplete="off" placeholder="e.g., Painted" /></div>
 
-        <!-- Pipe Jacks -->
         <div><label for="pipeJacksQty">Pipe Jacks — Qty</label><input id="pipeJacksQty" name="pipeJacksQty" type="number" min="0" step="1" autocomplete="off" /></div>
         <div><label for="pipeJacksType">Pipe Jacks — Type</label><input id="pipeJacksType" name="pipeJacksType" type="text" autocomplete="off" placeholder="e.g., NC" /></div>
 
@@ -148,7 +144,6 @@
         <div><label for="ridgeCap">Ridge Cap</label><input id="ridgeCap" name="ridgeCap" type="text" autocomplete="off" /></div>
         <div><label for="ridgeVent">Ridge Vent</label><input id="ridgeVent" name="ridgeVent" type="text" autocomplete="off" /></div>
 
-        <!-- Side Wall Flashing -->
         <div><label for="sideWallQty">Side Wall Flashing — Qty (LF)</label><input id="sideWallQty" name="sideWallQty" type="number" min="0" step="1" autocomplete="off" /></div>
         <div><label for="sideWallColor">Side Wall Flashing — Color</label><input id="sideWallColor" name="sideWallColor" type="text" autocomplete="off" /></div>
         <div>
@@ -316,7 +311,7 @@ function fillForm(form,obj){
 </script>
 
 <script>
-/* values → printable strings + flags (keeps template semantics) */
+/* values → printable strings + flags (unchanged semantics) */
 function computeValues(d){
   const out = {};
   const num = n => (n===undefined || n===null || n==='') ? '' : String(n);
@@ -345,33 +340,27 @@ function computeValues(d){
     instructions:d.instructions||'',
   });
 
-  // Vents
   const ventTypeRaw = (d.ventsType==='Other' ? d.ventsTypeOther : d.ventsType) || '';
   const ventType = ventTypeRaw.trim();
   out.ventsQty = num(d.ventsQty);
   out.ventsType = ventType;
   out.ventsColor = (d.ventsColor||'').trim();
-  // "X" shows when Turtle vents are used (per your requirement)
   out.x_vents_Turtle = /\bturtle\b/i.test(ventType) ? 'X' : '';
 
-  // Valleys
   const vm = d.valleyMode || '';
   out.x_valley_Open   = vm==='Open'   ? 'X' : '';
   out.x_valley_Closed = vm==='Closed' ? 'X' : '';
   out.valleysColor = (d.valleysColor||'').trim();
 
-  // Pipe jacks
   out.pipeJacksQty = num(d.pipeJacksQty);
   out.pipeJacksType = (d.pipeJacksType||'').trim();
 
-  // Side Wall Flashing
   const swQty = num(d.sideWallQty);
   const swColor = (d.sideWallColor||'').trim();
   out.sideWallMain = [swQty && (swQty + ' LF'), swColor].filter(Boolean).join(' ');
   out.x_sideWall_Metal   = d.sideWallMaterial==='Metal'   ? 'X' : '';
   out.x_sideWall_Plastic = d.sideWallMaterial==='Plastic' ? 'X' : '';
 
-  // Locations & types
   const loc = new Set([].concat(d.roofingLocations||[]));
   out.x_loc_House  = loc.has('House')  ? 'X' : '';
   out.x_loc_Garage = loc.has('Garage') ? 'X' : '';
@@ -404,244 +393,244 @@ function computeValues(d){
   out.x_wrap_Smooth= d.windowWraps==='Smooth' ? 'X' : '';
   out.x_wrap_PVC   = d.windowWraps==='PVC'    ? 'X' : '';
 
-  // “More Info” checkmarks show if text is provided
-  out.x_more_Redeck    = !!d.redeck;
-  out.x_more_Interior  = !!d.interiorDamage;
-  out.x_more_MagRoll   = !!d.cleanup;
-  out.x_more_CleanHaul = !!d.materialDrop;
-
-  // Store raw arrays (for Siding Elevations, Blocks) to show checkmarks
   out._elev = new Set([].concat(d.elevations||[]));
   out._blocks = new Set([].concat(d.blocks||[]));
-
   return out;
 }
 </script>
 
 <script>
-/* PDF drawing — Single page, clean layout, all template fields */
+/* >>> READABLE, HIGH-CONTRAST PDF <<< */
 document.getElementById('downloadPdf').addEventListener('click', async ()=>{
   if (!(await ensureJsPDFLoaded())) return;
   const { jsPDF } = window.jspdf;
 
-  const doc = new jsPDF({ unit:'in', format:'letter' }); // 8.5 x 11
-  const M = 0.5, W = 8.5, H = 11;
-  const LCOL_W = 4.9, GAP = 0.2;
-  const v = computeValues(formToObject(document.getElementById('tdhForm')));
+  const doc = new jsPDF({ unit:'in', format:'letter' });
+  const W = 8.5, H = 11, M = 0.5;
+  const LCOL_W = 5.0, GAP = 0.22;
 
-  // helpers
-  const line = (x1,y1,x2,y2,w=0.018)=>{ doc.setLineWidth(w); doc.line(x1,y1,x2,y2); };
+  // Typography
+  const FS = {
+    TITLE:22, SUB:11, SECTION:13.5, LABEL:10.5, VALUE:11.5, SMALL:9
+  };
+  const set = (w='normal', size=FS.VALUE)=>{ doc.setFont('helvetica', w); doc.setFontSize(size); doc.setTextColor(0,0,0); };
+
+  // Primitives
+  const line = (x1,y1,x2,y2,w=0.022)=>{ doc.setDrawColor(30,30,30); doc.setLineWidth(w); doc.line(x1,y1,x2,y2); };
   const hline = (x,y,wid,w=0.018)=> line(x,y,x+wid,y,w);
   const vline = (x,y,hei,w=0.018)=> line(x,y,x,y+hei,w);
-  const rect  = (x,y,w,h, wLine=0.018)=>{ doc.setLineWidth(wLine); doc.rect(x,y,w,h); };
-  const label = (x,y,t,fs=10,bold=false)=>{ doc.setFont('helvetica', bold?'bold':'normal'); doc.setFontSize(fs); doc.text(t,x,y); };
-  const text  = (x,y,t,fs=11)=>{ if(!t) return; doc.setFont('times','normal'); doc.setFontSize(fs); doc.text(String(t),x,y); };
-  const check = (x,y,flag)=>{ const s=0.18, pad=0.02; rect(x,y-s+0.04,s,s,0.013); if(flag){ doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.text('X', x+pad, y-0.02); } };
+  const rect  = (x,y,w,h, lw=0.018)=>{ doc.setDrawColor(40,40,40); doc.setLineWidth(lw); doc.rect(x,y,w,h); };
+  const sectionBar = (title, x, y, w)=>{ doc.setFillColor(235); doc.roundedRect(x,y,w,0.35,0.06,0.06,'F'); set('bold',FS.SECTION); doc.text(title, x+0.14, y+0.24); };
 
-  // Title
-  doc.setFont('helvetica','bold'); doc.setFontSize(19.5);
-  doc.text('TDH Agreement', W/2, M+0.28, {align:'center'});
-  doc.setFont('helvetica','normal'); doc.setFontSize(10);
-  doc.text('2513 River Rd Dr, Waterloo, NE 68069', W/2, M+0.52, {align:'center'});
+  const label = (x,y,t)=>{ set('bold',FS.LABEL); doc.text(t,x,y); };
+  const value = (x,y,t)=>{ if(!t) return; set('normal',FS.VALUE); doc.text(String(t),x,y); };
+  const check = (x,y,flag)=>{
+    const s=0.22; doc.setDrawColor(60); doc.setLineWidth(0.014); doc.rect(x,y-s+0.06,s,s);
+    if(flag){ set('bold',12.5); doc.text('X', x+0.03, y-0.01); }
+  };
 
-  // General Info block (2 cols, 4 rows)
-  const gi = {x:M, y:M+0.8, w:W-2*M, h:1.70};
+  const v = computeValues(formToObject(document.getElementById('tdhForm')));
+
+  // Header
+  set('bold',FS.TITLE);
+  doc.text('TDH Agreement', W/2, M+0.35, {align:'center'});
+  set('normal',FS.SUB);
+  doc.text('2513 River Rd Dr, Waterloo, NE 68069', W/2, M+0.65, {align:'center'});
+
+  // General Info box
+  const gi = {x:M, y:M+0.95, w:W-2*M, h:1.85};
   rect(gi.x,gi.y,gi.w,gi.h,0.02);
-  vline(gi.x+gi.w/2, gi.y, gi.h, 0.015);
+  vline(gi.x+gi.w/2, gi.y, gi.h, 0.016);
   const rH = gi.h/4;
-  [1,2,3].forEach(i=>hline(gi.x, gi.y+i*rH, gi.w, 0.015));
+  [1,2,3].forEach(i=>hline(gi.x, gi.y+i*rH, gi.w, 0.016));
 
-  label(gi.x+0.1, gi.y+0.24, 'Name:', 9, true);
-  label(gi.x+gi.w/2+0.1, gi.y+0.24, 'Primary Contact Name:', 9, true);
-  label(gi.x+0.1, gi.y+rH+0.24, 'Address:', 9, true);
-  label(gi.x+gi.w/2+0.1, gi.y+rH+0.24, 'Primary Contact Phone Number:', 9, true);
-  label(gi.x+0.1, gi.y+2*rH+0.24, 'City, State, Zip:', 9, true);
-  label(gi.x+gi.w/2+0.1, gi.y+2*rH+0.24, 'Insurance Company:', 9, true);
-  label(gi.x+0.1, gi.y+3*rH+0.24, 'Phone:', 9, true);
-  label(gi.x+gi.w/2+0.1, gi.y+3*rH+0.24, 'Claim Number:', 9, true);
+  // GI labels
+  label(gi.x+0.12, gi.y+0.28, 'Name:');
+  label(gi.x+gi.w/2+0.12, gi.y+0.28, 'Primary Contact Name:');
+  label(gi.x+0.12, gi.y+rH+0.28, 'Address:');
+  label(gi.x+gi.w/2+0.12, gi.y+rH+0.28, 'Primary Contact Phone Number:');
+  label(gi.x+0.12, gi.y+2*rH+0.28, 'City, State, Zip:');
+  label(gi.x+gi.w/2+0.12, gi.y+2*rH+0.28, 'Insurance Company:');
+  label(gi.x+0.12, gi.y+3*rH+0.28, 'Phone:');
+  label(gi.x+gi.w/2+0.12, gi.y+3*rH+0.28, 'Claim Number:');
 
-  text(gi.x+0.9, gi.y+0.24, v.name);
-  text(gi.x+gi.w/2+1.6, gi.y+0.24, v.primaryContactName);
-  text(gi.x+0.8, gi.y+rH+0.24, v.address);
-  text(gi.x+gi.w/2+2.4, gi.y+rH+0.24, v.primaryPhone);
-  text(gi.x+1.2, gi.y+2*rH+0.24, v.cityStateZip);
-  text(gi.x+gi.w/2+1.7, gi.y+2*rH+0.24, v.insuranceCompany);
-  text(gi.x+0.7, gi.y+3*rH+0.24, v.phone);
-  text(gi.x+gi.w/2+1.4, gi.y+3*rH+0.24, v.claimNumber);
+  // GI values
+  value(gi.x+0.95, gi.y+0.28, v.name);
+  value(gi.x+gi.w/2+1.75, gi.y+0.28, v.primaryContactName);
+  value(gi.x+0.85, gi.y+rH+0.28, v.address);
+  value(gi.x+gi.w/2+2.55, gi.y+rH+0.28, v.primaryPhone);
+  value(gi.x+1.25, gi.y+2*rH+0.28, v.cityStateZip);
+  value(gi.x+gi.w/2+1.9, gi.y+2*rH+0.28, v.insuranceCompany);
+  value(gi.x+0.8, gi.y+3*rH+0.28, v.phone);
+  value(gi.x+gi.w/2+1.5, gi.y+3*rH+0.28, v.claimNumber);
 
-  // Two-column body
-  const L = {x:M, y:gi.y+gi.h+0.35, w:LCOL_W};
+  // Columns start
+  const L = {x:M, y:gi.y+gi.h+0.4, w:LCOL_W};
   const R = {x:M+LCOL_W+GAP, y:L.y, w:W-2*M-LCOL_W-GAP};
 
-  /* LEFT — Roofing Info block */
-  label(L.x, L.y, 'Roofing Info', 13, true);
-  let y = L.y+0.30;
+  /* LEFT COLUMN */
+  sectionBar('Roofing Info', L.x, L.y, L.w);
+  let y = L.y+0.45;
 
-  label(L.x, y, 'Roofing location/s:',10,true);
-  check(L.x+1.35, y+0.05, !!v.x_loc_House);  text(L.x+1.6, y+0.05, 'House',10);
-  check(L.x+2.35, y+0.05, !!v.x_loc_Garage); text(L.x+2.6, y+0.05, 'Garage',10);
-  check(L.x+3.35, y+0.05, !!v.x_loc_Shed);   text(L.x+3.6, y+0.05, 'Shed',10);
-  check(L.x+4.2,  y+0.05, !!v.x_loc_Flat);   text(L.x+4.45,y+0.05, 'Flat',10);
-  y+=0.33;
+  label(L.x, y, 'Roofing location/s:');
+  check(L.x+1.55, y+0.06, !!v.x_loc_House);  value(L.x+1.85, y+0.06, 'House');
+  check(L.x+2.7,  y+0.06, !!v.x_loc_Garage); value(L.x+3.0,  y+0.06, 'Garage');
+  check(L.x+3.85, y+0.06, !!v.x_loc_Shed);   value(L.x+4.15, y+0.06, 'Shed');
+  check(L.x+4.85, y+0.06, !!v.x_loc_Flat);   value(L.x+5.15, y+0.06, 'Flat');
+  y+=0.36;
 
-  label(L.x, y, 'Roof Type:',10,true);
-  check(L.x+0.75,y+0.05, !!v.x_rt_Hip);   text(L.x+1.0,y+0.05,'Hip',10);
-  check(L.x+1.6, y+0.05, !!v.x_rt_Gable); text(L.x+1.85,y+0.05,'Gable',10);
-  check(L.x+2.6, y+0.05, !!v.x_rt_Both);  text(L.x+2.85,y+0.05,'Both',10);
-  label(L.x+3.55, y, 'Roof Pitch:',10,true); hline(L.x+4.35,y,0.8); text(L.x+4.42,y,v.roofPitch,10);
-  label(L.x+5.25, y, 'Stories:',10,true); hline(L.x+5.8,y,0.5); text(L.x+5.87,y,v.stories,10);
-  y+=0.33;
+  label(L.x, y, 'Roof Type:');
+  check(L.x+0.85,y+0.06, !!v.x_rt_Hip);   value(L.x+1.15,y+0.06,'Hip');
+  check(L.x+1.75,y+0.06, !!v.x_rt_Gable); value(L.x+2.05,y+0.06,'Gable');
+  check(L.x+2.75,y+0.06, !!v.x_rt_Both);  value(L.x+3.05,y+0.06,'Both');
+  label(L.x+3.9, y, 'Roof Pitch:'); hline(L.x+4.7,y,0.9); value(L.x+4.78,y, v.roofPitch);
+  label(L.x+5.75, y, 'Stories:');   hline(L.x+6.35,y,0.55); value(L.x+6.42,y, v.stories);
+  y+=0.36;
 
-  check(L.x, y+0.05, false); label(L.x+0.22, y, 'Tear off layers:',10,true); hline(L.x+1.55,y,0.6); text(L.x+1.62,y,v.tearOffLayers,10);
-  y+=0.33;
+  label(L.x, y, 'Tear off layers:'); hline(L.x+1.45,y,0.7); value(L.x+1.52,y, v.tearOffLayers);
+  y+=0.34;
 
-  check(L.x, y+0.05, false); label(L.x+0.22,y,'Underlayment:',10,true);
-  check(L.x+1.15,y+0.05, !!v.x_under_15); text(L.x+1.4,y+0.05,'15lb',10);
-  check(L.x+1.9, y+0.05, !!v.x_under_30); text(L.x+2.15,y+0.05,'30lb',10);
-  check(L.x+2.7, y+0.05, !!v.x_under_Syn); text(L.x+2.95,y+0.05,'Synthetic',10);
-  y+=0.33;
+  label(L.x, y, 'Underlayment:');
+  check(L.x+1.15,y+0.06, !!v.x_under_15); value(L.x+1.45,y+0.06,'15lb');
+  check(L.x+2.1, y+0.06, !!v.x_under_30); value(L.x+2.40,y+0.06,'30lb');
+  check(L.x+3.05,y+0.06, !!v.x_under_Syn);value(L.x+3.35,y+0.06,'Synthetic');
+  y+=0.34;
 
-  check(L.x, y+0.05, false); label(L.x+0.22,y,'Ice and water Barrier (per code):',10,true); hline(L.x+2.8,y,2.0); text(L.x+2.87,y,v.iceWater,10);
-  y+=0.33;
+  label(L.x, y, 'Ice and water Barrier (per code):'); hline(L.x+3.15,y,2.0); value(L.x+3.22,y, v.iceWater);
+  y+=0.34;
 
-  check(L.x, y+0.05, false); label(L.x+0.22,y,'Shingles Brand:',10,true);
-  hline(L.x+1.55,y,1.1); text(L.x+1.62,y,v.shinglesBrand,10);
-  label(L.x+2.85,y,'Style:',10,true); hline(L.x+3.25,y,0.9); text(L.x+3.32,y,v.style,10);
-  label(L.x+4.25,y,'Color:',10,true); hline(L.x+4.65,y,0.9); text(L.x+4.72,y,v.color,10);
-  label(L.x+5.7,y,'SQs:',10,true); hline(L.x+6.05,y,0.5); text(L.x+6.12,y,v.sqs,10);
-  y+=0.33;
+  label(L.x, y, 'Shingles Brand:'); hline(L.x+1.45,y,1.2); value(L.x+1.52,y, v.shinglesBrand);
+  label(L.x+2.9, y, 'Style:');      hline(L.x+3.35,y,1.0); value(L.x+3.42,y, v.style);
+  label(L.x+4.45,y, 'Color:');      hline(L.x+4.9, y,1.0); value(L.x+4.97,y, v.color);
+  label(L.x+6.0, y, 'SQs:');        hline(L.x+6.35,y,0.6); value(L.x+6.42,y, v.sqs);
+  y+=0.34;
 
-  check(L.x, y+0.05, false); label(L.x+0.22,y,'Drip Edge:',10,true); hline(L.x+1.1,y,1.2); text(L.x+1.17,y,v.dripEdge,10);
-  label(L.x+2.55,y,'Gutter Apron:',10,true); hline(L.x+3.55,y,1.2); text(L.x+3.62,y,v.gutterApron,10);
-  y+=0.33;
+  label(L.x, y, 'Drip Edge:');     hline(L.x+0.95,y,1.2); value(L.x+1.02,y, v.dripEdge);
+  label(L.x+2.45, y, 'Gutter Apron:'); hline(L.x+3.5,y,1.3); value(L.x+3.57,y, v.gutterApron);
+  y+=0.34;
 
-  // Vents (X when Turtle)
-  check(L.x, y+0.05, !!v.x_vents_Turtle); label(L.x+0.22,y,'Vents:',10,true);
-  hline(L.x+0.85,y,1.9); text(L.x+0.92,y,[v.ventsQty, v.ventsType].filter(Boolean).join(' '),10);
-  label(L.x+2.9,y,'Color:',10,true); hline(L.x+3.35,y,1.0); text(L.x+3.42,y,v.ventsColor,10);
-  y+=0.33;
+  // Vents (big X if Turtle)
+  check(L.x, y+0.06, !!v.x_vents_Turtle); label(L.x+0.28,y,'Vents:');
+  hline(L.x+0.95,y,2.0); value(L.x+1.02,y, [v.ventsQty, v.ventsType].filter(Boolean).join(' '));
+  label(L.x+3.1,y,'Color:'); hline(L.x+3.55,y,1.1); value(L.x+3.62,y, v.ventsColor);
+  y+=0.34;
 
-  // Valleys
-  check(L.x, y+0.05, false); label(L.x+0.22,y,'Valleys:',10,true);
-  label(L.x+0.9,y,'Color:',10,true); hline(L.x+1.3,y,1.1); text(L.x+1.37,y,v.valleysColor,10);
-  label(L.x+2.6,y,'Open or Closed',10,true);
-  check(L.x+3.8,y+0.05, !!v.x_valley_Open);  text(L.x+4.05,y+0.05,'Open',10);
-  check(L.x+4.8,y+0.05, !!v.x_valley_Closed);text(L.x+5.05,y+0.05,'Closed',10);
-  y+=0.33;
+  label(L.x, y, 'Valleys:');
+  label(L.x+0.7,y,'Color:'); hline(L.x+1.1,y,1.2); value(L.x+1.17,y, v.valleysColor);
+  label(L.x+2.55,y,'Open or Closed');
+  check(L.x+3.9,y+0.06, !!v.x_valley_Open);  value(L.x+4.2,y+0.06,'Open');
+  check(L.x+5.1,y+0.06, !!v.x_valley_Closed);value(L.x+5.4,y+0.06,'Closed');
+  y+=0.34;
 
-  check(L.x, y+0.05, false); label(L.x+0.22,y,'Pipe Jacks QTY:',10,true);
-  hline(L.x+1.5,y,0.7); text(L.x+1.57,y,v.pipeJacksQty,10);
-  label(L.x+2.4,y,'Type:',10,true); hline(L.x+2.8,y,0.9); text(L.x+2.87,y,v.pipeJacksType,10);
-  label(L.x+3.9,y,'Size:',10,true); hline(L.x+4.25,y,1.0); text(L.x+4.32,y,v.roofSize,10);
-  y+=0.33;
+  label(L.x, y, 'Pipe Jacks QTY:'); hline(L.x+1.5,y,0.8); value(L.x+1.57,y, v.pipeJacksQty);
+  label(L.x+2.5,y,'Type:');         hline(L.x+2.9,y,1.0); value(L.x+2.97,y, v.pipeJacksType);
+  label(L.x+4.1,y,'Size:');         hline(L.x+4.45,y,1.15); value(L.x+4.52,y, v.roofSize);
+  y+=0.34;
 
-  check(L.x, y+0.05, false); label(L.x+0.22,y,'Ridge Cap:',10,true); hline(L.x+1.1,y,1.2); text(L.x+1.17,y,v.ridgeCap,10);
-  label(L.x+2.5,y,'Ridge Vent:',10,true); hline(L.x+3.35,y,1.5); text(L.x+3.42,y,v.ridgeVent,10);
+  label(L.x, y, 'Ridge Cap:');  hline(L.x+1.0,y,1.4); value(L.x+1.07,y, v.ridgeCap);
+  label(L.x+2.6,y,'Ridge Vent:');hline(L.x+3.45,y,1.7); value(L.x+3.52,y, v.ridgeVent);
 
-  // Gutters & Downspouts
-  const gY = L.y + 4.45;
-  label(L.x, gY, 'Gutters and Downspouts Info', 13, true);
-  let gy = gY+0.3;
+  // Gutters / Downspouts
+  const gY = L.y + 4.7;
+  sectionBar('Gutters & Downspouts', L.x, gY, L.w);
+  let gy = gY+0.45;
 
-  label(L.x, gy, 'Gutters:',10,true);
-  check(L.x+0.9,gy+0.05, !!v.x_gut_5); text(L.x+1.15,gy+0.05,'5"',10);
-  check(L.x+1.6,gy+0.05, !!v.x_gut_6); text(L.x+1.85,gy+0.05,'6"',10);
-  label(L.x+2.35,gy,'Color:',10,true); hline(L.x+2.78,gy,1.1); text(L.x+2.85,gy,v.guttersColor,10);
-  label(L.x+4.15,gy,'Downspouts:',10,true);
-  check(L.x+5.25,gy+0.05, !!v.x_ds_23); text(L.x+5.5,gy+0.05,'2×3',10);
-  check(L.x+6.1, gy+0.05, !!v.x_ds_34); text(L.x+6.35,gy+0.05,'3×4',10);
-  label(L.x+6.95,gy,'Color:',10,true); hline(L.x+7.35,gy,0.8); text(L.x+7.42,gy,v.downspoutsColor,10);
-  gy+=0.33;
+  label(L.x, gy, 'Gutters:');
+  check(L.x+0.9,gy+0.06, !!v.x_gut_5); value(L.x+1.2,gy+0.06,'5"');
+  check(L.x+1.8,gy+0.06, !!v.x_gut_6); value(L.x+2.1,gy+0.06,'6"');
+  label(L.x+2.6,gy,'Color:'); hline(L.x+3.05,gy,1.2); value(L.x+3.12,gy, v.guttersColor);
+  label(L.x+4.5,gy,'Downspouts:');
+  check(L.x+5.6,gy+0.06, !!v.x_ds_23); value(L.x+5.9,gy+0.06,'2×3');
+  check(L.x+6.6,gy+0.06, !!v.x_ds_34); value(L.x+6.9,gy+0.06,'3×4');
+  label(L.x+7.45,gy,'Color:'); hline(L.x+7.9,gy,0.9); value(L.x+7.97,gy, v.downspoutsColor);
+  gy+=0.36;
 
-  label(L.x, gy, 'Gutter Guards:',10,true);
-  check(L.x+1.25,gy+0.05, !!v.x_guard_Plastic); text(L.x+1.5,gy+0.05,'Plastic',10);
-  check(L.x+2.2, gy+0.05, !!v.x_guard_RX);      text(L.x+2.45,gy+0.05,'RX',10);
-  check(L.x+2.9, gy+0.05, !!v.x_guard_LeafFree);text(L.x+3.15,gy+0.05,'Leaf Free',10);
-  label(L.x+4.1,gy,'Notes:',10,true); hline(L.x+4.55,gy,3.0); text(L.x+4.62,gy,v.gutterNotes,10);
+  label(L.x, gy, 'Gutter Guards:');
+  check(L.x+1.3,gy+0.06, !!v.x_guard_Plastic);  value(L.x+1.6,gy+0.06,'Plastic');
+  check(L.x+2.4,gy+0.06, !!v.x_guard_RX);       value(L.x+2.7,gy+0.06,'RX');
+  check(L.x+3.2,gy+0.06, !!v.x_guard_LeafFree); value(L.x+3.5,gy+0.06,'Leaf Free');
+  label(L.x+4.4,gy,'Notes:'); hline(L.x+4.85,gy,3.1); value(L.x+4.92,gy, v.gutterNotes);
 
   // Siding
-  const sY = gY + 1.1;
-  label(L.x, sY, 'Siding Info', 13, true);
-  let sy = sY+0.3;
+  const sY = gY + 1.25;
+  sectionBar('Siding Info', L.x, sY, L.w);
+  let sy = sY+0.45;
 
-  label(L.x,sy,'Brand:',10,true); hline(L.x+0.55,sy,1.1); text(L.x+0.62,sy,v.sidingBrand,10);
-  label(L.x+1.85,sy,'Style:',10,true); hline(L.x+2.3,sy,1.4); text(L.x+2.37,sy,v.sidingStyle,10);
-  label(L.x+3.9,sy,'SQs:',10,true); hline(L.x+4.2,sy,0.7); text(L.x+4.27,sy,v.sidingSqs,10);
-  label(L.x+5.0,sy,'Color:',10,true); hline(L.x+5.45,sy,1.1); text(L.x+5.52,sy,v.sidingColor,10);
-  sy+=0.33;
+  label(L.x,sy,'Brand:'); hline(L.x+0.6,sy,1.2); value(L.x+0.67,sy, v.sidingBrand);
+  label(L.x+2.0,sy,'Style:'); hline(L.x+2.45,sy,1.5); value(L.x+2.52,sy, v.sidingStyle);
+  label(L.x+4.1,sy,'SQs:');   hline(L.x+4.45,sy,0.8); value(L.x+4.52,sy, v.sidingSqs);
+  label(L.x+5.35,sy,'Color:');hline(L.x+5.8,sy,1.2);  value(L.x+5.87,sy, v.sidingColor);
+  sy+=0.36;
 
-  label(L.x,sy,'Elevations:',10,true);
-  check(L.x+0.95,sy+0.05, v._elev.has('Front')); text(L.x+1.2,sy+0.05,'Front',10);
-  check(L.x+1.9,sy+0.05, v._elev.has('Right')); text(L.x+2.15,sy+0.05,'Right',10);
-  check(L.x+2.8,sy+0.05, v._elev.has('Left'));  text(L.x+3.05,sy+0.05,'Left',10);
-  check(L.x+3.7,sy+0.05, v._elev.has('Rear'));  text(L.x+3.95,sy+0.05,'Rear',10);
-  label(L.x+4.6,sy,'Trim:',10,true); hline(L.x+5.0,sy,1.55); text(L.x+5.07,sy,v.trim,10);
-  sy+=0.33;
+  label(L.x,sy,'Elevations:');
+  check(L.x+0.95,sy+0.06, v._elev.has('Front')); value(L.x+1.25,sy+0.06,'Front');
+  check(L.x+2.0, sy+0.06, v._elev.has('Right')); value(L.x+2.3, sy+0.06,'Right');
+  check(L.x+3.0, sy+0.06, v._elev.has('Left'));  value(L.x+3.3, sy+0.06,'Left');
+  check(L.x+4.0, sy+0.06, v._elev.has('Rear'));  value(L.x+4.3, sy+0.06,'Rear');
+  label(L.x+5.2,sy,'Trim:'); hline(L.x+5.6,sy,1.6); value(L.x+5.67,sy, v.trim);
+  sy+=0.36;
 
-  label(L.x,sy,'Fascia:',10,true);
-  check(L.x+0.6,sy+0.05, !!v.x_fas_Smooth); text(L.x+0.85,sy+0.05,'Smooth',10);
-  check(L.x+1.8,sy+0.05, !!v.x_fas_PVC);    text(L.x+2.05,sy+0.05,'PVC',10);
-  label(L.x+2.8,sy,'Color:',10,true); hline(L.x+3.25,sy,1.2); text(L.x+3.32,sy,v.fasciaColor,10);
+  label(L.x,sy,'Fascia:');
+  check(L.x+0.7,sy+0.06, !!v.x_fas_Smooth); value(L.x+1.0,sy+0.06,'Smooth');
+  check(L.x+2.0,sy+0.06, !!v.x_fas_PVC);    value(L.x+2.3,sy+0.06,'PVC');
+  label(L.x+3.1,sy,'Color:'); hline(L.x+3.55,sy,1.3); value(L.x+3.62,sy, v.fasciaColor);
 
-  label(L.x+4.7,sy,'Soffit:',10,true);
-  check(L.x+5.25,sy+0.05, !!v.x_sof_Solid);  text(L.x+5.5,sy+0.05,'Solid',10);
-  check(L.x+6.25,sy+0.05, !!v.x_sof_Vented); text(L.x+6.5,sy+0.05,'Vented',10);
-  label(L.x+7.3,sy,'Color:',10,true); hline(L.x+7.72,sy,0.65); text(L.x+7.79,sy,v.soffitColor,10);
-  sy+=0.33;
+  label(L.x+5.1,sy,'Soffit:');
+  check(L.x+5.7,sy+0.06, !!v.x_sof_Solid);  value(L.x+6.0,sy+0.06,'Solid');
+  check(L.x+6.8,sy+0.06, !!v.x_sof_Vented); value(L.x+7.1,sy+0.06,'Vented');
+  label(L.x+7.9,sy,'Color:'); hline(L.x+8.3,sy,0.6); value(L.x+8.37,sy, v.soffitColor);
+  sy+=0.36;
 
-  label(L.x,sy,'Window Wraps:',10,true);
-  check(L.x+1.25,sy+0.05, !!v.x_wrap_Smooth); text(L.x+1.5,sy+0.05,'Smooth',10);
-  check(L.x+2.6,sy+0.05,  !!v.x_wrap_PVC);    text(L.x+2.85,sy+0.05,'PVC',10);
-  label(L.x+3.6,sy,'Color:',10,true); hline(L.x+4.05,sy,1.35); text(L.x+4.12,sy,v.windowWrapsColor,10);
-  label(L.x+5.7,sy,'Blocks:',10,true);
-  check(L.x+6.25,sy+0.05, v._blocks.has('Light Blocks')); text(L.x+6.5,sy+0.05,'Light Blocks',10);
-  check(L.x+7.5,sy+0.05,  v._blocks.has('Split Blocks'));  text(L.x+7.75,sy+0.05,'Split Blocks',10);
+  label(L.x,sy,'Window Wraps:');
+  check(L.x+1.25,sy+0.06, !!v.x_wrap_Smooth); value(L.x+1.55,sy+0.06,'Smooth');
+  check(L.x+2.6, sy+0.06,  !!v.x_wrap_PVC);   value(L.x+2.9, sy+0.06,'PVC');
+  label(L.x+3.7, sy,'Color:'); hline(L.x+4.15,sy,1.45); value(L.x+4.22,sy, v.windowWrapsColor);
+  label(L.x+5.95,sy,'Blocks:');
+  check(L.x+6.55,sy+0.06, v._blocks.has('Light Blocks')); value(L.x+6.85,sy+0.06,'Light Blocks');
+  check(L.x+7.95,sy+0.06, v._blocks.has('Split Blocks'));  value(L.x+8.25,sy+0.06,'Split Blocks');
 
-  /* RIGHT — More / Payment / Instructions */
-  let ry = R.y;
-  label(R.x, ry, 'More Info', 13, true); ry+=0.3;
-  check(R.x, ry+0.05, v.x_more_Redeck);   text(R.x+0.25, ry+0.05, 'Redeck: Partial or Full',10); ry+=0.3;
-  check(R.x, ry+0.05, v.x_more_Interior); text(R.x+0.25, ry+0.05, 'Interior damage',10); ry+=0.3;
-  check(R.x, ry+0.05, v.x_more_MagRoll);  text(R.x+0.25, ry+0.05, 'Mag Roll Sweeper',10); ry+=0.3;
-  check(R.x, ry+0.05, v.x_more_CleanHaul);text(R.x+0.25, ry+0.05, 'Clean and haul Debris',10); ry+=0.42;
+  /* RIGHT COLUMN */
+  sectionBar('More Info', R.x, R.y, R.w);
+  let ry = R.y+0.45;
+  check(R.x, ry+0.06, v.x_more_Redeck);   value(R.x+0.3, ry+0.06, 'Redeck: Partial or Full'); ry+=0.34;
+  check(R.x, ry+0.06, v.x_more_Interior); value(R.x+0.3, ry+0.06, 'Interior damage'); ry+=0.34;
+  check(R.x, ry+0.06, v.x_more_MagRoll);  value(R.x+0.3, ry+0.06, 'Mag Roll Sweeper'); ry+=0.34;
+  check(R.x, ry+0.06, v.x_more_CleanHaul);value(R.x+0.3, ry+0.06, 'Clean and haul Debris'); ry+=0.44;
 
-  label(R.x, ry, 'Material drop off:',10,true); hline(R.x+1.45,ry, R.w-1.65); text(R.x+1.52,ry,v.materialDrop,10);
-  ry+=0.5;
+  label(R.x, ry, 'Material drop off:'); hline(R.x+1.55,ry, R.w-1.75); value(R.x+1.62,ry, v.materialDrop);
+  ry+=0.55;
 
-  label(R.x, ry, 'Payment Info', 13, true); ry+=0.35;
-  label(R.x, ry, 'Agreed Amount:',10,true); hline(R.x+1.35,ry, R.w-1.55); text(R.x+1.42,ry,v.agreedAmount,10); ry+=0.35;
-  label(R.x, ry, 'First Payment:',10,true); hline(R.x+1.30,ry, R.w-1.50); text(R.x+1.37,ry,v.firstPayment,10); ry+=0.35;
-  label(R.x, ry, 'Final Payment:',10,true); hline(R.x+1.30,ry, R.w-1.50); text(R.x+1.37,ry,v.finalPayment,10); ry+=0.60;
+  sectionBar('Payment Info', R.x, ry, R.w); ry+=0.45;
+  label(R.x, ry, 'Agreed Amount:'); hline(R.x+1.4,ry, R.w-1.6); value(R.x+1.47,ry, v.agreedAmount); ry+=0.36;
+  label(R.x, ry, 'First Payment:'); hline(R.x+1.35,ry, R.w-1.55); value(R.x+1.42,ry, v.firstPayment); ry+=0.36;
+  label(R.x, ry, 'Final Payment:'); hline(R.x+1.35,ry, R.w-1.55); value(R.x+1.42,ry, v.finalPayment); ry+=0.66;
 
-  label(R.x, ry, 'Instructions', 13, true); ry+=0.3;
-  // 3 ruled lines for instructions
-  hline(R.x, ry, R.w, 0.012); hline(R.x, ry+0.35, R.w, 0.012); hline(R.x, ry+0.70, R.w, 0.012);
-
-  // WRAP across up to 3 lines (no truncation)
+  sectionBar('Instructions', R.x, ry, R.w); ry+=0.45;
+  // 3 ruled lines
+  doc.setDrawColor(170); hline(R.x, ry, R.w, 0.012); hline(R.x, ry+0.38, R.w, 0.012); hline(R.x, ry+0.76, R.w, 0.012); doc.setDrawColor(30);
   if (v.instructions){
-    doc.setFont('times','normal'); doc.setFontSize(11);
-    const lines = doc.splitTextToSize(v.instructions, R.w-0.1).slice(0,3);
-    lines.forEach((ln,i)=> doc.text(ln, R.x+0.05, ry + i*0.35 - 0.02));
+    set('normal',FS.VALUE);
+    const lines = doc.splitTextToSize(v.instructions, R.w-0.12).slice(0,3);
+    lines.forEach((ln,i)=> doc.text(ln, R.x+0.06, ry + i*0.38 - 0.02));
   }
 
   // Signatures
-  const sigY = H - 1.08;
-  label(M, sigY, 'Agreed to by Customer on date:',10,true);
-  hline(M+2.0, sigY, 1.1); text(M+2.07, sigY, v.custDate,10);
-  label(M+3.25, sigY, 'Signature:',10,true); hline(M+3.95, sigY, 2.2); text(M+4.02, sigY, v.custSignature,10);
+  const sigY = H - 1.05;
+  label(M, sigY, 'Agreed to by Customer on date:'); hline(M+2.2, sigY, 1.25); value(M+2.28, sigY, v.custDate);
+  label(M+3.6, sigY, 'Signature:'); hline(M+4.25, sigY, 2.3); value(M+4.32, sigY, v.custSignature);
 
-  const sigY2 = sigY + 0.40;
-  label(M, sigY2, 'Agreed to by TDH Representative on date:',10,true);
-  hline(M+3.2, sigY2, 1.1); text(M+3.27, sigY2, v.tdhDate,10);
-  label(M+4.4, sigY2, 'Signature:',10,true); hline(M+5.1, sigY2, 2.0); text(M+5.17, sigY2, v.tdhSignature,10);
+  const sigY2 = sigY + 0.45;
+  label(M, sigY2, 'Agreed to by TDH Representative on date:'); hline(M+3.5, sigY2, 1.25); value(M+3.58, sigY2, v.tdhDate);
+  label(M+4.95, sigY2, 'Signature:'); hline(M+5.6, sigY2, 2.05); value(M+5.67, sigY2, v.tdhSignature);
 
+  // Save
   const filename = `TDH_Agreement_${(v.name||'Filled').replace(/\s+/g,'_')}.pdf`;
   doc.save(filename);
 });
 </script>
 
 <script>
-/* DEMO ONLY — fake example (no real person) + clear */
+/* DEMO ONLY — fake example + clear */
 const form = document.getElementById('tdhForm');
 const example = {
   name:"Jordan Sample", address:"7425 Oak Meadow Ct", cityStateZip:"Prairie City, NE 68000",
