@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>TDH Agreement – Standalone PDF (no template image)</title>
+<title>TDH Agreement – Polished PDF (no template image)</title>
 <style>
   :root{ --bg:#0f172a; --panel:#111827; --ink:#e5e7eb; --muted:#94a3b8; --border:#1f2937; --gap:14px; --radius:14px; }
   *{ box-sizing:border-box }
   html,body{height:100%}
-  body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+  body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
   .wrap{max-width:1100px;margin:20px auto;padding:0 12px 80px}
   .toolbar{position:sticky;top:0;z-index:10;backdrop-filter:blur(6px);
     background:color-mix(in oklab,var(--bg) 85%, transparent);
@@ -43,7 +43,7 @@
 <body>
 <div class="wrap">
   <div class="toolbar">
-    <h1>TDH Agreement (Standalone PDF)</h1>
+    <h1>TDH Agreement (Polished PDF)</h1>
     <div class="actions">
       <button id="loadExample">Load Example</button>
       <button id="clearForm">Clear</button>
@@ -237,7 +237,7 @@
     </div>
 
     <div class="panel">
-      <h2>More & Payment & Instructions</h2>
+      <h2>More, Payment & Instructions</h2>
       <div class="grid two">
         <div><label for="materialDrop">Material drop off</label><input id="materialDrop" name="materialDrop" type="text" /></div>
         <div><label for="redeck">Redeck (Partial or Full)</label><input id="redeck" name="redeck" type="text" /></div>
@@ -271,26 +271,25 @@
   </form>
 </div>
 
-<!-- jsPDF loader (CDNs + optional local copy) -->
+<!-- jsPDF loader -->
 <script>
 async function ensureJsPDFLoaded(){
   if (window.jspdf && window.jspdf.jsPDF) return true;
-  const sources = [
-    "assets/jspdf.umd.min.js", // optional local copy
+  const urls = [
+    "assets/jspdf.umd.min.js",
     "https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js",
     "https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js",
-    "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"
+    "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js",
   ];
-  for (const src of sources){
-    try{ await new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=rej;document.head.appendChild(s);}); if(window.jspdf&&window.jspdf.jsPDF) return true; }catch(e){}
+  for (const u of urls){
+    try{ await new Promise((res,rej)=>{const s=document.createElement('script');s.src=u;s.onload=res;s.onerror=rej;document.head.appendChild(s);}); if(window.jspdf?.jsPDF) return true; }catch(e){}
   }
-  alert("Couldn’t load jsPDF.");
-  return false;
+  alert("Couldn't load jsPDF."); return false;
 }
 </script>
 
 <script>
-/* ---------- helpers ---------- */
+/* form helpers */
 function formToObject(form){
   const data={};
   new FormData(form).forEach((v,k)=>{
@@ -311,10 +310,10 @@ function fillForm(form,obj){
 </script>
 
 <script>
-/* ---------- values → printed text + markers ---------- */
+/* values → print strings + checkmark flags (polished) */
 function computeValues(d){
   const out = {};
-  const list = v => Array.isArray(v) ? v.join(', ') : (v || '');
+  const yes = (v)=>!!v && String(v).trim()!=='';
   const num = n => (n===undefined || n===null || n==='') ? '' : String(n);
 
   Object.assign(out, {
@@ -323,7 +322,7 @@ function computeValues(d){
     insuranceCompany:d.insuranceCompany||'', claimNumber:d.claimNumber||'', phone:d.phone||'',
     address:d.address||'', cityStateZip:d.cityStateZip||'',
 
-    // roofing
+    // roofing text fields
     tearOffLayers:d.tearOffLayers||'',
     shinglesBrand:d.shinglesBrand||'', style:d.style||'', color:d.color||'', sqs:d.sqs||'',
     iceWater:d.iceWater||'', dripEdge:d.dripEdge||'', gutterApron:d.gutterApron||'',
@@ -338,7 +337,7 @@ function computeValues(d){
     trim:d.trim||'', fasciaColor:d.fasciaColor||'', soffitColor:d.soffitColor||'',
     windowWrapsColor:d.windowWrapsColor||'',
 
-    // more/payment/signatures/etc
+    // more/payment/signatures
     materialDrop:d.materialDrop||'', redeck:d.redeck||'', interiorDamage:d.interiorDamage||'',
     cleanup:d.cleanup||'', miscNotes:d.miscNotes||'',
     agreedAmount:d.agreedAmount||'', firstPayment:d.firstPayment||'', finalPayment:d.finalPayment||'',
@@ -346,297 +345,334 @@ function computeValues(d){
     instructions:d.instructions||'',
   });
 
-  // combined fields
+  // vents split (Qty + Type) + separate color
   const ventTypeRaw = (d.ventsType==='Other' ? d.ventsTypeOther : d.ventsType) || '';
   const ventType = ventTypeRaw.trim();
   const ventQty = num(d.ventsQty);
-  const ventColor = (d.ventsColor||'').trim();
-  const turtleRe = /\bturtle\b/i;
-  out.vents = [ [ventQty, ventType].filter(Boolean).join(' '), ventColor && ('; ' + ventColor) ].filter(Boolean).join('');
-  out.x_vents_Turtle = turtleRe.test(ventType) ? 'X' : '';
+  out.vents_text = [ventQty, ventType].filter(Boolean).join(' ');
+  out.ventsColor = (d.ventsColor||'').trim();
+  out.x_vents_Turtle = /\bturtle\b/i.test(ventType) ? 'X' : '';
 
+  // valleys
   const vm = d.valleyMode || '';
   out.x_valley_Open   = vm==='Open'   ? 'X' : '';
   out.x_valley_Closed = vm==='Closed' ? 'X' : '';
+  out.valleys_text = (d.valleysColor||'').trim();
 
+  // pipe jacks string: “QTY EA TYPE”
   const pjQty = num(d.pipeJacksQty);
   const pjType = (d.pipeJacksType||'').trim();
-  out.pipeJacks = [ pjQty && (pjQty + ' EA'), pjType ].filter(Boolean).join(' ');
+  out.pipeJacksQty = pjQty;
+  out.pipeJacksType = pjType;
 
+  // side wall flashing (main text only qty+color) + material flags
   const swQty = num(d.sideWallQty);
   const swColor = (d.sideWallColor||'').trim();
-  const swMat = (d.sideWallMaterial||'').trim();
-  out.sideWallFlashing = [ [swQty && (swQty + ' LF'), swColor].filter(Boolean).join(' '), swMat && ('; ' + swMat) ].filter(Boolean).join('');
+  out.sideWallMain = [swQty && (swQty + ' LF'), swColor].filter(Boolean).join(' ');
+  out.x_sideWall_Metal   = d.sideWallMaterial==='Metal'   ? 'X' : '';
+  out.x_sideWall_Plastic = d.sideWallMaterial==='Plastic' ? 'X' : '';
 
-  // checkboxes
-  const roofingLoc = new Set([].concat(d.roofingLocations||[]));
-  out.x_roofing_House  = roofingLoc.has('House')  ? 'X' : '';
-  out.x_roofing_Garage = roofingLoc.has('Garage') ? 'X' : '';
-  out.x_roofing_Shed   = roofingLoc.has('Shed')   ? 'X' : '';
-  out.x_roofing_Flat   = roofingLoc.has('Flat')   ? 'X' : '';
+  // locations & types
+  const loc = new Set([].concat(d.roofingLocations||[]));
+  out.x_loc_House  = loc.has('House')  ? 'X' : '';
+  out.x_loc_Garage = loc.has('Garage') ? 'X' : '';
+  out.x_loc_Shed   = loc.has('Shed')   ? 'X' : '';
+  out.x_loc_Flat   = loc.has('Flat')   ? 'X' : '';
 
-  out.x_underlayment_15lb      = d.underlayment==='15lb'      ? 'X' : '';
-  out.x_underlayment_30lb      = d.underlayment==='30lb'      ? 'X' : '';
-  out.x_underlayment_Synthetic = d.underlayment==='Synthetic' ? 'X' : '';
+  out.x_under_15   = d.underlayment==='15lb'      ? 'X' : '';
+  out.x_under_30   = d.underlayment==='30lb'      ? 'X' : '';
+  out.x_under_Syn  = d.underlayment==='Synthetic' ? 'X' : '';
 
-  out.x_gutters_5 = d.guttersSize==='5' ? 'X' : '';
-  out.x_gutters_6 = d.guttersSize==='6' ? 'X' : '';
-  out.x_downspouts_2x3 = d.downspoutsSize==='2x3' ? 'X' : '';
-  out.x_downspouts_3x4 = d.downspoutsSize==='3x4' ? 'X' : '';
+  const rt = new Set([].concat(d.roofType||[]));
+  out.x_rt_Hip   = rt.has('Hip')   ? 'X' : '';
+  out.x_rt_Gable = rt.has('Gable') ? 'X' : '';
+  out.x_rt_Both  = rt.has('Both')  ? 'X' : '';
 
-  const roofType = new Set([].concat(d.roofType||[]));
-  out.x_roofType_Hip   = roofType.has('Hip')   ? 'X' : '';
-  out.x_roofType_Gable = roofType.has('Gable') ? 'X' : '';
-  out.x_roofType_Both  = roofType.has('Both')  ? 'X' : '';
+  out.x_gut_5  = d.guttersSize==='5' ? 'X' : '';
+  out.x_gut_6  = d.guttersSize==='6' ? 'X' : '';
+  out.x_ds_23  = d.downspoutsSize==='2x3' ? 'X' : '';
+  out.x_ds_34  = d.downspoutsSize==='3x4' ? 'X' : '';
 
-  const guards = new Set([].concat(d.gutterGuards||[]));
-  out.x_guard_Plastic  = guards.has('Plastic')   ? 'X' : '';
-  out.x_guard_RX       = guards.has('RX')        ? 'X' : '';
-  out.x_guard_LeafFree = guards.has('Leaf Free') ? 'X' : '';
+  const gg = new Set([].concat(d.gutterGuards||[]));
+  out.x_guard_Plastic  = gg.has('Plastic')   ? 'X' : '';
+  out.x_guard_RX       = gg.has('RX')        ? 'X' : '';
+  out.x_guard_LeafFree = gg.has('Leaf Free') ? 'X' : '';
 
-  out.x_fascia_Smooth = d.fascia==='Smooth' ? 'X' : '';
-  out.x_fascia_PVC    = d.fascia==='PVC'    ? 'X' : '';
-  out.x_soffit_Solid  = d.soffit==='Solid'  ? 'X' : '';
-  out.x_soffit_Vented = d.soffit==='Vented' ? 'X' : '';
-  out.x_wraps_Smooth  = d.windowWraps==='Smooth' ? 'X' : '';
-  out.x_wraps_PVC     = d.windowWraps==='PVC'    ? 'X' : '';
+  out.x_fas_Smooth = d.fascia==='Smooth' ? 'X' : '';
+  out.x_fas_PVC    = d.fascia==='PVC'    ? 'X' : '';
+  out.x_sof_Solid  = d.soffit==='Solid'  ? 'X' : '';
+  out.x_sof_Vented = d.soffit==='Vented' ? 'X' : '';
+  out.x_wrap_Smooth= d.windowWraps==='Smooth' ? 'X' : '';
+  out.x_wrap_PVC   = d.windowWraps==='PVC'    ? 'X' : '';
+
+  // “More Info” checkmarks show if any text is provided
+  out.x_more_Redeck         = yes(d.redeck);
+  out.x_more_Interior       = yes(d.interiorDamage);
+  out.x_more_MagRoll        = yes(d.cleanup);         // (kept as signal)
+  out.x_more_CleanHaul      = yes(d.materialDrop);    // (kept as signal)
 
   return out;
 }
 </script>
 
 <script>
-/* ---------- PDF DRAWING (no background image) ---------- */
+/* POLISHED PDF (drawn from scratch) */
 document.getElementById('downloadPdf').addEventListener('click', async ()=>{
   if (!(await ensureJsPDFLoaded())) return;
   const { jsPDF } = window.jspdf;
 
-  // page units in inches for easy spacing
   const doc = new jsPDF({ unit:'in', format:'letter' });
-  const M = 0.5; // margin
+  const M = 0.5;               // page margin
   const W = 8.5, H = 11;
+  const LCOL_W = 4.9;          // left column width
+  const GAP = 0.2;             // gap between columns
+  const RCOLOR = [20,20,20];   // stroke color
+  const GY = [120,120,120];    // gray for hairlines
+
+  const lineW = 0.018;         // base line width
+  doc.setDrawColor(...RCOLOR);
+  doc.setTextColor(0,0,0);
 
   // helpers
-  const line = (x1,y1,x2,y2,w=0.015)=>{ doc.setLineWidth(w); doc.line(x1,y1,x2,y2); };
-  const hline = (x,y,wid,w=0.015)=> line(x,y,x+wid,y,w);
-  const vline = (x,y,hei,w=0.015)=> line(x,y,x,y+hei,w);
+  const line = (x1,y1,x2,y2,w=lineW)=>{ doc.setLineWidth(w); doc.line(x1,y1,x2,y2); };
+  const hline = (x,y,wid,w=lineW)=> line(x,y,x+wid,y,w);
+  const vline = (x,y,hei,w=lineW)=> line(x,y,x,y+hei,w);
+  const rect = (x,y,w,h, wLine=lineW)=>{ doc.setLineWidth(wLine); doc.rect(x,y,w,h); };
   const label = (x,y,t,fs=10,bold=false)=>{ doc.setFont('helvetica', bold?'bold':'normal'); doc.setFontSize(fs); doc.text(t,x,y); };
-  const text = (x,y,t,fs=11)=>{ doc.setFont('times','normal'); doc.setFontSize(fs); doc.text(String(t),x,y); };
-  const box = (x,y,w,h)=>{ doc.rect(x,y,w,h); };
-  const check = (x,y,checked)=>{ doc.rect(x,y-0.14,0.18,0.18); if(checked){ doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.text('X', x+0.02, y-0.02); } };
+  const text = (x,y,t,fs=11)=>{ if(!t) return; doc.setFont('times','normal'); doc.setFontSize(fs); doc.text(String(t),x,y); };
+  const check = (x,y,flag)=>{ // y is baseline
+    const s=0.18, pad=0.02; rect(x,y-s+0.04,s,s,0.013); // square
+    if(flag){ doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.text('X', x+pad, y-0.02); }
+  };
 
   // Title
   doc.setFont('helvetica','bold'); doc.setFontSize(20);
-  doc.text('TDH Agreement', W/2, M+0.25, {align:'center'});
+  doc.text('TDH Agreement', W/2, M+0.28, {align:'center'});
   doc.setFont('helvetica','normal'); doc.setFontSize(10);
-  doc.text('2513 River Rd Dr, Waterloo, NE 68069', W/2, M+0.5, {align:'center'});
-
-  // General Info table (two columns, 4 rows)
-  const gi = {x:M, y:M+0.7, w:W-2*M, h:1.7};
-  box(gi.x,gi.y,gi.w,gi.h);
-  vline(gi.x+gi.w/2, gi.y, gi.h);
-  // horizontal row lines
-  const rH = gi.h/4;
-  hline(gi.x, gi.y+rH, gi.w); hline(gi.x, gi.y+2*rH, gi.w); hline(gi.x, gi.y+3*rH, gi.w);
-
-  label(gi.x+0.08, gi.y+0.22, 'Name:', 9, true);
-  label(gi.x+gi.w/2+0.08, gi.y+0.22, 'Primary Contact Name:', 9, true);
-
-  label(gi.x+0.08, gi.y+rH+0.22, 'Address:', 9, true);
-  label(gi.x+gi.w/2+0.08, gi.y+rH+0.22, 'Primary Contact Phone Number:', 9, true);
-
-  label(gi.x+0.08, gi.y+2*rH+0.22, 'City, State, Zip:', 9, true);
-  label(gi.x+gi.w/2+0.08, gi.y+2*rH+0.22, 'Insurance Company:', 9, true);
-
-  label(gi.x+0.08, gi.y+3*rH+0.22, 'Phone:', 9, true);
-  label(gi.x+gi.w/2+0.08, gi.y+3*rH+0.22, 'Claim Number:', 9, true);
+  doc.text('2513 River Rd Dr, Waterloo, NE 68069', W/2, M+0.52, {align:'center'});
 
   const v = computeValues(formToObject(document.getElementById('tdhForm')));
 
-  // Fill General Info values
-  text(gi.x+0.9, gi.y+0.22, v.name);
-  text(gi.x+gi.w/2+1.4, gi.y+0.22, v.primaryContactName);
-  text(gi.x+0.75, gi.y+rH+0.22, v.address);
-  text(gi.x+gi.w/2+2.1, gi.y+rH+0.22, v.primaryPhone);
-  text(gi.x+1.1, gi.y+2*rH+0.22, v.cityStateZip);
-  text(gi.x+gi.w/2+1.6, gi.y+2*rH+0.22, v.insuranceCompany);
-  text(gi.x+0.6, gi.y+3*rH+0.22, v.phone);
-  text(gi.x+gi.w/2+1.3, gi.y+3*rH+0.22, v.claimNumber);
+  // General Info table
+  const gi = {x:M, y:M+0.8, w:W-2*M, h:1.7};
+  rect(gi.x,gi.y,gi.w,gi.h,0.02);
+  vline(gi.x+gi.w/2, gi.y, gi.h, 0.015);
+  const rH = gi.h/4;
+  [1,2,3].forEach(i => hline(gi.x, gi.y+i*rH, gi.w, 0.015));
 
-  // Two-column body: left column width
-  const L = {x:M, y:gi.y+gi.h+0.35, w:4.9};
-  const R = {x:M+L.w+0.2, y:L.y, w:W - (M+L.w+0.2) - M};
+  label(gi.x+0.1, gi.y+0.24, 'Name:', 9, true);
+  label(gi.x+gi.w/2+0.1, gi.y+0.24, 'Primary Contact Name:', 9, true);
+  label(gi.x+0.1, gi.y+rH+0.24, 'Address:', 9, true);
+  label(gi.x+gi.w/2+0.1, gi.y+rH+0.24, 'Primary Contact Phone Number:', 9, true);
+  label(gi.x+0.1, gi.y+2*rH+0.24, 'City, State, Zip:', 9, true);
+  label(gi.x+gi.w/2+0.1, gi.y+2*rH+0.24, 'Insurance Company:', 9, true);
+  label(gi.x+0.1, gi.y+3*rH+0.24, 'Phone:', 9, true);
+  label(gi.x+gi.w/2+0.1, gi.y+3*rH+0.24, 'Claim Number:', 9, true);
 
-  // ---- LEFT: Roofing Info
-  label(L.x, L.y, 'Roofing Info', 14, true);
+  text(gi.x+0.9, gi.y+0.24, v.name);
+  text(gi.x+gi.w/2+1.6, gi.y+0.24, v.primaryContactName);
+  text(gi.x+0.8, gi.y+rH+0.24, v.address);
+  text(gi.x+gi.w/2+2.4, gi.y+rH+0.24, v.primaryPhone);
+  text(gi.x+1.2, gi.y+2*rH+0.24, v.cityStateZip);
+  text(gi.x+gi.w/2+1.7, gi.y+2*rH+0.24, v.insuranceCompany);
+  text(gi.x+0.7, gi.y+3*rH+0.24, v.phone);
+  text(gi.x+gi.w/2+1.4, gi.y+3*rH+0.24, v.claimNumber);
 
-  let y = L.y+0.25;
-  label(L.x, y, 'Roofing location/s:', 10, true);
-  check(L.x+1.35, y+0.05, !!v.x_roofing_House);  text(L.x+1.6, y+0.05, 'House',10);
-  check(L.x+2.4,  y+0.05, !!v.x_roofing_Garage); text(L.x+2.65,y+0.05, 'Garage',10);
-  check(L.x+3.5,  y+0.05, !!v.x_roofing_Shed);   text(L.x+3.75,y+0.05, 'Shed',10);
-  check(L.x+4.4,  y+0.05, !!v.x_roofing_Flat);   text(L.x+4.65,y+0.05, 'Flat',10);
-  y+=0.35;
+  // Two columns
+  const L = {x:M, y:gi.y+gi.h+0.35, w:LCOL_W};
+  const R = {x:M+LCOL_W+GAP, y:L.y, w:W-2*M-LCOL_W-GAP};
 
+  /* ---- LEFT: Roofing ---- */
+  label(L.x, L.y, 'Roofing Info', 13, true);
+
+  let y = L.y+0.3;
+  // locations
+  label(L.x, y, 'Roofing location/s:',10,true);
+  check(L.x+1.35, y+0.05, !!v.x_loc_House);  text(L.x+1.6, y+0.05, 'House',10);
+  check(L.x+2.35, y+0.05, !!v.x_loc_Garage); text(L.x+2.6, y+0.05, 'Garage',10);
+  check(L.x+3.35, y+0.05, !!v.x_loc_Shed);   text(L.x+3.6, y+0.05, 'Shed',10);
+  check(L.x+4.2,  y+0.05, !!v.x_loc_Flat);   text(L.x+4.45,y+0.05, 'Flat',10);
+  y+=0.33;
+
+  // roof type + pitch + stories
   label(L.x, y, 'Roof Type:',10,true);
-  check(L.x+0.75,y+0.05, !!v.x_roofType_Hip);   text(L.x+1.0,y+0.05,'Hip',10);
-  check(L.x+1.6, y+0.05, !!v.x_roofType_Gable); text(L.x+1.85,y+0.05,'Gable',10);
-  check(L.x+2.7, y+0.05, !!v.x_roofType_Both);  text(L.x+2.95,y+0.05,'Both',10);
+  check(L.x+0.75,y+0.05, !!v.x_rt_Hip);   text(L.x+1.0,y+0.05,'Hip',10);
+  check(L.x+1.6, y+0.05, !!v.x_rt_Gable); text(L.x+1.85,y+0.05,'Gable',10);
+  check(L.x+2.6, y+0.05, !!v.x_rt_Both);  text(L.x+2.85,y+0.05,'Both',10);
+  label(L.x+3.55, y, 'Roof Pitch:',10,true); hline(L.x+4.35,y,0.8); text(L.x+4.4,y,v.roofPitch,10);
+  label(L.x+5.25, y, 'Stories:',10,true); hline(L.x+5.8,y,0.5); text(L.x+5.85,y,v.stories,10);
+  y+=0.33;
 
-  label(L.x+3.7, y, 'Roof Pitch:',10,true); hline(L.x+4.45,y,0.9); text(L.x+4.5,y,v.roofPitch,10);
-  label(L.x+5.5, y, 'Stories:',10,true); hline(L.x+6.1,y,0.6); text(L.x+6.15,y,v.stories,10);
-  y+=0.35;
+  // tear off
+  check(L.x, y+0.05, false); label(L.x+0.22, y, 'Tear off layers:',10,true);
+  hline(L.x+1.55,y,0.6); text(L.x+1.6,y,v.tearOffLayers,10);
+  y+=0.33;
 
-  check(L.x, y+0.05, false); label(L.x+0.22, y, 'Tear off layers:',10,true); hline(L.x+1.6,y,0.5); text(L.x+1.65,y,v.tearOffLayers,10);
-  y+=0.35;
-
+  // underlayment
   check(L.x, y+0.05, false); label(L.x+0.22,y,'Underlayment:',10,true);
-  check(L.x+1.15,y+0.05, !!v.x_underlayment_15lb); text(L.x+1.4,y+0.05,'15lb',10);
-  check(L.x+1.9, y+0.05, !!v.x_underlayment_30lb); text(L.x+2.15,y+0.05,'30lb',10);
-  check(L.x+2.7, y+0.05, !!v.x_underlayment_Synthetic); text(L.x+2.95,y+0.05,'Synthetic',10);
-  y+=0.35;
+  check(L.x+1.15,y+0.05, !!v.x_under_15); text(L.x+1.4,y+0.05,'15lb',10);
+  check(L.x+1.9, y+0.05, !!v.x_under_30); text(L.x+2.15,y+0.05,'30lb',10);
+  check(L.x+2.7, y+0.05, !!v.x_under_Syn); text(L.x+2.95,y+0.05,'Synthetic',10);
+  y+=0.33;
 
+  // ice & water
   check(L.x, y+0.05, false); label(L.x+0.22,y,'Ice and water Barrier (per code):',10,true);
-  hline(L.x+2.8,y,2.1); text(L.x+2.85,y,v.iceWater,10);
-  y+=0.35;
+  hline(L.x+2.8,y,2.0); text(L.x+2.85,y,v.iceWater,10);
+  y+=0.33;
 
-  check(L.x, y+0.05, false); label(L.x+0.22,y,'Shingles Brand:',10,true); hline(L.x+1.6,y,1.1); text(L.x+1.65,y,v.shinglesBrand,10);
-  label(L.x+2.9,y,'Style:',10,true); hline(L.x+3.35,y,0.9); text(L.x+3.4,y,v.style,10);
-  label(L.x+4.4,y,'Color:',10,true); hline(L.x+4.85,y,0.9); text(L.x+4.9,y,v.color,10);
-  label(L.x+5.85,y,'SQs:',10,true); hline(L.x+6.2,y,0.6); text(L.x+6.25,y,v.sqs,10);
-  y+=0.35;
+  // shingles row
+  check(L.x, y+0.05, false); label(L.x+0.22,y,'Shingles Brand:',10,true);
+  hline(L.x+1.55,y,1.1); text(L.x+1.6,y,v.shinglesBrand,10);
+  label(L.x+2.85,y,'Style:',10,true); hline(L.x+3.25,y,0.9); text(L.x+3.3,y,v.style,10);
+  label(L.x+4.25,y,'Color:',10,true); hline(L.x+4.65,y,0.9); text(L.x+4.7,y,v.color,10);
+  label(L.x+5.7,y,'SQs:',10,true); hline(L.x+6.05,y,0.5); text(L.x+6.1,y,v.sqs,10);
+  y+=0.33;
 
-  check(L.x, y+0.05, false); label(L.x+0.22,y,'Drip Edge:',10,true); hline(L.x+1.2,y,1.3); text(L.x+1.25,y,v.dripEdge,10);
-  label(L.x+2.7,y,'Gutter Apron:',10,true); hline(L.x+3.6,y,1.25); text(L.x+3.65,y,v.gutterApron,10);
-  y+=0.35;
+  // drip edge / apron
+  check(L.x, y+0.05, false); label(L.x+0.22,y,'Drip Edge:',10,true);
+  hline(L.x+1.1,y,1.2); text(L.x+1.15,y,v.dripEdge,10);
+  label(L.x+2.55,y,'Gutter Apron:',10,true); hline(L.x+3.55,y,1.2); text(L.x+3.6,y,v.gutterApron,10);
+  y+=0.33;
 
-  check(L.x, y+0.05, !!v.x_vents_Turtle); label(L.x+0.22,y,'Vents:',10,true); hline(L.x+0.9,y,2.0); text(L.x+0.95,y,v.vents,10);
-  label(L.x+3.0,y,'Color:',10,true); hline(L.x+3.45,y,1.2); text(L.x+3.5,y,v.ventsColor||'',10);
-  y+=0.35;
+  // vents (Qty+Type) + color; add “X” when Turtle is typed
+  check(L.x, y+0.05, !!v.x_vents_Turtle); label(L.x+0.22,y,'Vents:',10,true);
+  hline(L.x+0.85,y,1.9); text(L.x+0.9,y,v.vents_text,10);
+  label(L.x+2.9,y,'Color:',10,true); hline(L.x+3.35,y,1.0); text(L.x+3.4,y,v.ventsColor,10);
+  y+=0.33;
 
-  check(L.x, y+0.05, false); label(L.x+0.22,y,'Valleys:',10,true); hline(L.x+0.95,y,1.5); text(L.x+1.0,y,v.valleys_text||'',10);
-  label(L.x+2.6,y,'Color:',10,true);
-  label(L.x+3.1,y,'Open or Closed',10,true);
-  check(L.x+3.95,y+0.05, !!v.x_valley_Open);  text(L.x+4.2,y+0.05,'Open',10);
-  check(L.x+4.9,y+0.05,  !!v.x_valley_Closed);text(L.x+5.15,y+0.05,'Closed',10);
-  y+=0.35;
+  // valleys
+  check(L.x, y+0.05, false); label(L.x+0.22,y,'Valleys:',10,true);
+  label(L.x+0.9,y,'Color:',10,true); hline(L.x+1.3,y,1.1); text(L.x+1.35,y,v.valleys_text,10);
+  label(L.x+2.6,y,'Open or Closed',10,true);
+  check(L.x+3.8,y+0.05, !!v.x_valley_Open);  text(L.x+4.05,y+0.05,'Open',10);
+  check(L.x+4.8,y+0.05, !!v.x_valley_Closed);text(L.x+5.05,y+0.05,'Closed',10);
+  y+=0.33;
 
-  check(L.x, y+0.05, false); label(L.x+0.22,y,'Pipe Jacks QTY:',10,true); hline(L.x+1.5,y,0.8); text(L.x+1.55,y,(v.pipeJacks||'').split(' EA')[0]||'',10);
-  label(L.x+2.5,y,'Type:',10,true); hline(L.x+2.9,y,0.9); text(L.x+2.95,y,(v.pipeJacks||'').split(' EA ')[1]||v.pipeJacks||'',10);
-  label(L.x+4.0,y,'Size:',10,true); hline(L.x+4.35,y,1.0); text(L.x+4.4,y,v.roofSize,10);
-  y+=0.35;
+  // pipe jacks + size
+  check(L.x, y+0.05, false); label(L.x+0.22,y,'Pipe Jacks QTY:',10,true);
+  hline(L.x+1.5,y,0.7); text(L.x+1.55,y,v.pipeJacksQty,10);
+  label(L.x+2.4,y,'Type:',10,true); hline(L.x+2.8,y,0.9); text(L.x+2.85,y,v.pipeJacksType,10);
+  label(L.x+3.9,y,'Size:',10,true); hline(L.x+4.25,y,1.0); text(L.x+4.3,y,v.roofSize,10);
+  y+=0.33;
 
-  check(L.x, y+0.05, false); label(L.x+0.22,y,'Ridge Cap:',10,true); hline(L.x+1.1,y,1.2); text(L.x+1.15,y,v.ridgeCap,10);
+  // ridge cap / ridge vent
+  check(L.x, y+0.05, false); label(L.x+0.22,y,'Ridge Cap:',10,true);
+  hline(L.x+1.1,y,1.2); text(L.x+1.15,y,v.ridgeCap,10);
   label(L.x+2.5,y,'Ridge Vent:',10,true); hline(L.x+3.35,y,1.5); text(L.x+3.4,y,v.ridgeVent,10);
-  y+=0.35;
+  y+=0.33;
 
-  check(L.x, y+0.05, false); label(L.x+0.22,y,'Side Wall Flashing:',10,true); hline(L.x+1.75,y,2.0); text(L.x+1.8,y,v.sideWallFlashing,10);
-  label(L.x+3.9,y,'Color:',10,true); hline(L.x+4.3,y,1.1);
-  label(L.x+5.5,y,'Metal or Plastic',10,true);
-  check(L.x+6.4,y+0.05, v.sideWallFlashing.includes('; Metal'));  text(L.x+6.65,y+0.05,'Metal',10);
-  check(L.x+7.25,y+0.05, v.sideWallFlashing.includes('; Plastic'));text(L.x+7.5,y+0.05,'Plastic',10);
+  // side wall flashing
+  check(L.x, y+0.05, false); label(L.x+0.22,y,'Side Wall Flashing:',10,true);
+  hline(L.x+1.7,y,1.9); text(L.x+1.75,y,v.sideWallMain,10);
+  label(L.x+3.75,y,'Material',10,true);
+  check(L.x+4.5,y+0.05, !!v.x_sideWall_Metal);   text(L.x+4.75,y+0.05,'Metal',10);
+  check(L.x+5.4,y+0.05, !!v.x_sideWall_Plastic); text(L.x+5.65,y+0.05,'Plastic',10);
 
-  // ---- RIGHT: More Info / Payment / Instructions
+  // Gutters & downspouts
+  const gY = L.y + 4.45;
+  label(L.x, gY, 'Gutters and Downspouts Info', 13, true);
+  let gy = gY+0.3;
+
+  check(L.x, gy+0.05, (v.x_gut_5||v.x_gut_6)); label(L.x+0.22,gy,'Gutters:',10,true);
+  check(L.x+0.9,gy+0.05, !!v.x_gut_5); text(L.x+1.15,gy+0.05,'5"',10);
+  check(L.x+1.6,gy+0.05, !!v.x_gut_6); text(L.x+1.85,gy+0.05,'6"',10);
+  label(L.x+2.35,gy,'Color:',10,true); hline(L.x+2.75,gy,1.1); text(L.x+2.8,gy,v.guttersColor,10);
+  label(L.x+4.05,gy,'Downspouts:',10,true);
+  check(L.x+5.1,gy+0.05, !!v.x_ds_23); text(L.x+5.35,gy+0.05,'2×3',10);
+  check(L.x+5.95,gy+0.05, !!v.x_ds_34); text(L.x+6.2,gy+0.05,'3×4',10);
+  label(L.x+6.75,gy,'Color:',10,true); hline(L.x+7.12,gy,0.8); text(L.x+7.17,gy,v.downspoutsColor,10);
+  gy+=0.33;
+
+  check(L.x, gy+0.05, (v.x_guard_Plastic||v.x_guard_RX||v.x_guard_LeafFree)); label(L.x+0.22,gy,'Gutter Guards:',10,true);
+  check(L.x+1.25,gy+0.05, !!v.x_guard_Plastic); text(L.x+1.5,gy+0.05,'Plastic',10);
+  check(L.x+2.2, gy+0.05, !!v.x_guard_RX);      text(L.x+2.45,gy+0.05,'RX',10);
+  check(L.x+2.9, gy+0.05, !!v.x_guard_LeafFree);text(L.x+3.15,gy+0.05,'Leaf Free',10);
+  label(L.x+4.1,gy,'Notes:',10,true); hline(L.x+4.45,gy,3.1); text(L.x+4.5,gy,v.gutterNotes,10);
+
+  // Siding
+  const sY = gY + 1.1;
+  label(L.x, sY, 'Siding Info', 13, true);
+  let sy = sY+0.3;
+
+  label(L.x,sy,'Brand:',10,true); hline(L.x+0.55,sy,1.1); text(L.x+0.6,sy,v.sidingBrand,10);
+  label(L.x+1.85,sy,'Style:',10,true); hline(L.x+2.3,sy,1.4); text(L.x+2.35,sy,v.sidingStyle,10);
+  label(L.x+3.9,sy,'SQs:',10,true); hline(L.x+4.2,sy,0.7); text(L.x+4.25,sy,v.sidingSqs,10);
+  label(L.x+5.0,sy,'Color:',10,true); hline(L.x+5.45,sy,1.1); text(L.x+5.5,sy,v.sidingColor,10);
+  sy+=0.33;
+
+  label(L.x,sy,'Elevations:',10,true);
+  check(L.x+0.95,sy+0.05, (v.elevations||'').includes('Front')); text(L.x+1.2,sy+0.05,'Front',10);
+  check(L.x+1.9,sy+0.05, (v.elevations||'').includes('Right')); text(L.x+2.15,sy+0.05,'Right',10);
+  check(L.x+2.8,sy+0.05, (v.elevations||'').includes('Left'));  text(L.x+3.05,sy+0.05,'Left',10);
+  check(L.x+3.7,sy+0.05, (v.elevations||'').includes('Rear'));  text(L.x+3.95,sy+0.05,'Rear',10);
+  label(L.x+4.6,sy,'Trim:',10,true); hline(L.x+4.95,sy,1.6); text(L.x+5.0,sy,v.trim,10);
+  sy+=0.33;
+
+  label(L.x,sy,'Fascia:',10,true);
+  check(L.x+0.6,sy+0.05, !!v.x_fas_Smooth); text(L.x+0.85,sy+0.05,'Smooth',10);
+  check(L.x+1.8,sy+0.05, !!v.x_fas_PVC);    text(L.x+2.05,sy+0.05,'PVC',10);
+  label(L.x+2.8,sy,'Color:',10,true); hline(L.x+3.2,sy,1.25); text(L.x+3.25,sy,v.fasciaColor,10);
+
+  label(L.x+4.7,sy,'Soffit:',10,true);
+  check(L.x+5.25,sy+0.05, !!v.x_sof_Solid);  text(L.x+5.5,sy+0.05,'Solid',10);
+  check(L.x+6.25,sy+0.05, !!v.x_sof_Vented); text(L.x+6.5,sy+0.05,'Vented',10);
+  label(L.x+7.3,sy,'Color:',10,true); hline(L.x+7.65,sy,0.7); text(L.x+7.7,sy,v.soffitColor,10);
+  sy+=0.33;
+
+  label(L.x,sy,'Window Wraps:',10,true);
+  check(L.x+1.25,sy+0.05, !!v.x_wrap_Smooth); text(L.x+1.5,sy+0.05,'Smooth',10);
+  check(L.x+2.6,sy+0.05,  !!v.x_wrap_PVC);    text(L.x+2.85,sy+0.05,'PVC',10);
+  label(L.x+3.6,sy,'Color:',10,true); hline(L.x+4.0,sy,1.4); text(L.x+4.05,sy,v.windowWrapsColor,10);
+  label(L.x+5.7,sy,'Blocks:',10,true);
+  check(L.x+6.25,sy+0.05, (v.blocks||'').includes('Light Blocks')); text(L.x+6.5,sy+0.05,'Light Blocks',10);
+  check(L.x+7.5,sy+0.05, (v.blocks||'').includes('Split Blocks'));  text(L.x+7.75,sy+0.05,'Split Blocks',10);
+
+  /* ---- RIGHT: More / Payment / Instructions ---- */
   let ry = R.y;
-  label(R.x, ry, 'More Info', 14, true); ry+=0.3;
-  check(R.x, ry+0.05, !!v.redeck);  text(R.x+0.25, ry+0.05, 'Redeck: Partial or Full',10);
-  ry+=0.3;
-  check(R.x, ry+0.05, !!v.interiorDamage); text(R.x+0.25, ry+0.05, 'Interior damage',10);
-  ry+=0.3;
-  check(R.x, ry+0.05, !!v.cleanup); text(R.x+0.25, ry+0.05, 'Mag Roll Sweeper',10);
-  ry+=0.3;
-  check(R.x, ry+0.05, !!v.materialDrop); text(R.x+0.25, ry+0.05, 'Clean and haul Debris',10);
-  ry+=0.35;
+  label(R.x, ry, 'More Info', 13, true); ry+=0.3;
+  check(R.x, ry+0.05, v.x_more_Redeck);   text(R.x+0.25, ry+0.05, 'Redeck: Partial or Full',10); ry+=0.3;
+  check(R.x, ry+0.05, v.x_more_Interior); text(R.x+0.25, ry+0.05, 'Interior damage',10); ry+=0.3;
+  check(R.x, ry+0.05, v.x_more_MagRoll);  text(R.x+0.25, ry+0.05, 'Mag Roll Sweeper',10); ry+=0.3;
+  check(R.x, ry+0.05, v.x_more_CleanHaul);text(R.x+0.25, ry+0.05, 'Clean and haul Debris',10); ry+=0.4;
+
   label(R.x, ry, 'Material drop off:',10,true); hline(R.x+1.4,ry, R.w-1.6); text(R.x+1.45,ry,v.materialDrop,10);
-  ry+=0.45;
+  ry+=0.5;
 
-  label(R.x, ry, 'Payment Info',14,true); ry+=0.35;
-  label(R.x, ry,'Agreed Amount:',10,true); hline(R.x+1.3,ry, R.w-1.5); text(R.x+1.35,ry,v.agreedAmount,10); ry+=0.35;
-  label(R.x, ry,'First Payment:',10,true); hline(R.x+1.25,ry, R.w-1.45); text(R.x+1.3,ry,v.firstPayment,10); ry+=0.35;
-  label(R.x, ry,'Final Payment:',10,true); hline(R.x+1.25,ry, R.w-1.45); text(R.x+1.3,ry,v.finalPayment,10); ry+=0.55;
+  label(R.x, ry, 'Payment Info', 13, true); ry+=0.35;
+  label(R.x, ry, 'Agreed Amount:',10,true); hline(R.x+1.3,ry, R.w-1.5); text(R.x+1.35,ry,v.agreedAmount,10); ry+=0.35;
+  label(R.x, ry, 'First Payment:',10,true); hline(R.x+1.25,ry, R.w-1.45); text(R.x+1.3,ry,v.firstPayment,10); ry+=0.35;
+  label(R.x, ry, 'Final Payment:',10,true); hline(R.x+1.25,ry, R.w-1.45); text(R.x+1.3,ry,v.finalPayment,10); ry+=0.55;
 
-  label(R.x, ry, 'Instructions',14,true); ry+=0.3;
-  hline(R.x, ry, R.w); ry+=0.35;
-  hline(R.x, ry, R.w); ry+=0.35;
-  hline(R.x, ry, R.w); text(R.x+0.05, ry-0.55, v.instructions,10); ry+=0.5;
+  label(R.x, ry, 'Instructions', 13, true); ry+=0.3;
+  // 3 ruled lines
+  doc.setDrawColor(...GY); hline(R.x, ry, R.w, 0.012); ry+=0.35; hline(R.x, ry, R.w, 0.012); ry+=0.35; hline(R.x, ry, R.w, 0.012);
+  doc.setDrawColor(...RCOLOR);
+  // wrap instruction text across the lines
+  if (v.instructions){
+    doc.setFont('times','normal'); doc.setFontSize(11);
+    const lines = doc.splitTextToSize(v.instructions, R.w-0.1);
+    const base = ry-0.7;
+    lines.slice(0,3).forEach((ln,i)=> doc.text(ln, R.x+0.05, base+i*0.35));
+  }
 
-  // ---- Siding info (single-line summaries to fit page)
-  const sy = L.y + 4.4;
-  label(L.x, sy, 'Gutters and downspouts Info',14,true);
-  let gy = sy+0.3;
-  check(L.x, gy+0.05, v.x_gutters_5==='X'||v.x_gutters_6==='X'); label(L.x+0.22,gy,'Gutters:',10,true);
-  check(L.x+0.85,gy+0.05, v.x_gutters_5==='X'); text(L.x+1.1,gy+0.05,'5"',10);
-  check(L.x+1.5,gy+0.05, v.x_gutters_6==='X'); text(L.x+1.75,gy+0.05,'6"',10);
-  label(L.x+2.2,gy,'Color:',10,true); hline(L.x+2.6,gy,1.2); text(L.x+2.65,gy,v.guttersColor,10);
-  label(L.x+4.0,gy,'Downspouts:',10,true);
-  check(L.x+5.05,gy+0.05, v.x_downspouts_2x3==='X'); text(L.x+5.3,gy+0.05,'2x3',10);
-  check(L.x+5.9,gy+0.05, v.x_downspouts_3x4==='X'); text(L.x+6.15,gy+0.05,'3x4',10);
-  label(L.x+6.7,gy,'Color:',10,true); hline(L.x+7.05,gy,0.9); text(L.x+7.1,gy,v.downspoutsColor,10);
-  gy+=0.35;
-  check(L.x, gy+0.05, (v.x_guard_Plastic||v.x_guard_RX||v.x_guard_LeafFree)==='X'); label(L.x+0.22,gy,'Gutter Guards:',10,true);
-  check(L.x+1.3,gy+0.05, v.x_guard_Plastic==='X'); text(L.x+1.55,gy+0.05,'Plastic',10);
-  check(L.x+2.3,gy+0.05, v.x_guard_RX==='X'); text(L.x+2.55,gy+0.05,'RX',10);
-  check(L.x+3.05,gy+0.05, v.x_guard_LeafFree==='X'); text(L.x+3.3,gy+0.05,'Leaf Free',10);
-  label(L.x+4.2,gy,'Notes:',10,true); hline(L.x+4.6,gy,2.8); text(L.x+4.65,gy,v.gutterNotes,10);
-
-  const si = {y: sy+1.1};
-  label(L.x, si.y, 'Siding Info',14,true);
-  let sy2 = si.y+0.3;
-  label(L.x,sy2,'Brand:',10,true); hline(L.x+0.55,sy2,1.1); text(L.x+0.6,sy2,v.sidingBrand,10);
-  label(L.x+1.9,sy2,'Style:',10,true); hline(L.x+2.35,sy2,1.4); text(L.x+2.4,sy2,v.sidingStyle,10);
-  label(L.x+4.0,sy2,'SQs:',10,true); hline(L.x+4.3,sy2,0.7); text(L.x+4.35,sy2,v.sidingSqs,10);
-  label(L.x+5.1,sy2,'Color:',10,true); hline(L.x+5.55,sy2,1.1); text(L.x+5.6,sy2,v.sidingColor,10);
-  sy2+=0.35;
-
-  label(L.x,sy2,'Elevations:',10,true);
-  check(L.x+0.95,sy2+0.05, (v.elevations||'').includes('Front')); text(L.x+1.2,sy2+0.05,'Front',10);
-  check(L.x+1.9,sy2+0.05, (v.elevations||'').includes('Right')); text(L.x+2.15,sy2+0.05,'Right',10);
-  check(L.x+2.8,sy2+0.05, (v.elevations||'').includes('Left'));  text(L.x+3.05,sy2+0.05,'Left',10);
-  check(L.x+3.7,sy2+0.05, (v.elevations||'').includes('Rear'));  text(L.x+3.95,sy2+0.05,'Rear',10);
-  label(L.x+4.6,sy2,'Trim:',10,true); hline(L.x+5.0,sy2,1.7); text(L.x+5.05,sy2,v.trim,10);
-  sy2+=0.35;
-
-  label(L.x,sy2,'Fascia:',10,true);
-  check(L.x+0.6,sy2+0.05, v.x_fascia_Smooth==='X'); text(L.x+0.85,sy2+0.05,'Smooth',10);
-  check(L.x+1.8,sy2+0.05, v.x_fascia_PVC==='X');    text(L.x+2.05,sy2+0.05,'PVC',10);
-  label(L.x+2.8,sy2,'Color:',10,true); hline(L.x+3.2,sy2,1.3); text(L.x+3.25,sy2,v.fasciaColor,10);
-
-  label(L.x+4.7,sy2,'Soffit:',10,true);
-  check(L.x+5.25,sy2+0.05, v.x_soffit_Solid==='X');  text(L.x+5.5,sy2+0.05,'Solid',10);
-  check(L.x+6.25,sy2+0.05, v.x_soffit_Vented==='X'); text(L.x+6.5,sy2+0.05,'Vented',10);
-  label(L.x+7.3,sy2,'Color:',10,true); hline(L.x+7.65,sy2,0.7); text(L.x+7.7,sy2,v.soffitColor,10);
-  sy2+=0.35;
-
-  label(L.x,sy2,'Window Wraps:',10,true);
-  check(L.x+1.25,sy2+0.05, v.x_wraps_Smooth==='X'); text(L.x+1.5,sy2+0.05,'Smooth',10);
-  check(L.x+2.6,sy2+0.05,  v.x_wraps_PVC==='X');    text(L.x+2.85,sy2+0.05,'PVC',10);
-  label(L.x+3.6,sy2,'Color:',10,true); hline(L.x+4.0,sy2,1.4); text(L.x+4.05,sy2,v.windowWrapsColor,10);
-
-  label(L.x+5.7,sy2,'Blocks:',10,true);
-  check(L.x+6.25,sy2+0.05, (v.blocks||'').includes('Light Blocks')); text(L.x+6.5,sy2+0.05,'Light Blocks',10);
-  check(L.x+7.5,sy2+0.05, (v.blocks||'').includes('Split Blocks'));  text(L.x+7.75,sy2+0.05,'Split Blocks',10);
-
-  // ---- Signatures
+  // Signatures at bottom
   const sigY = H - 1.1;
   label(M, sigY, 'Agreed to by Customer on date:',10,true);
   hline(M+2.0, sigY, 1.1); text(M+2.05, sigY, v.custDate,10);
-  label(M+3.2, sigY, 'Signature:',10,true);
-  hline(M+3.9, sigY, 2.2); text(M+3.95, sigY, v.custSignature,10);
+  label(M+3.3, sigY, 'Signature:',10,true); hline(M+4.0, sigY, 2.2); text(M+4.05, sigY, v.custSignature,10);
 
   const sigY2 = sigY + 0.4;
   label(M, sigY2, 'Agreed to by TDH Representative on date:',10,true);
   hline(M+3.2, sigY2, 1.1); text(M+3.25, sigY2, v.tdhDate,10);
-  label(M+4.4, sigY2, 'Signature:',10,true);
-  hline(M+5.1, sigY2, 2.0); text(M+5.15, sigY2, v.tdhSignature,10);
+  label(M+4.45, sigY2, 'Signature:',10,true); hline(M+5.15, sigY2, 2.0); text(M+5.2, sigY2, v.tdhSignature,10);
 
-  // Done
   const filename = `TDH_Agreement_${(v.name||'Filled').replace(/\s+/g,'_')}.pdf`;
   doc.save(filename);
 });
 </script>
 
 <script>
-/* ---------- Example + utilities ---------- */
+/* Example + utilities */
 const form = document.getElementById('tdhForm');
 const example = {
   name:"Jordan Sample", address:"7425 Oak Meadow Ct", cityStateZip:"Prairie City, NE 68000",
