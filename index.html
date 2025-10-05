@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>TDH Agreement – Readable PDF</title>
+<title>TDH Agreement – Readable PDF (Fixed)</title>
 <meta name="color-scheme" content="dark light" />
 <style>
   :root{ --bg:#0f172a; --panel:#111827; --ink:#e5e7eb; --muted:#94a3b8; --border:#1f2937; --gap:14px; --radius:14px; }
@@ -58,7 +58,7 @@
     <input type="password" autocomplete="new-password">
   </form>
 
-  <!-- ===== FORM (unchanged) ===== -->
+  <!-- ===== FORM ===== -->
   <form id="tdhForm" class="grid" autocomplete="off">
     <div class="panel">
       <h2>General Info</h2>
@@ -283,14 +283,16 @@ async function ensureJsPDFLoaded(){
     "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js",
   ];
   for (const u of urls){
-    try{ await new Promise((res,rej)=>{const s=document.createElement('script');s.src=u;s.onload=res;s.onerror=rej;document.head.appendChild(s);}); if(window.jspdf?.jsPDF) return true; }catch(e){}
+    try{
+      await new Promise((res,rej)=>{const s=document.createElement('script');s.src=u;s.onload=res;s.onerror=rej;document.head.appendChild(s);});
+      if(window.jspdf?.jsPDF) return true;
+    }catch(e){}
   }
   alert("Couldn't load jsPDF."); return false;
 }
 </script>
 
 <script>
-/* helpers */
 function formToObject(form){
   const data={};
   new FormData(form).forEach((v,k)=>{
@@ -311,7 +313,6 @@ function fillForm(form,obj){
 </script>
 
 <script>
-/* values → printable strings + flags (unchanged semantics) */
 function computeValues(d){
   const out = {};
   const num = n => (n===undefined || n===null || n==='') ? '' : String(n);
@@ -400,34 +401,45 @@ function computeValues(d){
 </script>
 
 <script>
-/* >>> READABLE, HIGH-CONTRAST PDF <<< */
+/* >>> READABLE, HIGH-CONTRAST PDF (fixed + no-overlap) <<< */
 document.getElementById('downloadPdf').addEventListener('click', async ()=>{
   if (!(await ensureJsPDFLoaded())) return;
   const { jsPDF } = window.jspdf;
 
-  const doc = new jsPDF({ unit:'in', format:'letter' });
+  // Disable compression + only-used-fonts to avoid glyph scrambling
+  const doc = new jsPDF({ unit:'in', format:'letter', compress:false, putOnlyUsedFonts:false, precision:12 });
   const W = 8.5, H = 11, M = 0.5;
   const LCOL_W = 5.0, GAP = 0.22;
 
-  // Typography
-  const FS = {
-    TITLE:22, SUB:11, SECTION:13.5, LABEL:10.5, VALUE:11.5, SMALL:9
+  // Stable core font
+  const FS = { TITLE:22, SUB:11, SECTION:13.5, LABEL:10.5, VALUE:11.5, SMALL:9 };
+  const set = (w='normal', size=FS.VALUE)=>{
+    doc.setFont('times', w === 'bold' ? 'bold' : 'normal');
+    doc.setFontSize(size);
+    doc.setTextColor(0,0,0);
   };
-  const set = (w='normal', size=FS.VALUE)=>{ doc.setFont('helvetica', w); doc.setFontSize(size); doc.setTextColor(0,0,0); };
 
-  // Primitives
+  // Helpers
   const line = (x1,y1,x2,y2,w=0.022)=>{ doc.setDrawColor(30,30,30); doc.setLineWidth(w); doc.line(x1,y1,x2,y2); };
   const hline = (x,y,wid,w=0.018)=> line(x,y,x+wid,y,w);
   const vline = (x,y,hei,w=0.018)=> line(x,y,x,y+hei,w);
   const rect  = (x,y,w,h, lw=0.018)=>{ doc.setDrawColor(40,40,40); doc.setLineWidth(lw); doc.rect(x,y,w,h); };
-  const sectionBar = (title, x, y, w)=>{ doc.setFillColor(235); doc.roundedRect(x,y,w,0.35,0.06,0.06,'F'); set('bold',FS.SECTION); doc.text(title, x+0.14, y+0.24); };
+  const sectionBar = (title, x, y, w)=>{ doc.setFillColor(235); doc.roundedRect(x,y,w,0.35,0.06,0.06,'F'); set('bold',FS.SECTION); doc.text(title, x+0.14, y+0.26); };
 
-  const label = (x,y,t)=>{ set('bold',FS.LABEL); doc.text(t,x,y); };
-  const value = (x,y,t)=>{ if(!t) return; set('normal',FS.VALUE); doc.text(String(t),x,y); };
-  const check = (x,y,flag)=>{
-    const s=0.22; doc.setDrawColor(60); doc.setLineWidth(0.014); doc.rect(x,y-s+0.06,s,s);
-    if(flag){ set('bold',12.5); doc.text('X', x+0.03, y-0.01); }
-  };
+  // Fit value within available width (in inches) with ellipsis
+  function valueFit(x,y,text,maxW,weight='normal',size=FS.VALUE){
+    if(!text) return;
+    set(weight,size);
+    let t = String(text);
+    while (doc.getTextWidth(t) > maxW && t.length > 0){
+      t = t.slice(0,-1);
+    }
+    if (String(text).length > t.length) {
+      if (t.length > 1) t = t.slice(0,-1) + '…';
+      else t = '…';
+    }
+    doc.text(t, x, y);
+  }
 
   const v = computeValues(formToObject(document.getElementById('tdhForm')));
 
@@ -445,24 +457,25 @@ document.getElementById('downloadPdf').addEventListener('click', async ()=>{
   [1,2,3].forEach(i=>hline(gi.x, gi.y+i*rH, gi.w, 0.016));
 
   // GI labels
-  label(gi.x+0.12, gi.y+0.28, 'Name:');
-  label(gi.x+gi.w/2+0.12, gi.y+0.28, 'Primary Contact Name:');
-  label(gi.x+0.12, gi.y+rH+0.28, 'Address:');
-  label(gi.x+gi.w/2+0.12, gi.y+rH+0.28, 'Primary Contact Phone Number:');
-  label(gi.x+0.12, gi.y+2*rH+0.28, 'City, State, Zip:');
-  label(gi.x+gi.w/2+0.12, gi.y+2*rH+0.28, 'Insurance Company:');
-  label(gi.x+0.12, gi.y+3*rH+0.28, 'Phone:');
-  label(gi.x+gi.w/2+0.12, gi.y+3*rH+0.28, 'Claim Number:');
+  set('bold',FS.LABEL);
+  doc.text('Name:', gi.x+0.12, gi.y+0.3);
+  doc.text('Primary Contact Name:', gi.x+gi.w/2+0.12, gi.y+0.3);
+  doc.text('Address:', gi.x+0.12, gi.y+rH+0.3);
+  doc.text('Primary Contact Phone Number:', gi.x+gi.w/2+0.12, gi.y+rH+0.3);
+  doc.text('City, State, Zip:', gi.x+0.12, gi.y+2*rH+0.3);
+  doc.text('Insurance Company:', gi.x+gi.w/2+0.12, gi.y+2*rH+0.3);
+  doc.text('Phone:', gi.x+0.12, gi.y+3*rH+0.3);
+  doc.text('Claim Number:', gi.x+gi.w/2+0.12, gi.y+3*rH+0.3);
 
-  // GI values
-  value(gi.x+0.95, gi.y+0.28, v.name);
-  value(gi.x+gi.w/2+1.75, gi.y+0.28, v.primaryContactName);
-  value(gi.x+0.85, gi.y+rH+0.28, v.address);
-  value(gi.x+gi.w/2+2.55, gi.y+rH+0.28, v.primaryPhone);
-  value(gi.x+1.25, gi.y+2*rH+0.28, v.cityStateZip);
-  value(gi.x+gi.w/2+1.9, gi.y+2*rH+0.28, v.insuranceCompany);
-  value(gi.x+0.8, gi.y+3*rH+0.28, v.phone);
-  value(gi.x+gi.w/2+1.5, gi.y+3*rH+0.28, v.claimNumber);
+  // GI values (fit them into columns)
+  valueFit(gi.x+0.95, gi.y+0.3, v.name,                gi.w/2 - 1.10);
+  valueFit(gi.x+gi.w/2+1.75, gi.y+0.3, v.primaryContactName, gi.w/2 - 1.95);
+  valueFit(gi.x+0.85, gi.y+rH+0.3, v.address,          gi.w/2 - 1.00);
+  valueFit(gi.x+gi.w/2+2.55, gi.y+rH+0.3, v.primaryPhone,      gi.w/2 - 2.70);
+  valueFit(gi.x+1.25, gi.y+2*rH+0.3, v.cityStateZip,   gi.w/2 - 1.40);
+  valueFit(gi.x+gi.w/2+1.9, gi.y+2*rH+0.3, v.insuranceCompany, gi.w/2 - 2.05);
+  valueFit(gi.x+0.8, gi.y+3*rH+0.3, v.phone,           gi.w/2 - 0.95);
+  valueFit(gi.x+gi.w/2+1.5, gi.y+3*rH+0.3, v.claimNumber,      gi.w/2 - 1.65);
 
   // Columns start
   const L = {x:M, y:gi.y+gi.h+0.4, w:LCOL_W};
@@ -472,142 +485,186 @@ document.getElementById('downloadPdf').addEventListener('click', async ()=>{
   sectionBar('Roofing Info', L.x, L.y, L.w);
   let y = L.y+0.45;
 
-  label(L.x, y, 'Roofing location/s:');
-  check(L.x+1.55, y+0.06, !!v.x_loc_House);  value(L.x+1.85, y+0.06, 'House');
-  check(L.x+2.7,  y+0.06, !!v.x_loc_Garage); value(L.x+3.0,  y+0.06, 'Garage');
-  check(L.x+3.85, y+0.06, !!v.x_loc_Shed);   value(L.x+4.15, y+0.06, 'Shed');
-  check(L.x+4.85, y+0.06, !!v.x_loc_Flat);   value(L.x+5.15, y+0.06, 'Flat');
+  set('bold',FS.LABEL); doc.text('Roofing location/s:', L.x, y);
+  const chk = (x,y,flag,label)=>{ const s=0.22; doc.setDrawColor(60); doc.setLineWidth(0.014); doc.rect(x,y-s+0.06,s,s); if(flag){ set('bold',12.5); doc.text('X', x+0.03, y-0.01);} set('normal',FS.VALUE); doc.text(label, x+0.3, y+0.06); set('bold',FS.LABEL); };
+  chk(L.x+1.55, y, !!v.x_loc_House,  'House');
+  chk(L.x+2.70, y, !!v.x_loc_Garage, 'Garage');
+  chk(L.x+3.85, y, !!v.x_loc_Shed,   'Shed');
+  chk(L.x+4.85, y, !!v.x_loc_Flat,   'Flat');
   y+=0.36;
 
-  label(L.x, y, 'Roof Type:');
-  check(L.x+0.85,y+0.06, !!v.x_rt_Hip);   value(L.x+1.15,y+0.06,'Hip');
-  check(L.x+1.75,y+0.06, !!v.x_rt_Gable); value(L.x+2.05,y+0.06,'Gable');
-  check(L.x+2.75,y+0.06, !!v.x_rt_Both);  value(L.x+3.05,y+0.06,'Both');
-  label(L.x+3.9, y, 'Roof Pitch:'); hline(L.x+4.7,y,0.9); value(L.x+4.78,y, v.roofPitch);
-  label(L.x+5.75, y, 'Stories:');   hline(L.x+6.35,y,0.55); value(L.x+6.42,y, v.stories);
+  doc.text('Roof Type:', L.x, y);
+  chk(L.x+0.85,y, !!v.x_rt_Hip,   'Hip');
+  chk(L.x+1.75,y, !!v.x_rt_Gable, 'Gable');
+  chk(L.x+2.75,y, !!v.x_rt_Both,  'Both');
+  set('bold',FS.LABEL); doc.text('Roof Pitch:', L.x+3.9, y); hline(L.x+4.7,y,0.9);
+  valueFit(L.x+4.78,y, v.roofPitch, 0.86);
+  doc.text('Stories:', L.x+5.75, y); hline(L.x+6.35,y,0.55);
+  valueFit(L.x+6.42,y, v.stories, 0.49);
   y+=0.36;
 
-  label(L.x, y, 'Tear off layers:'); hline(L.x+1.45,y,0.7); value(L.x+1.52,y, v.tearOffLayers);
+  doc.text('Tear off layers:', L.x, y); hline(L.x+1.45,y,0.7);
+  valueFit(L.x+1.52,y, v.tearOffLayers, 0.64);
   y+=0.34;
 
-  label(L.x, y, 'Underlayment:');
-  check(L.x+1.15,y+0.06, !!v.x_under_15); value(L.x+1.45,y+0.06,'15lb');
-  check(L.x+2.1, y+0.06, !!v.x_under_30); value(L.x+2.40,y+0.06,'30lb');
-  check(L.x+3.05,y+0.06, !!v.x_under_Syn);value(L.x+3.35,y+0.06,'Synthetic');
+  doc.text('Underlayment:', L.x, y);
+  chk(L.x+1.15,y, !!v.x_under_15, '15lb');
+  chk(L.x+2.10,y, !!v.x_under_30, '30lb');
+  chk(L.x+3.05,y, !!v.x_under_Syn,'Synthetic');
   y+=0.34;
 
-  label(L.x, y, 'Ice and water Barrier (per code):'); hline(L.x+3.15,y,2.0); value(L.x+3.22,y, v.iceWater);
+  doc.text('Ice and water Barrier (per code):', L.x, y); hline(L.x+3.15,y,2.0);
+  valueFit(L.x+3.22,y, v.iceWater, 1.92);
   y+=0.34;
 
-  label(L.x, y, 'Shingles Brand:'); hline(L.x+1.45,y,1.2); value(L.x+1.52,y, v.shinglesBrand);
-  label(L.x+2.9, y, 'Style:');      hline(L.x+3.35,y,1.0); value(L.x+3.42,y, v.style);
-  label(L.x+4.45,y, 'Color:');      hline(L.x+4.9, y,1.0); value(L.x+4.97,y, v.color);
-  label(L.x+6.0, y, 'SQs:');        hline(L.x+6.35,y,0.6); value(L.x+6.42,y, v.sqs);
+  doc.text('Shingles Brand:', L.x, y); hline(L.x+1.45,y,1.2);
+  valueFit(L.x+1.52,y, v.shinglesBrand, 1.12);
+  doc.text('Style:', L.x+2.9, y); hline(L.x+3.35,y,1.0);
+  valueFit(L.x+3.42,y, v.style, 0.92);
+  doc.text('Color:', L.x+4.45,y); hline(L.x+4.9,y,1.0);
+  valueFit(L.x+4.97,y, v.color, 0.92);
+  doc.text('SQs:', L.x+6.0,y); hline(L.x+6.35,y,0.6);
+  valueFit(L.x+6.42,y, v.sqs, 0.54);
   y+=0.34;
 
-  label(L.x, y, 'Drip Edge:');     hline(L.x+0.95,y,1.2); value(L.x+1.02,y, v.dripEdge);
-  label(L.x+2.45, y, 'Gutter Apron:'); hline(L.x+3.5,y,1.3); value(L.x+3.57,y, v.gutterApron);
+  doc.text('Drip Edge:', L.x, y); hline(L.x+0.95,y,1.2);
+  valueFit(L.x+1.02,y, v.dripEdge, 1.12);
+  doc.text('Gutter Apron:', L.x+2.45, y); hline(L.x+3.5,y,1.3);
+  valueFit(L.x+3.57,y, v.gutterApron, 1.22);
   y+=0.34;
 
-  // Vents (big X if Turtle)
-  check(L.x, y+0.06, !!v.x_vents_Turtle); label(L.x+0.28,y,'Vents:');
-  hline(L.x+0.95,y,2.0); value(L.x+1.02,y, [v.ventsQty, v.ventsType].filter(Boolean).join(' '));
-  label(L.x+3.1,y,'Color:'); hline(L.x+3.55,y,1.1); value(L.x+3.62,y, v.ventsColor);
+  chk(L.x, y, !!v.x_vents_Turtle, '');
+  set('bold',FS.LABEL); doc.text('Vents:', L.x+0.28, y);
+  hline(L.x+0.95,y,2.0);
+  valueFit(L.x+1.02,y, [v.ventsQty, v.ventsType].filter(Boolean).join(' '), 1.92);
+  doc.text('Color:', L.x+3.1,y); hline(L.x+3.55,y,1.1);
+  valueFit(L.x+3.62,y, v.ventsColor, 1.02);
   y+=0.34;
 
-  label(L.x, y, 'Valleys:');
-  label(L.x+0.7,y,'Color:'); hline(L.x+1.1,y,1.2); value(L.x+1.17,y, v.valleysColor);
-  label(L.x+2.55,y,'Open or Closed');
-  check(L.x+3.9,y+0.06, !!v.x_valley_Open);  value(L.x+4.2,y+0.06,'Open');
-  check(L.x+5.1,y+0.06, !!v.x_valley_Closed);value(L.x+5.4,y+0.06,'Closed');
+  doc.text('Valleys:', L.x, y);
+  doc.text('Color:', L.x+0.7,y); hline(L.x+1.1,y,1.2);
+  valueFit(L.x+1.17,y, v.valleysColor, 1.12);
+  doc.text('Open or Closed', L.x+2.55,y);
+  chk(L.x+3.9,y, !!v.x_valley_Open,  'Open');
+  chk(L.x+5.1,y, !!v.x_valley_Closed,'Closed');
   y+=0.34;
 
-  label(L.x, y, 'Pipe Jacks QTY:'); hline(L.x+1.5,y,0.8); value(L.x+1.57,y, v.pipeJacksQty);
-  label(L.x+2.5,y,'Type:');         hline(L.x+2.9,y,1.0); value(L.x+2.97,y, v.pipeJacksType);
-  label(L.x+4.1,y,'Size:');         hline(L.x+4.45,y,1.15); value(L.x+4.52,y, v.roofSize);
+  doc.text('Pipe Jacks QTY:', L.x, y); hline(L.x+1.5,y,0.8);
+  valueFit(L.x+1.57,y, v.pipeJacksQty, 0.74);
+  doc.text('Type:', L.x+2.5,y); hline(L.x+2.9,y,1.0);
+  valueFit(L.x+2.97,y, v.pipeJacksType, 0.92);
+  doc.text('Size:', L.x+4.1,y); hline(L.x+4.45,y,1.15);
+  valueFit(L.x+4.52,y, v.roofSize, 1.07);
   y+=0.34;
 
-  label(L.x, y, 'Ridge Cap:');  hline(L.x+1.0,y,1.4); value(L.x+1.07,y, v.ridgeCap);
-  label(L.x+2.6,y,'Ridge Vent:');hline(L.x+3.45,y,1.7); value(L.x+3.52,y, v.ridgeVent);
+  doc.text('Ridge Cap:', L.x, y); hline(L.x+1.0,y,1.4);
+  valueFit(L.x+1.07,y, v.ridgeCap, 1.32);
+  doc.text('Ridge Vent:', L.x+2.6,y); hline(L.x+3.45,y,1.7);
+  valueFit(L.x+3.52,y, v.ridgeVent, 1.62);
 
   // Gutters / Downspouts
   const gY = L.y + 4.7;
   sectionBar('Gutters & Downspouts', L.x, gY, L.w);
   let gy = gY+0.45;
 
-  label(L.x, gy, 'Gutters:');
-  check(L.x+0.9,gy+0.06, !!v.x_gut_5); value(L.x+1.2,gy+0.06,'5"');
-  check(L.x+1.8,gy+0.06, !!v.x_gut_6); value(L.x+2.1,gy+0.06,'6"');
-  label(L.x+2.6,gy,'Color:'); hline(L.x+3.05,gy,1.2); value(L.x+3.12,gy, v.guttersColor);
-  label(L.x+4.5,gy,'Downspouts:');
-  check(L.x+5.6,gy+0.06, !!v.x_ds_23); value(L.x+5.9,gy+0.06,'2×3');
-  check(L.x+6.6,gy+0.06, !!v.x_ds_34); value(L.x+6.9,gy+0.06,'3×4');
-  label(L.x+7.45,gy,'Color:'); hline(L.x+7.9,gy,0.9); value(L.x+7.97,gy, v.downspoutsColor);
+  doc.text('Gutters:', L.x, gy);
+  chk(L.x+0.9,gy, !!v.x_gut_5, '5"');
+  chk(L.x+1.8,gy, !!v.x_gut_6, '6"');
+  doc.text('Color:', L.x+2.6,gy); hline(L.x+3.05,gy,1.2);
+  valueFit(L.x+3.12,gy, v.guttersColor, 1.12);
+  doc.text('Downspouts:', L.x+4.5,gy);
+  chk(L.x+5.6,gy, !!v.x_ds_23, '2×3');
+  chk(L.x+6.6,gy, !!v.x_ds_34, '3×4');
+  doc.text('Color:', L.x+7.45,gy); hline(L.x+7.9,gy,0.9);
+  valueFit(L.x+7.97,gy, v.downspoutsColor, 0.82);
   gy+=0.36;
 
-  label(L.x, gy, 'Gutter Guards:');
-  check(L.x+1.3,gy+0.06, !!v.x_guard_Plastic);  value(L.x+1.6,gy+0.06,'Plastic');
-  check(L.x+2.4,gy+0.06, !!v.x_guard_RX);       value(L.x+2.7,gy+0.06,'RX');
-  check(L.x+3.2,gy+0.06, !!v.x_guard_LeafFree); value(L.x+3.5,gy+0.06,'Leaf Free');
-  label(L.x+4.4,gy,'Notes:'); hline(L.x+4.85,gy,3.1); value(L.x+4.92,gy, v.gutterNotes);
+  doc.text('Gutter Guards:', L.x, gy);
+  chk(L.x+1.3,gy, !!v.x_guard_Plastic, 'Plastic');
+  chk(L.x+2.4,gy, !!v.x_guard_RX, 'RX');
+  chk(L.x+3.2,gy, !!v.x_guard_LeafFree, 'Leaf Free');
+  doc.text('Notes:', L.x+4.4,gy); hline(L.x+4.85,gy,3.1);
+  valueFit(L.x+4.92,gy, v.gutterNotes, 3.02);
 
   // Siding
   const sY = gY + 1.25;
   sectionBar('Siding Info', L.x, sY, L.w);
   let sy = sY+0.45;
 
-  label(L.x,sy,'Brand:'); hline(L.x+0.6,sy,1.2); value(L.x+0.67,sy, v.sidingBrand);
-  label(L.x+2.0,sy,'Style:'); hline(L.x+2.45,sy,1.5); value(L.x+2.52,sy, v.sidingStyle);
-  label(L.x+4.1,sy,'SQs:');   hline(L.x+4.45,sy,0.8); value(L.x+4.52,sy, v.sidingSqs);
-  label(L.x+5.35,sy,'Color:');hline(L.x+5.8,sy,1.2);  value(L.x+5.87,sy, v.sidingColor);
+  doc.text('Brand:', L.x,sy); hline(L.x+0.6,sy,1.2);
+  valueFit(L.x+0.67,sy, v.sidingBrand, 1.12);
+  doc.text('Style:', L.x+2.0,sy); hline(L.x+2.45,sy,1.5);
+  valueFit(L.x+2.52,sy, v.sidingStyle, 1.42);
+  doc.text('SQs:', L.x+4.1,sy); hline(L.x+4.45,sy,0.8);
+  valueFit(L.x+4.52,sy, v.sidingSqs, 0.72);
+  doc.text('Color:', L.x+5.35,sy); hline(L.x+5.8,sy,1.2);
+  valueFit(L.x+5.87,sy, v.sidingColor, 1.12);
   sy+=0.36;
 
-  label(L.x,sy,'Elevations:');
-  check(L.x+0.95,sy+0.06, v._elev.has('Front')); value(L.x+1.25,sy+0.06,'Front');
-  check(L.x+2.0, sy+0.06, v._elev.has('Right')); value(L.x+2.3, sy+0.06,'Right');
-  check(L.x+3.0, sy+0.06, v._elev.has('Left'));  value(L.x+3.3, sy+0.06,'Left');
-  check(L.x+4.0, sy+0.06, v._elev.has('Rear'));  value(L.x+4.3, sy+0.06,'Rear');
-  label(L.x+5.2,sy,'Trim:'); hline(L.x+5.6,sy,1.6); value(L.x+5.67,sy, v.trim);
+  doc.text('Elevations:', L.x,sy);
+  chk(L.x+0.95,sy, v._elev.has('Front'), 'Front');
+  chk(L.x+2.0, sy, v._elev.has('Right'), 'Right');
+  chk(L.x+3.0, sy, v._elev.has('Left'),  'Left');
+  chk(L.x+4.0, sy, v._elev.has('Rear'),  'Rear');
+  doc.text('Trim:', L.x+5.2,sy); hline(L.x+5.6,sy,1.6);
+  valueFit(L.x+5.67,sy, v.trim, 1.52);
   sy+=0.36;
 
-  label(L.x,sy,'Fascia:');
-  check(L.x+0.7,sy+0.06, !!v.x_fas_Smooth); value(L.x+1.0,sy+0.06,'Smooth');
-  check(L.x+2.0,sy+0.06, !!v.x_fas_PVC);    value(L.x+2.3,sy+0.06,'PVC');
-  label(L.x+3.1,sy,'Color:'); hline(L.x+3.55,sy,1.3); value(L.x+3.62,sy, v.fasciaColor);
+  doc.text('Fascia:', L.x,sy);
+  chk(L.x+0.7,sy, !!v.x_fas_Smooth, 'Smooth');
+  chk(L.x+2.0,sy, !!v.x_fas_PVC,    'PVC');
+  doc.text('Color:', L.x+3.1,sy); hline(L.x+3.55,sy,1.3);
+  valueFit(L.x+3.62,sy, v.fasciaColor, 1.22);
 
-  label(L.x+5.1,sy,'Soffit:');
-  check(L.x+5.7,sy+0.06, !!v.x_sof_Solid);  value(L.x+6.0,sy+0.06,'Solid');
-  check(L.x+6.8,sy+0.06, !!v.x_sof_Vented); value(L.x+7.1,sy+0.06,'Vented');
-  label(L.x+7.9,sy,'Color:'); hline(L.x+8.3,sy,0.6); value(L.x+8.37,sy, v.soffitColor);
+  doc.text('Soffit:', L.x+5.1,sy);
+  chk(L.x+5.7,sy, !!v.x_sof_Solid,  'Solid');
+  chk(L.x+6.8,sy, !!v.x_sof_Vented, 'Vented');
+  doc.text('Color:', L.x+7.9,sy); hline(L.x+8.3,sy,0.6);
+  valueFit(L.x+8.37,sy, v.soffitColor, 0.52);
   sy+=0.36;
 
-  label(L.x,sy,'Window Wraps:');
-  check(L.x+1.25,sy+0.06, !!v.x_wrap_Smooth); value(L.x+1.55,sy+0.06,'Smooth');
-  check(L.x+2.6, sy+0.06,  !!v.x_wrap_PVC);   value(L.x+2.9, sy+0.06,'PVC');
-  label(L.x+3.7, sy,'Color:'); hline(L.x+4.15,sy,1.45); value(L.x+4.22,sy, v.windowWrapsColor);
-  label(L.x+5.95,sy,'Blocks:');
-  check(L.x+6.55,sy+0.06, v._blocks.has('Light Blocks')); value(L.x+6.85,sy+0.06,'Light Blocks');
-  check(L.x+7.95,sy+0.06, v._blocks.has('Split Blocks'));  value(L.x+8.25,sy+0.06,'Split Blocks');
+  doc.text('Window Wraps:', L.x,sy);
+  chk(L.x+1.25,sy, !!v.x_wrap_Smooth, 'Smooth');
+  chk(L.x+2.6, sy,  !!v.x_wrap_PVC,   'PVC');
+  doc.text('Color:', L.x+3.7, sy); hline(L.x+4.15,sy,1.45);
+  valueFit(L.x+4.22,sy, v.windowWrapsColor, 1.37);
+  doc.text('Blocks:', L.x+5.95,sy);
+  chk(L.x+6.55,sy, v._blocks.has('Light Blocks'), 'Light Blocks');
+  chk(L.x+7.95,sy, v._blocks.has('Split Blocks'), 'Split Blocks');
 
   /* RIGHT COLUMN */
   sectionBar('More Info', R.x, R.y, R.w);
   let ry = R.y+0.45;
-  check(R.x, ry+0.06, v.x_more_Redeck);   value(R.x+0.3, ry+0.06, 'Redeck: Partial or Full'); ry+=0.34;
-  check(R.x, ry+0.06, v.x_more_Interior); value(R.x+0.3, ry+0.06, 'Interior damage'); ry+=0.34;
-  check(R.x, ry+0.06, v.x_more_MagRoll);  value(R.x+0.3, ry+0.06, 'Mag Roll Sweeper'); ry+=0.34;
-  check(R.x, ry+0.06, v.x_more_CleanHaul);value(R.x+0.3, ry+0.06, 'Clean and haul Debris'); ry+=0.44;
 
-  label(R.x, ry, 'Material drop off:'); hline(R.x+1.55,ry, R.w-1.75); value(R.x+1.62,ry, v.materialDrop);
+  set('bold',FS.LABEL); doc.text('Redeck (Partial or Full):', R.x, ry); hline(R.x+2.25,ry, R.w-2.45);
+  valueFit(R.x+2.32,ry, (v.redeck||''), R.w-2.55);
+  ry+=0.36;
+
+  doc.text('Interior damage:', R.x, ry); hline(R.x+1.55,ry, R.w-1.75);
+  valueFit(R.x+1.62,ry, (v.interiorDamage||''), R.w-1.85);
+  ry+=0.36;
+
+  doc.text('Cleanup:', R.x, ry); hline(R.x+0.9,ry, R.w-1.1);
+  valueFit(R.x+0.97,ry, (v.cleanup||''), R.w-1.2);
+  ry+=0.46;
+
+  doc.text('Material drop off:', R.x, ry); hline(R.x+1.7,ry, R.w-1.9);
+  valueFit(R.x+1.77,ry, v.materialDrop, R.w-2.0);
   ry+=0.55;
 
   sectionBar('Payment Info', R.x, ry, R.w); ry+=0.45;
-  label(R.x, ry, 'Agreed Amount:'); hline(R.x+1.4,ry, R.w-1.6); value(R.x+1.47,ry, v.agreedAmount); ry+=0.36;
-  label(R.x, ry, 'First Payment:'); hline(R.x+1.35,ry, R.w-1.55); value(R.x+1.42,ry, v.firstPayment); ry+=0.36;
-  label(R.x, ry, 'Final Payment:'); hline(R.x+1.35,ry, R.w-1.55); value(R.x+1.42,ry, v.finalPayment); ry+=0.66;
+  doc.text('Agreed Amount:', R.x, ry); hline(R.x+1.4,ry, R.w-1.6);
+  valueFit(R.x+1.47,ry, v.agreedAmount, R.w-1.7); ry+=0.36;
+  doc.text('First Payment:', R.x, ry); hline(R.x+1.35,ry, R.w-1.55);
+  valueFit(R.x+1.42,ry, v.firstPayment, R.w-1.65); ry+=0.36;
+  doc.text('Final Payment:', R.x, ry); hline(R.x+1.35,ry, R.w-1.55);
+  valueFit(R.x+1.42,ry, v.finalPayment, R.w-1.65); ry+=0.66;
 
   sectionBar('Instructions', R.x, ry, R.w); ry+=0.45;
-  // 3 ruled lines
-  doc.setDrawColor(170); hline(R.x, ry, R.w, 0.012); hline(R.x, ry+0.38, R.w, 0.012); hline(R.x, ry+0.76, R.w, 0.012); doc.setDrawColor(30);
+  // 3 ruled lines + wrapped text (clamped to 3 lines)
+  doc.setDrawColor(170);
+  hline(R.x, ry, R.w, 0.012); hline(R.x, ry+0.38, R.w, 0.012); hline(R.x, ry+0.76, R.w, 0.012);
+  doc.setDrawColor(30);
   if (v.instructions){
     set('normal',FS.VALUE);
     const lines = doc.splitTextToSize(v.instructions, R.w-0.12).slice(0,3);
@@ -616,12 +673,16 @@ document.getElementById('downloadPdf').addEventListener('click', async ()=>{
 
   // Signatures
   const sigY = H - 1.05;
-  label(M, sigY, 'Agreed to by Customer on date:'); hline(M+2.2, sigY, 1.25); value(M+2.28, sigY, v.custDate);
-  label(M+3.6, sigY, 'Signature:'); hline(M+4.25, sigY, 2.3); value(M+4.32, sigY, v.custSignature);
+  set('bold',FS.LABEL); doc.text('Agreed to by Customer on date:', M, sigY); hline(M+2.2, sigY, 1.25);
+  valueFit(M+2.28, sigY, v.custDate, 1.17);
+  doc.text('Signature:', M+3.6, sigY); hline(M+4.25, sigY, 2.3);
+  valueFit(M+4.32, sigY, v.custSignature, 2.22);
 
   const sigY2 = sigY + 0.45;
-  label(M, sigY2, 'Agreed to by TDH Representative on date:'); hline(M+3.5, sigY2, 1.25); value(M+3.58, sigY2, v.tdhDate);
-  label(M+4.95, sigY2, 'Signature:'); hline(M+5.6, sigY2, 2.05); value(M+5.67, sigY2, v.tdhSignature);
+  doc.text('Agreed to by TDH Representative on date:', M, sigY2); hline(M+3.5, sigY2, 1.25);
+  valueFit(M+3.58, sigY2, v.tdhDate, 1.17);
+  doc.text('Signature:', M+4.95, sigY2); hline(M+5.6, sigY2, 2.05);
+  valueFit(M+5.67, sigY2, v.tdhSignature, 1.97);
 
   // Save
   const filename = `TDH_Agreement_${(v.name||'Filled').replace(/\s+/g,'_')}.pdf`;
@@ -630,7 +691,7 @@ document.getElementById('downloadPdf').addEventListener('click', async ()=>{
 </script>
 
 <script>
-/* DEMO ONLY — fake example + clear */
+/* DEMO—fake example + clear */
 const form = document.getElementById('tdhForm');
 const example = {
   name:"Jordan Sample", address:"7425 Oak Meadow Ct", cityStateZip:"Prairie City, NE 68000",
