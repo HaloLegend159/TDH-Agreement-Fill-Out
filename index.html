@@ -3,21 +3,19 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>TDH Agreement – Web Form → PDF (No-Overlap Layout)</title>
+<title>TDH Agreement – Web Form → PDF (No-Overlap • Robust Loader)</title>
 <meta name="color-scheme" content="dark light" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --bg:#0f172a;--panel:#111827;--ink:#e5e7eb;--muted:#94a3b8;--accent:#22d3ee;--border:#1f2937;--radius:14px;--gap:14px
-  }
+  :root{ --bg:#0f172a; --panel:#111827; --ink:#e5e7eb; --muted:#94a3b8; --accent:#22d3ee; --border:#1f2937; --radius:14px; --gap:14px }
   *{box-sizing:border-box}
   html,body{height:100%}
   body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.6 Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
   a{color:var(--accent);text-decoration:none}
   .wrap{max-width:1200px;margin:20px auto;padding:0 16px 96px}
-  .toolbar{position:sticky;top:0;z-index:5;backdrop-filter:blur(8px);background:color-mix(in oklab, var(--bg) 75%, transparent);border-bottom:1px solid var(--border)}
+  .toolbar{position:sticky;top:0;z-index:5;backdrop-filter:blur(8px);background:rgba(15,23,42,.75);border-bottom:1px solid var(--border)}
   .toolbar-inner{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:10px 0}
   .title{display:flex;gap:10px;align-items:center;font-weight:700}
   .title .dot{width:10px;height:10px;border-radius:999px;background:var(--accent);box-shadow:0 0 18px var(--accent)}
@@ -39,9 +37,10 @@
   .chip{display:inline-flex;align-items:center;gap:8px;background:#0b1220;border:1px solid var(--border);padding:8px 10px;border-radius:999px}
   .note{color:var(--muted);font-size:12px}
   .hr{height:1px;background:var(--border);margin:20px 0}
+  .status{display:inline-flex;align-items:center;gap:8px;font-size:12px;color:#e5e7eb;background:#0b1220;border:1px solid var(--border);padding:6px 10px;border-radius:999px}
+  .status .light{width:8px;height:8px;border-radius:999px;background:#f59e0b;box-shadow:0 0 10px currentColor}
 
   /* === PRINTABLE (bulletproof, no-overlap) === */
-  /* We render into an 8.5x11in page at CSS pixels ~ 816x1056. We use a simple two-column grid (fixed label column) to avoid collisions. */
   #printRoot{position:fixed;inset:0;pointer-events:none;opacity:0}
   .page{width:816px;min-height:1056px;background:#fff;color:#0b1220;padding:28px 32px;border:1px solid #e5e7eb;border-radius:8px}
   .h1{font-size:22px;font-weight:700;margin:0 0 4px}
@@ -56,6 +55,14 @@
   .pill{display:inline-block;background:#eef2ff;border:1px solid #c7d2fe;color:#1e3a8a;border-radius:999px;padding:2px 8px;font-size:11px}
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px}
   .avoid-break{page-break-inside:avoid}
+
+  /* Diagnostics UI */
+  .diag{background:#0b1220;border:1px solid var(--border);border-radius:12px;padding:12px;margin-top:16px}
+  .diag h3{margin:0 0 6px;font-size:14px}
+  .tests{display:grid;gap:8px}
+  .test{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:8px 10px;background:#0f1628;border:1px solid #1c263d;border-radius:10px}
+  .ok{color:#22c55e}
+  .bad{color:#ef4444}
 </style>
 </head>
 <body>
@@ -63,15 +70,17 @@
     <div class="toolbar">
       <div class="toolbar-inner">
         <div class="title"><span class="dot"></span><span>TDH Agreement – Form → PDF</span></div>
-        <div style="display:flex;gap:8px;align-items:center">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <span class="status" id="engineStatus"><span class="light" id="engineLight"></span><span id="engineText">PDF engine: loading…</span></span>
           <button class="btn ghost" id="btnExample" title="Fill with example data">Load Example</button>
           <button class="btn secondary" id="btnClear" title="Clear all fields">Clear</button>
           <button class="btn" id="btnDownload" title="Generate a polished PDF">Download PDF</button>
+          <button class="btn ghost" id="btnRepair" title="Reload the PDF engine if blocked">Repair PDF Engine</button>
         </div>
       </div>
     </div>
 
-    <p class="note">Uses a rock‑solid two‑column layout in the PDF to prevent clipping or overlap. Long text automatically wraps.</p>
+    <p class="note">PDF export now uses a **robust loader** with CDN fallbacks. The generated page uses a **two‑column, no‑overlap layout**; long text wraps and will not clip.</p>
 
     <!-- GENERAL INFO -->
     <section class="panel">
@@ -216,19 +225,74 @@
       </div>
     </section>
 
+    <div class="panel diag">
+      <h3>Diagnostics</h3>
+      <p class="note">Run these tests if PDF isn’t downloading or the engine light is red.</p>
+      <div class="tests" id="tests"></div>
+      <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn" id="btnRunDiag">Run Diagnostics</button>
+        <button class="btn secondary" id="btnResetDiag">Clear Diagnostics</button>
+      </div>
+    </div>
+
     <div class="hr"></div>
 
     <div id="printRoot"></div>
   </div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-YcsIPYwjl4QXG8Hk9wDqI8t0w+M1q0sYKJr2Q9m3aRuA7+R7oKrLAY9z1xj3c3B3QX0cQn1y0n4VZ0CPwAJ6pg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-
   <script>
+    // ---------- Small DOM helpers ----------
     const $ = (sel, root=document) => root.querySelector(sel);
     const $$ = (sel, root=document) => [...root.querySelectorAll(sel)];
 
-    function getCheckedChips(container){return $$("input[type='checkbox']:checked", container).map(i=>i.value)}
-    function getCheckedRadio(container){const r=$("input[type='radio']:checked",container);return r? r.value: ""}
+    // ---------- PDF engine loader with fallbacks ----------
+    const PDF_CDNS = [
+      'https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js',
+      'https://unpkg.com/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js',
+      'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js'
+    ];
+
+    function loadScript(url){
+      return new Promise((resolve, reject)=>{
+        const s = document.createElement('script');
+        s.src = url;
+        s.crossOrigin = 'anonymous';
+        s.referrerPolicy = 'no-referrer';
+        s.onload = ()=> resolve(url);
+        s.onerror = ()=> reject(new Error('Failed to load '+url));
+        document.head.appendChild(s);
+      });
+    }
+
+    async function ensurePdfLoaded(){
+      if (window.html2pdf) return true;
+      let lastErr;
+      for(const url of PDF_CDNS){
+        try{ await loadScript(url); if(window.html2pdf) return true; }
+        catch(e){ lastErr = e; }
+      }
+      throw lastErr || new Error('html2pdf failed to load from all CDNs');
+    }
+
+    // ---------- UI state for engine light ----------
+    function setEngineStatus(status, msg){
+      const light = $('#engineLight');
+      const text = $('#engineText');
+      text.textContent = msg;
+      if(status==='ok'){ light.style.background = '#22c55e'; light.style.boxShadow='0 0 10px #22c55e'; }
+      else if(status==='bad'){ light.style.background = '#ef4444'; light.style.boxShadow='0 0 10px #ef4444'; }
+      else { light.style.background = '#f59e0b'; light.style.boxShadow='0 0 10px #f59e0b'; }
+    }
+
+    // Try to load immediately
+    (async()=>{
+      try{ await ensurePdfLoaded(); setEngineStatus('ok','PDF engine: ready'); }
+      catch(e){ setEngineStatus('bad','PDF engine: failed to load'); console.error(e); }
+    })();
+
+    // ---------- Form helpers ----------
+    function getCheckedChips(container){ return $$("input[type='checkbox']:checked", container).map(i=>i.value) }
+    function getCheckedRadio(container){ const r = $("input[type='radio']:checked", container); return r? r.value: "" }
 
     function collectData(){
       return {
@@ -287,7 +351,7 @@
         custDate: $('#custDate').value,
         repDate: $('#repDate').value,
         repName: $('#repName').value.trim()
-      }
+      };
     }
 
     function clearForm(){
@@ -321,7 +385,7 @@
       $$('#roofType input[type="radio"]').forEach(r=>{r.checked = (r.value===ex.roofType)});
     }
 
-    function currency(n){if(n==null||n==='')return'';const v=Number(n);if(Number.isNaN(v))return n;return v.toLocaleString(undefined,{style:'currency',currency:'USD'})}
+    function currency(n){ if(n==null||n==='')return''; const v=Number(n); if(Number.isNaN(v))return n; return v.toLocaleString(undefined,{style:'currency',currency:'USD'}) }
 
     function kv(parent,label,value){
       const wrap = document.createElement('div');
@@ -404,31 +468,40 @@
       kv(s3,'Siding Notes', d.sidingNotes);
       kv(s3,'Partial or Full', d.partialFull);
 
-      // Payments & Dates (two-column grid for compactness)
+      // Payments & Dates
       const s4 = sec('Payments & Dates');
       const cols = document.createElement('div'); cols.className='grid2';
       const left = document.createElement('div'); const right = document.createElement('div');
       cols.appendChild(left); cols.appendChild(right); s4.appendChild(cols);
-      // left
       kv(left,'Agreed Amount', currency(d.agreedAmount));
       kv(left,'First Payment', currency(d.firstPayment));
       kv(left,'Final Payment', currency(d.finalPayment));
-      // right
       kv(right,'Customer Date', d.custDate);
       kv(right,'TDH Rep Date', d.repDate);
       kv(right,'TDH Representative', d.repName);
 
-      page.appendChild(header);
-      page.appendChild(s1);
-      page.appendChild(s2);
-      page.appendChild(s3);
-      page.appendChild(s4);
+      const pageFrag = document.createDocumentFragment();
+      pageFrag.appendChild(header);
+      pageFrag.appendChild(s1);
+      pageFrag.appendChild(s2);
+      pageFrag.appendChild(s3);
+      pageFrag.appendChild(s4);
+      page.appendChild(pageFrag);
 
       $('#printRoot').appendChild(page);
       return page;
     }
 
     async function downloadPDF(){
+      try{
+        await ensurePdfLoaded();
+        setEngineStatus('ok','PDF engine: ready');
+      }catch(e){
+        setEngineStatus('bad','PDF engine: failed to load (click Repair)');
+        alert('PDF engine failed to load. Click "Repair PDF Engine" to try alternate CDNs.');
+        return;
+      }
+
       const data = collectData();
       const page = buildPrintable(data);
       const filenameSafe = (data.name || 'TDH_Agreement').replace(/[^a-z0-9_\-]+/gi,'_');
@@ -442,9 +515,79 @@
       await html2pdf().set(opt).from(page).save();
     }
 
+    // ---------- Diagnostics ("test cases") ----------
+    function addTestLine(name, ok, extra=''){
+      const line = document.createElement('div');
+      line.className = 'test';
+      line.innerHTML = `<span>${name}</span><span class="${ok?'ok':'bad'}">${ok?'PASS':'FAIL'}${extra? ' – '+extra: ''}</span>`;
+      $('#tests').appendChild(line);
+    }
+
+    async function runDiagnostics(){
+      $('#tests').innerHTML = '';
+
+      // Test 1: Engine presence
+      const engineLoaded = !!window.html2pdf || await ensurePdfLoaded().then(()=>true).catch(()=>false);
+      addTestLine('Engine loads (html2pdf present)', engineLoaded);
+
+      if(!engineLoaded){ setEngineStatus('bad','PDF engine: failed to load'); return; }
+
+      // Test 2: Minimal render (no download)
+      const probe = document.createElement('div');
+      probe.style.width='400px'; probe.style.padding='16px'; probe.style.background='#fff'; probe.style.color='#111';
+      probe.innerHTML = '<h3>Minimal PDF Probe</h3><p>This is a lightweight render test that should not download a file.</p>';
+      document.body.appendChild(probe);
+      try{
+        await html2pdf().from(probe).set({ html2canvas:{scale:1}, jsPDF:{unit:'pt',format:'letter'} }).toPdf().get('pdf');
+        addTestLine('Minimal render pipeline', true);
+      }catch(e){
+        console.error(e); addTestLine('Minimal render pipeline', false, e.message||e.toString());
+      }finally{
+        document.body.removeChild(probe);
+      }
+
+      // Test 3: Long-content wrap
+      const longData = {
+        name:'Very Long Name That Should Wrap Cleanly Without Any Overlap Whatsoever In The PDF Export Output For Reliability',
+        primaryContactName:'Alexandria Catherine Exampleton the Third',
+        primaryContactPhone:'(402) 555‑0000',
+        insuranceCompany:'Prairie Mutual of the Greater Midwestern United Insurance Conglomerate – Division X',
+        claimNumber:'PM‑NE‑24‑DEMO‑SUPER‑LONG‑1234567890',
+        phone:'(402) 555‑0001',
+        address:'12345 Extraordinarily Long Avenue Name That Spans Many Characters Suite 100',
+        cityStateZip:'Somewhere, NE 68000‑1234',
+        roofLocations:['House','Garage','Shed','Flat'],
+        tearOffLayers:'2', underlayment:'Synthetic', shinglesBrand:'Malarkey Vista', style:'Architectural', color:'Weathered Wood', sqs:'28',
+        iceWater:'Yes – eaves/valleys (per code)', dripEdge:'Yes – charcoal', gutterApron:'Yes – charcoal', sideWallFlashing:'Metal',
+        vents:'8 box vents – black', valleys:'Open (metal)', pipeJacks:'3 – neoprene', ridge:'Ridge cap – matching', roofPitch:'9/12', stories:'2', roofSize:'~3,400 sq ft', roofType:'Gable',
+        gutters:'6"', downspouts:'3x4', gutterColor:'Charcoal', downspoutColor:'Charcoal', gutterGuards:'Leaf Free', magRoll:'Yes', debris:'Yes',
+        sidingBrand:'LP SmartSide', sidingStyle:'Lap 8"', sidingSqs:'25', sidingColor:'Charcoal', elevations:'Front / Rear / Left / Right', trim:'PVC', fascia:'Smooth', soffit:'Vented', windowWraps:'Smooth', blocks:'2 Light, 1 Split', sidingNotes:'This note is intentionally verbose to test wrapping and ensure there are no overlaps or clipping in the final layout under worst-case text lengths.', partialFull:'Full Replacement',
+        materialDrop:'Driveway (left side) – 7am OK', redeck:'No', interior:'Master bath ceiling stain', agreedAmount:'20000', firstPayment:'5000', finalPayment:'15000',
+        custDate:new Date().toISOString().slice(0,10), repDate:new Date().toISOString().slice(0,10), repName:'QA Tester'
+      };
+      try{
+        const page = buildPrintable(longData);
+        await html2pdf().from(page).set({ html2canvas:{scale:1}, jsPDF:{unit:'pt',format:'letter'} }).toPdf().get('pdf');
+        addTestLine('Long-content wrap (no overlap runtime errors)', true);
+      }catch(e){
+        console.error(e); addTestLine('Long-content wrap', false, e.message||e.toString());
+      }
+    }
+
+    function resetDiagnostics(){ $('#tests').innerHTML = ''; }
+
+    // ---------- Wire up UI ----------
     $('#btnExample').addEventListener('click', loadExample);
     $('#btnClear').addEventListener('click', clearForm);
     $('#btnDownload').addEventListener('click', downloadPDF);
+    $('#btnRepair').addEventListener('click', async ()=>{
+      setEngineStatus('pending','PDF engine: loading…');
+      try{ await ensurePdfLoaded(); setEngineStatus('ok','PDF engine: ready'); }
+      catch(e){ setEngineStatus('bad','PDF engine: failed to load'); console.error(e); }
+    });
+
+    $('#btnRunDiag').addEventListener('click', runDiagnostics);
+    $('#btnResetDiag').addEventListener('click', resetDiagnostics);
   </script>
 </body>
 </html>
