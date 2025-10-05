@@ -1,587 +1,672 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Siege Circuit — v4.8</title>
-  <meta name="description" content="HTML5 turret defense with persistent saves, intermission upgrades, speed controls, premium tiles, strict placement, auto‑continue. v4.7 removes Tech Tree and fixes a stray parenthesis bug causing a parse error." />
-  <style>
-    :root{ --bg:#05070f; --ink:#e5e7eb; --muted:#9aa4b2; --panel:#0b1222; --border:#1f2937; --accent:#7dd3fc; --good:#34d399; --warn:#fbbf24; --bad:#f87171; --violet:#a78bfa; --radius:14px; }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{margin:0;background:radial-gradient(1400px 1000px at 70% -10%,#0f172a 0%,#05070f 60%);color:var(--ink);font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Inter,sans-serif;overflow:hidden}
-    canvas{display:block}
-    .hud{position:fixed;left:12px;top:12px;display:flex;gap:10px;align-items:center;padding:8px 12px;background:rgba(11,18,34,.55);backdrop-filter:blur(6px);border:1px solid var(--border);border-radius:12px;z-index:10}
-    .pill{display:inline-flex;align-items:center;gap:8px;background:#0b1222;border:1px solid #1c2436;border-radius:999px;padding:6px 10px}
-    .btns{position:fixed;right:12px;top:12px;display:flex;gap:8px;z-index:10;flex-wrap:wrap;max-width:50vw}
-    button{appearance:none;background:#121a2d;color:var(--ink);border:1px solid #1f2a42;padding:8px 12px;border-radius:10px;cursor:pointer;transition:transform .05s ease,background .2s ease}
-    button:hover{background:#172036}
-    button:active{transform:translateY(1px)}
-    .overlay{position:fixed;inset:0;display:grid;place-items:center;background:linear-gradient(180deg,rgba(2,6,23,.78),rgba(2,6,23,.58));z-index:20}
-    .card{background:rgba(9,14,30,.95);border:1px solid var(--border);border-radius:var(--radius);padding:22px;max-width:1120px;width:min(94vw,1120px);box-shadow:0 10px 30px rgba(0,0,0,.35)}
-    .title{font-size:26px;font-weight:800;margin:0 0 6px}
-    .subtitle{margin:0 0 12px;color:var(--muted)}
-    .tabs{display:flex;gap:8px;margin:10px 0}
-    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
-    .tile{background:#0c1528;border:1px solid #1c2436;border-radius:12px;padding:12px}
-    .kv{display:flex;justify-content:space-between;align-items:center;padding:8px;border:1px solid #21304b;border-radius:10px;background:#0b1222;margin-top:6px}
-    .badge{display:inline-flex;align-items:center;gap:6px;background:#0b1222;border:1px solid #1c2436;border-radius:999px;padding:2px 8px;font-size:12px;color:var(--muted)}
-    .shopgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
-    .shopitem{background:#0b1222;border:1px solid #1c2436;padding:12px;border-radius:12px}
-    .shopitem h4{margin:0 0 6px;font-size:15px}
-    .owned{color:var(--good)}
-    .price{color:var(--warn);font-weight:700}
-    .foot{display:flex;justify-content:space-between;gap:8px;margin-top:10px;align-items:center}
-    .tpanel{position:fixed;z-index:50;transform:translate(-50%,-100%);background:#0b1222;border:1px solid #23314b;border-radius:12px;padding:10px;min-width:280px;max-width:360px;box-shadow:0 10px 30px rgba(0,0,0,.35);pointer-events:auto}
-    .tpanel h4{margin:0 0 6px;font-size:14px}
-    .tpanel .row{display:flex;justify-content:space-between;align-items:center;margin:6px 0}
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>TDH Agreement – Readable PDF</title>
+<meta name="color-scheme" content="dark light" />
+<style>
+  :root{ --bg:#0f172a; --panel:#111827; --ink:#e5e7eb; --muted:#94a3b8; --border:#1f2937; --gap:14px; --radius:14px; }
+  *{ box-sizing:border-box }
+  html,body{height:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+  .wrap{max-width:1100px;margin:20px auto;padding:0 12px 80px}
+  .toolbar{position:sticky;top:0;z-index:10;backdrop-filter:blur(6px);
+    background:color-mix(in oklab,var(--bg) 85%, transparent);
+    display:flex;gap:8px;padding:10px 0 14px;align-items:center;flex-wrap:wrap}
+  .toolbar h1{margin:0;font-size:18px;margin-right:auto}
+  .actions{display:flex;gap:8px;flex-wrap:wrap}
+  button{border:1px solid var(--border);background:#0b1324;color:var(--ink);
+    padding:10px 14px;border-radius:12px;cursor:pointer;font-weight:600}
+  button.primary{background:#1a2a4b}
+  button:hover{background:#101a33}
+  .grid{display:grid;gap:var(--gap)}
+  .two{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+  @media (min-width:980px){ .two{grid-template-columns:repeat(2,minmax(0,1fr))} }
+  .panel{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:16px}
+  .panel h2{margin:0 0 10px;font-size:16px;font-weight:700}
+  label{display:block;color:var(--muted);font-size:12px;margin-bottom:6px}
+  input[type="text"], input[type="tel"], input[type="number"], input[type="date"], textarea, select{
+    width:100%; background:#0b1220; color:var(--ink);
+    border:1px solid var(--border); border-radius:10px; padding:10px 12px; outline:none;
+    transition:border-color .2s, box-shadow .2s, background .2s
+  }
+  input::placeholder, textarea::placeholder{ color:#64748b; opacity:.9 }
+  input:hover, textarea:hover, select:hover{ border-color:#334155; background:#0d1527 }
+  input:focus, textarea:focus, select:focus{ border-color:#60a5fa; box-shadow:0 0 0 3px rgba(96,165,250,.25); background:#0a152b }
+  input[type="checkbox"], input[type="radio"]{ accent-color:#3b82f6 }
+  .checks{display:flex;flex-wrap:wrap;gap:10px 16px}
+  .checks label{display:inline-flex;align-items:center;gap:8px;margin:0}
+  .sig-row{display:grid;gap:10px;grid-template-columns:1.2fr 1fr 1.2fr;align-items:end}
+  .row{display:grid;gap:10px;grid-template-columns:180px 1fr;align-items:center}
+</style>
 </head>
 <body>
-  <canvas id="game" aria-label="Siege Circuit battlefield" role="img"></canvas>
-
-  <div class="hud" aria-live="polite">
-    <div class="pill"><strong>Wave</strong> <span id="wave">1</span></div>
-    <div class="pill"><strong>Lives</strong> <span id="lives">20</span></div>
-    <div class="pill"><strong>⚙ Cores</strong> <span id="cores">0</span></div>
-    <div class="pill"><strong>💎 Shards</strong> <span id="shards">0</span></div>
-    <div class="pill"><strong>⏩ Speed</strong> <span id="speed">1x</span></div>
-  </div>
-  <div class="btns">
-    <button id="menuBtn">Menu (M)</button>
-    <button id="pauseBtn">Pause (P)</button>
-    <button id="spd05" title="Speed 0.5x (key 1)">0.5x</button>
-    <button id="spd10" title="Speed 1x (key 2)">1x</button>
-    <button id="spd15" title="Speed 1.5x (key 3)">1.5x</button>
-    <button id="spd20" title="Speed 2x (key 4)">2x</button>
-    <button id="spd30" title="Speed 3x (key 5)">3x</button>
-    <button id="spd40" title="Speed 4x (key 6)">4x</button>
-  </div>
-
-  <div id="overlay" class="overlay" role="dialog" aria-modal="true" style="display:none">
-    <div class="card">
-      <h1 class="title">🛡️ Siege Circuit <span style="color:#a78bfa">v4.8</span></h1>
-      <p class="subtitle" id="overlaySub">Intermission: spend ⚙ in Armory. <strong>Build:</strong> click an empty tile to place a Basic turret. <strong>Upgrade:</strong> click any turret to convert its <em>type</em> and buy <strong>Damage</strong>/<strong>Rate</strong>/<strong>Range</strong> upgrades. Premium dark tiles only accept high‑tier turrets.</p>
-
-      <div class="tabs">
-        <button id="tabPlay">▶ Play</button>
-        <button id="tabArmory">🧪 Armory</button>
-        <button id="tabChallenges">🏆 Challenges</button>
-        <button id="tabSettings">⚙️ Settings</button>
-      </div>
-
-      <div id="panelPlay" class="grid">
-        <div class="tile">
-          <h3>Profile</h3>
-          <div class="kv"><span>Best Wave</span><strong id="p_best">1</strong></div>
-          <div class="kv"><span>Current Shards (run)</span><strong id="p_shards">0</strong></div>
-          <div class="kv"><span>Total Cores (meta)</span><strong id="p_cores">0</strong></div>
-          <div class="kv"><span>Permanent Tech</span><strong id="p_tech">0 unlocked</strong></div>
-          <div class="kv"><span>Difficulty</span><strong id="p_diff">Standard</strong></div>
-        </div>
-        <div class="tile">
-          <h3>Flow</h3>
-          <p>Click an empty buildable tile to place a <strong>Basic</strong> turret. Then click any turret to open its panel: <em>Type Conversion</em> and <em>Stat Upgrades</em>. Costs are shown and deducted from Shards.</p>
-          <div class="foot">
-            <button id="startBtn">Start Run</button>
-            <button id="resumeBtn" style="display:none">Resume</button>
-            <button id="nextBtn" style="display:none">Next Wave</button>
-            <button id="resetBtn" title="Reset all saved progress">Reset Save</button>
-          </div>
-        </div>
-      </div>
-
-      <div id="panelArmory" style="display:none">
-        <h3>Armory — Permanent Upgrades (spend Cores ⚙)</h3>
-        <div class="badge">You have <strong id="a_cores">0</strong> ⚙</div>
-        <div class="shopgrid" id="armoryGrid"></div>
-      </div>
-
-      <div id="panelChallenges" style="display:none">
-        <h3>Run Challenges (reset each run)</h3>
-        <div id="runChallengeList" class="grid"></div>
-        <h3 style="margin-top:12px">Meta Challenges</h3>
-        <div id="challengeList" class="grid"></div>
-      </div>
-
-      <div id="panelSettings" style="display:none">
-        <div class="grid">
-          <div class="tile"><h3>Graphics</h3>
-            <div class="kv"><span>Particles</span><input id="setParticles" type="range" min="0" max="1" step="1"/></div>
-            <div class="kv"><span>Glow</span><input id="setGlow" type="range" min="0" max="1" step="1"/></div>
-          </div>
-          <div class="tile"><h3>Gameplay</h3>
-            <div class="kv"><span>Difficulty</span>
-              <select id="setDiff">
-                <option value="1">Standard</option>
-                <option value="1.35">Veteran</option>
-                <option value="1.8">Insane</option>
-              </select>
-            </div>
-            <div class="kv"><span>Auto‑continue at intermission</span>
-              <label style="display:flex;align-items:center;gap:6px"><input id="setAuto" type="checkbox"/> Enable</label>
-            </div>
-            <div class="kv"><span>Auto‑continue after (sec)</span>
-              <input id="setAutoSec" type="number" min="2" max="30" step="1" style="width:80px" />
-            </div>
-          </div>
-        </div>
-      </div>
-
+<div class="wrap">
+  <div class="toolbar">
+    <h1>TDH Agreement (Readable PDF)</h1>
+    <div class="actions">
+      <button id="loadExample" type="button" title="Fills with fake demo data">Load Example</button>
+      <button id="clearForm"   type="button">Clear</button>
+      <button id="downloadPdf" type="button" class="primary"><strong>Download PDF</strong></button>
     </div>
   </div>
 
-  <div id="tPanel" class="tpanel" style="display:none"></div>
+  <!-- HONEYPOT to discourage browser profile autofill -->
+  <form style="position:absolute;left:-9999px;top:-9999px">
+    <input type="text" autocomplete="username">
+    <input type="password" autocomplete="new-password">
+  </form>
 
-  <script>
-  (function(){
-    'use strict';
-    const cvs = document.getElementById('game');
-    const ctx = cvs.getContext('2d');
-    const DPR = Math.max(1, Math.min(2, window.devicePixelRatio||1));
-    function resize(){
-      cvs.width = Math.floor(window.innerWidth*DPR);
-      cvs.height = Math.floor(window.innerHeight*DPR);
-      cvs.style.width = window.innerWidth+'px';
-      cvs.style.height = window.innerHeight+'px';
-      ctx.setTransform(DPR,0,0,DPR,0,0);
-    }
-    window.addEventListener('resize', resize); resize();
+  <!-- ===== FORM (unchanged) ===== -->
+  <form id="tdhForm" class="grid" autocomplete="off">
+    <div class="panel">
+      <h2>General Info</h2>
+      <div class="grid two">
+        <div><label for="name">Name</label><input id="name" name="name" type="text" autocomplete="off" /></div>
+        <div><label for="primaryContactName">Primary Contact Name</label><input id="primaryContactName" name="primaryContactName" type="text" autocomplete="off" /></div>
+        <div><label for="primaryPhone">Primary Contact Phone Number</label><input id="primaryPhone" name="primaryPhone" type="tel" autocomplete="off" /></div>
+        <div><label for="insuranceCompany">Insurance Company</label><input id="insuranceCompany" name="insuranceCompany" type="text" autocomplete="off" /></div>
+        <div><label for="claimNumber">Claim Number</label><input id="claimNumber" name="claimNumber" type="text" autocomplete="off" /></div>
+        <div><label for="phone">Phone</label><input id="phone" name="phone" type="tel" autocomplete="off" /></div>
+        <div><label for="address">Address</label><input id="address" name="address" type="text" autocomplete="off" /></div>
+        <div><label for="cityStateZip">City, State, Zip</label><input id="cityStateZip" name="cityStateZip" type="text" autocomplete="off" /></div>
+      </div>
+    </div>
 
-    function $(s){return document.querySelector(s)}
-    const ui = {
-      wave:$('#wave'), lives:$('#lives'), cores:$('#cores'), shards:$('#shards'), speed:$('#speed'),
-      overlay:$('#overlay'), pauseBtn:$('#pauseBtn'), menuBtn:$('#menuBtn'),
-      spd05:$('#spd05'), spd10:$('#spd10'), spd15:$('#spd15'), spd20:$('#spd20'), spd30:$('#spd30'), spd40:$('#spd40'),
-      startBtn:$('#startBtn'), resumeBtn:$('#resumeBtn'), nextBtn:$('#nextBtn'), resetBtn:$('#resetBtn'),
-      tabPlay:$('#tabPlay'), tabArmory:$('#tabArmory'), tabChallenges:$('#tabChallenges'), tabSettings:$('#tabSettings'),
-      panelPlay:$('#panelPlay'), panelArmory:$('#panelArmory'), panelChallenges:$('#panelChallenges'), panelSettings:$('#panelSettings'),
-      p_best:$('#p_best'), p_cores:$('#p_cores'), p_shards:$('#p_shards'), p_tech:$('#p_tech'), p_diff:$('#p_diff'),
-      a_cores:$('#a_cores'), armoryGrid:$('#armoryGrid'), challengeList:$('#challengeList'), runChallengeList:$('#runChallengeList'),
-      setParticles:$('#setParticles'), setGlow:$('#setGlow'), setDiff:$('#setDiff'), setAuto:$('#setAuto'), setAutoSec:$('#setAutoSec'),
-      overlaySub:$('#overlaySub'), tPanel:$('#tPanel')
-    };
+    <div class="panel">
+      <h2>Roofing Info</h2>
+      <div class="checks">
+        <label><input type="checkbox" name="roofingLocations" value="House">House</label>
+        <label><input type="checkbox" name="roofingLocations" value="Garage">Garage</label>
+        <label><input type="checkbox" name="roofingLocations" value="Shed">Shed</label>
+        <label><input type="checkbox" name="roofingLocations" value="Flat">Flat</label>
+      </div>
 
-    // Forward backdrop clicks to canvas so intermission doesn't block field interactions
-    ui.overlay.addEventListener('click', function(e){
-      const card = e.target.closest('.card');
-      if(!card){
-        const evt = new MouseEvent('click', {clientX:e.clientX, clientY:e.clientY, bubbles:true});
-        cvs.dispatchEvent(evt);
-      }
-    });
+      <div class="grid two" style="margin-top:10px">
+        <div><label for="tearOffLayers">Tear off layers</label><input id="tearOffLayers" name="tearOffLayers" type="number" min="0" step="1" autocomplete="off" /></div>
+        <div>
+          <label>Underlayment</label>
+          <div class="checks">
+            <label><input type="radio" name="underlayment" value="15lb">15lb</label>
+            <label><input type="radio" name="underlayment" value="30lb">30lb</label>
+            <label><input type="radio" name="underlayment" value="Synthetic">Synthetic</label>
+          </div>
+        </div>
 
-    // ===== Persistent Save (stable key + migration) =====
-    const SAVE_ROOT='siege.circuit';
-    const LEGACY_KEYS=['siege.circuit.v3.7','siege.circuit.v3.6','siege.circuit.v3.5','siege.circuit.v3.4','siege.circuit.v3.3','siege.circuit.v3.2','siege.circuit.v3.1','siege.circuit.v3','siege.circuit.v2'];
-    const SAVE_VERSION=3;
-    function defaultSave(){
-      return {version:SAVE_VERSION, bestWave:1, cores:0, tech:{}, settings:{particles:1, glow:1, diff:1, autoIntermission:0, autoIntermissionSec:6},
-              armory:{dmg:0, fire:0, range:0, startShards:0, interest:0}, unlocked:{}, challenges:{}};
-    }
-    function normalize(s){
-      const d=defaultSave();
-      return {
-        version: SAVE_VERSION,
-        bestWave: Math.max(d.bestWave, (s && s.bestWave)||1),
-        cores: Math.max(0, (s && s.cores)||0),
-        tech: Object.assign({}, d.tech, (s && s.tech)||{}),
-        settings: Object.assign({}, d.settings, (s && s.settings)||{}),
-        armory: Object.assign({}, d.armory, (s && s.armory)||{}),
-        unlocked: Object.assign({}, d.unlocked, (s && s.unlocked)||{}),
-        challenges: Object.assign({}, d.challenges, (s && s.challenges)||{})
-      };
-    }
-    function loadSave(){
-      let s=null;
-      try{ s=JSON.parse(localStorage.getItem(SAVE_ROOT)||'null'); }catch{}
-      if(!s){
-        for(const k of LEGACY_KEYS){ try{ const raw=localStorage.getItem(k); if(raw){ s=JSON.parse(raw); break; } }catch{} }
-      }
-      s = s? normalize(s) : defaultSave();
-      localStorage.setItem(SAVE_ROOT, JSON.stringify(s));
-      return s;
-    }
-    let save = loadSave();
-    function persist(){ localStorage.setItem(SAVE_ROOT, JSON.stringify(save)); refreshProfile(); }
+        <div><label for="shinglesBrand">Shingles Brand</label><input id="shinglesBrand" name="shinglesBrand" type="text" autocomplete="off" /></div>
+        <div><label for="style">Style</label><input id="style" name="style" type="text" autocomplete="off" /></div>
+        <div><label for="color">Color</label><input id="color" name="color" type="text" autocomplete="off" /></div>
+        <div><label for="sqs">SQs</label><input id="sqs" name="sqs" type="text" autocomplete="off" /></div>
 
-    // ===== Turrets & balance =====
-    const TURRETS = {
-      // Buffed base damage a bit and expanded the roster
-      basic:{name:'Basic', cost:30, dmg:8, rof:1.0, range:2.7, color:'#9ca3af'},
-      piercer:{name:'Piercer', cost:45, dmg:14, rof:1.1, range:3.6, color:'#7dd3fc', pierce:2},
-      shock:{name:'Shock', cost:60, dmg:8, rof:0.42, range:2.9, color:'#a78bfa', chain:0},
-      splash:{name:'Splash', cost:85, dmg:12, rof:0.64, range:3.1, color:'#fbbf24', splash:62},
-      // New turret types
-      cryo:{name:'Cryo', cost:70, dmg:9, rof:1.0, range:3.4, color:'#67e8f9', slow:{mul:0.55,dur:1.6}},
-      plasma:{name:'Plasma', cost:95, dmg:18, rof:0.9, range:3.8, color:'#22d3ee', splash:42},
-      gauss:{name:'Gauss', cost:105, dmg:48, rof:0.50, range:5.0, color:'#60a5fa', beam:true},
-      rail:{name:'Rail', cost:120, dmg:72, rof:0.27, range:5.6, color:'#fb7185'}
-    };
-    function minAvailableTurretCost(){ return TURRETS.basic.cost; }
-    function turretStatMult(){ const a=save.armory, tech=save.tech; return {dmg:1+(a.dmg*0.08)+(tech.fusion?0.10:0), rof:1+(a.fire*0.06), rng:1+(a.range*0.06)}; }
+        <div><label for="iceWater">Ice &amp; Water Barrier (per code)</label><input id="iceWater" name="iceWater" type="text" autocomplete="off" /></div>
+        <div><label for="dripEdge">Drip Edge (Color)</label><input id="dripEdge" name="dripEdge" type="text" autocomplete="off" /></div>
+        <div><label for="gutterApron">Gutter Apron (Color)</label><input id="gutterApron" name="gutterApron" type="text" autocomplete="off" /></div>
 
-    // ===== Challenges =====
-    const CHALLS = [
-      {id:'w5', desc:'Reach Wave 5', goal:1, track:'wave', mark:5, reward:{cores:20}},
-      {id:'w10', desc:'Reach Wave 10', goal:1, track:'wave', mark:10, reward:{cores:30}},
-      {id:'w15', desc:'Reach Wave 15', goal:1, track:'wave', mark:15, reward:{cores:40}},
-      {id:'multi', desc:'Own 12 turrets at once', goal:12, track:'turrets', reward:{cores:30}},
-      {id:'rich', desc:'Hold 600+ shards at any time', goal:600, track:'maxshards', reward:{cores:30}},
-      {id:'rail', desc:'Deal 25,000 dmg with Rail', goal:25000, track:'rail', reward:{cores:40}}
-    ];
-    const RUN_CHALLS = [
-      {id:'r_kill50', desc:'Eliminate 50 enemies this run', goal:50, track:'kills', reward:{shards:60}},
-      {id:'r_spend200', desc:'Spend 200 shards this run', goal:200, track:'spend', reward:{shards:80}},
-      {id:'r_wave5_noloss', desc:'Reach Wave 5 with 0 lives lost', goal:1, track:'noloss', reward:{shards:100}},
-      {id:'r_types3', desc:'Own 3+ different turret types', goal:3, track:'types', reward:{shards:50}},
-      {id:'r_convert3', desc:'Convert 3 Basic → type', goal:3, track:'conversions', reward:{shards:50}},
-      {id:'r_railboss', desc:'Kill a boss with Rail', goal:1, track:'railboss', reward:{shards:90}}
-    ];
+        <div><label for="ventsQty">Vents — Qty</label><input id="ventsQty" name="ventsQty" type="number" min="0" step="1" autocomplete="off" /></div>
+        <div>
+          <label for="ventsType">Vents — Type</label>
+          <select id="ventsType" name="ventsType">
+            <option value="">Select…</option>
+            <option value="Turtle">Turtle</option>
+            <option value="Box">Box/Louver</option>
+            <option value="Other">Other (specify)</option>
+          </select>
+        </div>
+        <div><label for="ventsTypeOther">If Other, type</label><input id="ventsTypeOther" name="ventsTypeOther" type="text" autocomplete="off" placeholder="e.g., O’Hagin" /></div>
+        <div><label for="ventsColor">Vents — Color</label><input id="ventsColor" name="ventsColor" type="text" autocomplete="off" /></div>
 
-    function addProgress(id, delta){
-      var c = save.challenges[id]; if(!c){ c={p:0,done:false}; save.challenges[id]=c; }
-      if(c.done) return; c.p += delta; var meta=null; for(var i=0;i<CHALLS.length;i++){ if(CHALLS[i].id===id){ meta=CHALLS[i]; break; } }
-      if(meta && c.p >= meta.goal){ c.done=true; if(meta.reward && meta.reward.cores){ save.cores+=meta.reward.cores; toast('Challenge complete: +'+meta.reward.cores+' ⚙'); } persist(); buildChallenges(); }
-    }
+        <div>
+          <label>Valleys</label>
+          <div class="checks">
+            <label><input type="radio" name="valleyMode" value="Open">Open</label>
+            <label><input type="radio" name="valleyMode" value="Closed">Closed</label>
+          </div>
+        </div>
+        <div><label for="valleysColor">Valleys — Color</label><input id="valleysColor" name="valleysColor" type="text" autocomplete="off" placeholder="e.g., Painted" /></div>
 
-    let runProg = null;
-    function resetRunProg(){ runProg={p:{}, done:{} , livesLost:0}; }
-    function rAdd(track, delta){ var p=runProg.p[track]||0; p+=delta; runProg.p[track]=p; checkRunChalls(); }
-    function rSet(track, val){ runProg.p[track]=val; checkRunChalls(); }
-    function rGet(track){ return runProg.p[track]||0; }
-    function checkRunChalls(){ for(var i=0;i<RUN_CHALLS.length;i++){ var rc=RUN_CHALLS[i]; if(runProg.done[rc.id]) continue; var val=rGet(rc.track); if(val>=rc.goal){ runProg.done[rc.id]=true; var reward=rc.reward&&rc.reward.shards||0; shards+=reward; toast('Run challenge: '+rc.desc+' +'+reward+' 💎'); } } buildChallenges(); refreshProfile(); }
+        <div><label for="pipeJacksQty">Pipe Jacks — Qty</label><input id="pipeJacksQty" name="pipeJacksQty" type="number" min="0" step="1" autocomplete="off" /></div>
+        <div><label for="pipeJacksType">Pipe Jacks — Type</label><input id="pipeJacksType" name="pipeJacksType" type="text" autocomplete="off" placeholder="e.g., NC" /></div>
 
-    function trackEvent(type, val){ if(type==='wave'){ for(var i=0;i<CHALLS.length;i++){ var c=CHALLS[i]; if(c.track==='wave' && val>=c.mark) addProgress(c.id,1); } addProgress('rail',0); } if(type==='turrets') addProgress('multi', val); if(type==='maxshards') addProgress('rich', val); if(type==='rail') addProgress('rail', val); }
+        <div><label for="roofPitch">Roof Pitch</label><input id="roofPitch" name="roofPitch" type="text" autocomplete="off" placeholder="e.g., 4/12" /></div>
+        <div><label for="stories">Stories</label><input id="stories" name="stories" type="number" min="0" step="1" autocomplete="off" /></div>
+        <div><label for="roofSize">Size</label><input id="roofSize" name="roofSize" type="text" autocomplete="off" placeholder="e.g., 1,050 SF" /></div>
 
-    // ===== Game state =====
-    let running=false, paused=false, intermission=false; let tPrev=0; let gameSpeed=1;
-    let gridSize=56; let cols, rows; let path=[]; let lives=20; let shards=0; let wave=1; let interest=0;
-    let turrets=[]; let bullets=[]; let creeps=[]; let particles=[];
+        <div>
+          <label>Roof Type</label>
+          <div class="checks">
+            <label><input type="checkbox" name="roofType" value="Hip">Hip</label>
+            <label><input type="checkbox" name="roofType" value="Gable">Gable</label>
+            <label><input type="checkbox" name="roofType" value="Both">Both</label>
+          </div>
+        </div>
 
-    let intermissionTimerId=null, intermissionETA=0;
+        <div><label for="ridgeCap">Ridge Cap</label><input id="ridgeCap" name="ridgeCap" type="text" autocomplete="off" /></div>
+        <div><label for="ridgeVent">Ridge Vent</label><input id="ridgeVent" name="ridgeVent" type="text" autocomplete="off" /></div>
 
-    // Rewards helpers (v4.8)
-    function loseLife(){
-      lives--; runProg.livesLost++;
-      shards += 10; // +10 shards per life lost
-      refreshProfile();
-    }
-    function onWaveClearedReward(){
-      save.cores += 1; // +1 core per wave clear
-      toast('+1 ⚙ Core for wave clear');
-      persist();
-    }
+        <div><label for="sideWallQty">Side Wall Flashing — Qty (LF)</label><input id="sideWallQty" name="sideWallQty" type="number" min="0" step="1" autocomplete="off" /></div>
+        <div><label for="sideWallColor">Side Wall Flashing — Color</label><input id="sideWallColor" name="sideWallColor" type="text" autocomplete="off" /></div>
+        <div>
+          <label>Side Wall Flashing — Material</label>
+          <div class="checks">
+            <label><input type="radio" name="sideWallMaterial" value="Metal">Metal</label>
+            <label><input type="radio" name="sideWallMaterial" value="Plastic">Plastic</label>
+          </div>
+        </div>
+      </div>
+    </div>
 
-    function gridInit(){
-      cols = Math.floor(window.innerWidth/gridSize)-1; rows = Math.floor(window.innerHeight/gridSize)-2; if(cols<10) cols=10; if(rows<8) rows=8;
-      path=[]; let y=2; let dir=1; while(y<rows-1){ if(dir>0){ for(let x=1;x<cols-1;x++) path.push([x,y]); } else { for(let x=cols-2;x>=1;x--) path.push([x,y]); } y+=2; dir*=-1; }
-      premiumTiles.clear(); for(let r=1;r<rows-1;r++){ for(let c=1;c<cols-1;c++){ if(isOnPath(c,r)) continue; const centerBias=(Math.abs(c-cols/2)+Math.abs(r-rows/2)); if(((c+r)%2===0) && centerBias<(cols+rows)/3) premiumTiles.add(key(c,r)); }}
-    }
-    let premiumTiles = new Set();
-    gridInit(); window.addEventListener('resize', gridInit);
+    <div class="panel">
+      <h2>Gutters</h2>
+      <div class="grid two">
+        <div>
+          <label>Gutters:</label>
+          <div class="checks">
+            <label><input type="radio" name="guttersSize" value="5">5"</label>
+            <label><input type="radio" name="guttersSize" value="6">6"</label>
+          </div>
+        </div>
+        <div><label for="guttersColor">Gutters Color</label><input id="guttersColor" name="guttersColor" type="text" autocomplete="off" /></div>
+        <div>
+          <label>Downspouts:</label>
+          <div class="checks">
+            <label><input type="radio" name="downspoutsSize" value="2x3">2×3</label>
+            <label><input type="radio" name="downspoutsSize" value="3x4">3×4</label>
+          </div>
+        </div>
+        <div><label for="downspoutsColor">Downspouts Color</label><input id="downspoutsColor" name="downspoutsColor" type="text" autocomplete="off" /></div>
+        <div>
+          <label>Gutter Guards:</label>
+          <div class="checks">
+            <label><input type="checkbox" name="gutterGuards" value="Plastic">Plastic</label>
+            <label><input type="checkbox" name="gutterGuards" value="RX">RX</label>
+            <label><input type="checkbox" name="gutterGuards" value="Leaf Free">Leaf Free</label>
+          </div>
+        </div>
+        <div><label for="gutterNotes">Gutter Notes</label><input id="gutterNotes" name="gutterNotes" type="text" autocomplete="off" /></div>
+      </div>
+    </div>
 
-    function gx(c){ return c*gridSize + gridSize*0.5; } function gy(r){ return r*gridSize + gridSize*0.5; } function key(c,r){ return c+','+r; }
+    <div class="panel">
+      <h2>Siding Info</h2>
+      <div class="grid two">
+        <div><label for="sidingBrand">Brand</label><input id="sidingBrand" name="sidingBrand" type="text" autocomplete="off" /></div>
+        <div><label for="sidingStyle">Style</label><input id="sidingStyle" name="sidingStyle" type="text" autocomplete="off" /></div>
+        <div><label for="sidingSqs">SQs</label><input id="sidingSqs" name="sidingSqs" type="text" autocomplete="off" /></div>
+        <div><label for="sidingColor">Color</label><input id="sidingColor" name="sidingColor" type="text" autocomplete="off" /></div>
+        <div>
+          <label>Elevations</label>
+          <div class="checks">
+            <label><input type="checkbox" name="elevations" value="Front">Front</label>
+            <label><input type="checkbox" name="elevations" value="Right">Right</label>
+            <label><input type="checkbox" name="elevations" value="Left">Left</label>
+            <label><input type="checkbox" name="elevations" value="Rear">Rear</label>
+          </div>
+        </div>
+        <div><label for="trim">Trim</label><input id="trim" name="trim" type="text" autocomplete="off" /></div>
+        <div>
+          <label>Fascia</label>
+          <div class="checks">
+            <label><input type="radio" name="fascia" value="Smooth">Smooth</label>
+            <label><input type="radio" name="fascia" value="PVC">PVC</label>
+          </div>
+        </div>
+        <div><label for="fasciaColor">Fascia Color</label><input id="fasciaColor" name="fasciaColor" type="text" autocomplete="off" /></div>
+        <div>
+          <label>Soffit</label>
+          <div class="checks">
+            <label><input type="radio" name="soffit" value="Solid">Solid</label>
+            <label><input type="radio" name="soffit" value="Vented">Vented</label>
+          </div>
+        </div>
+        <div><label for="soffitColor">Soffit Color</label><input id="soffitColor" name="soffitColor" type="text" autocomplete="off" /></div>
+        <div>
+          <label>Window Wraps</label>
+          <div class="checks">
+            <label><input type="radio" name="windowWraps" value="Smooth">Smooth</label>
+            <label><input type="radio" name="windowWraps" value="PVC">PVC</label>
+          </div>
+        </div>
+        <div><label for="windowWrapsColor">Window Wraps Color</label><input id="windowWrapsColor" name="windowWrapsColor" type="text" autocomplete="off" /></div>
+        <div>
+          <label>Blocks</label>
+          <div class="checks">
+            <label><input type="checkbox" name="blocks" value="Light Blocks">Light Blocks</label>
+            <label><input type="checkbox" name="blocks" value="Split Blocks">Split Blocks</label>
+          </div>
+        </div>
+      </div>
+    </div>
 
-    // ===== UI helpers =====
-    function showTab(name){
-      if(ui.panelPlay) ui.panelPlay.style.display = name==='Play'? '' : 'none';
-      if(ui.panelArmory) ui.panelArmory.style.display = name==='Armory'? '' : 'none';
-      if(ui.panelChallenges) ui.panelChallenges.style.display = name==='Challenges'? '' : 'none';
-      if(ui.panelSettings) ui.panelSettings.style.display = name==='Settings'? '' : 'none';
-    }
-    function updatePlayButtons(){ ui.startBtn.style.display = (!running && !intermission) ? '' : 'none'; ui.nextBtn.style.display  = (intermission) ? '' : 'none'; ui.resumeBtn.style.display = (running && !intermission) ? '' : 'none'; }
-    function openMenu(){ paused=true; ui.overlay.style.display='grid'; updatePlayButtons(); buildArmory(); buildTech(); buildChallenges(); refreshProfile(); }
-    function togglePause(){ if(!running) return; paused=!paused; ui.pauseBtn.textContent = paused? 'Resume (P)' : 'Pause (P)'; }
-    function setSpeed(n){ gameSpeed = Math.max(0.25, Math.min(4, n)); ui.speed.textContent = gameSpeed+'x'; }
+    <div class="panel">
+      <h2>More, Payment & Instructions</h2>
+      <div class="grid two">
+        <div><label for="materialDrop">Material drop off</label><input id="materialDrop" name="materialDrop" type="text" autocomplete="off" /></div>
+        <div><label for="redeck">Redeck (Partial or Full)</label><input id="redeck" name="redeck" type="text" autocomplete="off" /></div>
+        <div><label for="interiorDamage">Interior damage</label><input id="interiorDamage" name="interiorDamage" type="text" autocomplete="off" /></div>
+        <div><label for="cleanup">Cleanup</label><input id="cleanup" name="cleanup" type="text" autocomplete="off" /></div>
+        <div style="grid-column:1/-1"><label for="miscNotes">Misc. Notes</label><textarea id="miscNotes" name="miscNotes" autocomplete="off" placeholder="Optional"></textarea></div>
 
-    function refreshProfile(){ ui.wave.textContent=wave; ui.lives.textContent=lives; ui.cores.textContent=save.cores; ui.shards.textContent=Math.floor(shards); ui.p_best.textContent=save.bestWave; ui.p_cores.textContent=save.cores; ui.a_cores.textContent=save.cores; ui.p_shards.textContent=Math.floor(shards); ui.p_tech.textContent=Object.keys(save.tech).length+' unlocked'; ui.p_diff.textContent={1:'Standard','1.35':'Veteran','1.8':'Insane'}[String(save.settings.diff)||'1']; ui.speed.textContent=gameSpeed+'x'; }
+        <div><label for="agreedAmount">Agreed Amount ($)</label><input id="agreedAmount" name="agreedAmount" type="text" autocomplete="off" /></div>
+        <div><label for="firstPayment">First Payment ($)</label><input id="firstPayment" name="firstPayment" type="text" autocomplete="off" /></div>
+        <div><label for="finalPayment">Final Payment ($)</label><input id="finalPayment" name="finalPayment" type="text" autocomplete="off" /></div>
 
-    // ===== Armory (permanent) =====
-    const ARMORY = [
-      {id:'dmg', name:'All Turret Damage', desc:'+8% dmg per level', base:40, scale:1.75, max:20},
-      {id:'fire', name:'All Fire Rate', desc:'+6% rof per level', base:50, scale:1.8, max:20},
-      {id:'range', name:'All Range', desc:'+6% range per level', base:50, scale:1.7, max:15},
-      {id:'startShards', name:'Starting Shards', desc:'+15 starting shards per level', base:60, scale:1.9, max:10},
-      {id:'interest', name:'Wave Interest', desc:'+2% shards interest per wave', base:80, scale:2.0, max:10}
-    ];
-    function armoryPrice(it){ return Math.floor(it.base*Math.pow(it.scale, save.armory[it.id]||0)); }
-    function buildArmory(){ ui.armoryGrid.innerHTML=''; ARMORY.forEach(function(it){ const lvl=save.armory[it.id]||0; const price=armoryPrice(it); const maxed=lvl>=it.max; const div=document.createElement('div'); div.className='shopitem'; var priceHTML = maxed?'<span class="owned">Maxed</span>':'<span class="price">⚙ '+price+'</span>'; var btnHTML = maxed?'':'<button data-buyarm="'+it.id+'">Buy</button>'; div.innerHTML='<h4>'+it.name+'</h4><div style="color:var(--muted);margin-bottom:6px">'+it.desc+'</div><div class="foot"><div>'+priceHTML+'<span class="badge">Lv '+lvl+'/'+it.max+'</span></div><div>'+btnHTML+'</div></div>'; ui.armoryGrid.appendChild(div); }); ui.armoryGrid.querySelectorAll('[data-buyarm]').forEach(function(b){ b.addEventListener('click',function(){ const id=b.getAttribute('data-buyarm'); const it=ARMORY.find(function(x){return x.id===id}); const price=armoryPrice(it); if(save.cores<price){ toast('Not enough Cores'); return;} save.cores-=price; save.armory[id]++; persist(); buildArmory(); recomputeAllTurrets(); }); }); }
+        <div style="grid-column:1/-1" class="row">
+          <label for="instructions">Instructions / Location</label>
+          <input id="instructions" name="instructions" type="text" autocomplete="off" placeholder="Address / access notes" />
+        </div>
+      </div>
+    </div>
 
-    // Tech tree removed; keep stub so calls are harmless
-    function buildTech(){ return; }
+    <div class="panel">
+      <h2>Signatures</h2>
+      <div class="sig-row">
+        <div><label for="custDate">Agreed to by Customer on date</label><input id="custDate" name="custDate" type="date" autocomplete="off" /></div>
+        <div><label for="custSignature">Customer Signature (typed)</label><input id="custSignature" name="custSignature" type="text" autocomplete="off" placeholder="Sign here" /></div>
+        <div><label for="tdhDate">Agreed to by TDH Representative on date</label><input id="tdhDate" name="tdhDate" type="date" autocomplete="off" /></div>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <label for="tdhSignature">TDH Representative Signature (typed)</label>
+        <input id="tdhSignature" name="tdhSignature" type="text" autocomplete="off" placeholder="Sign here" />
+      </div>
+    </div>
+  </form>
+</div>
 
-    function buildChallenges(){
-      // Meta
-      ui.challengeList.innerHTML=''; CHALLS.forEach(function(c){ const st=save.challenges[c.id]||{p:0,done:false}; const div=document.createElement('div'); div.className='tile'; var progress='Progress: '+Math.floor(st.p)+'/'+c.goal; if(c.track==='wave'){ progress += ' (mark '+c.mark+')'; } var badge=st.done?'<span class="badge" style="color:var(--good)">Completed</span>':'<span class="badge">'+progress+'</span>'; div.innerHTML='<h4 style="margin:0 0 6px">'+c.desc+'</h4><div class="foot"><div>'+badge+'</div><div class="badge">Reward: '+(c.reward.cores||0)+' ⚙</div></div>'; ui.challengeList.appendChild(div); });
-      // Run
-      ui.runChallengeList.innerHTML=''; for(var i=0;i<RUN_CHALLS.length;i++){ var rc=RUN_CHALLS[i]; var val=rGet(rc.track); var done=!!runProg.done[rc.id]; var prog='Progress: '+Math.floor(val)+'/'+rc.goal; var badge=done?'<span class="badge" style="color:var(--good)">Completed</span>':'<span class="badge">'+prog+'</span>'; var div2=document.createElement('div'); div2.className='tile'; div2.innerHTML='<h4 style="margin:0 0 6px">'+rc.desc+'</h4><div class="foot"><div>'+badge+'</div><div class="badge">Reward: '+(rc.reward.shards||0)+' 💎</div></div>'; ui.runChallengeList.appendChild(div2); }
-    }
+<!-- jsPDF loader -->
+<script>
+async function ensureJsPDFLoaded(){
+  if (window.jspdf && window.jspdf.jsPDF) return true;
+  const urls = [
+    "https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js",
+    "https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js",
+    "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js",
+  ];
+  for (const u of urls){
+    try{ await new Promise((res,rej)=>{const s=document.createElement('script');s.src=u;s.onload=res;s.onerror=rej;document.head.appendChild(s);}); if(window.jspdf?.jsPDF) return true; }catch(e){}
+  }
+  alert("Couldn't load jsPDF."); return false;
+}
+</script>
 
-    // ===== Build & conversion =====
-    function lvMults2(lv){ return {dmg:Math.pow(1.10,(lv&&lv.dmg)||0), rof:Math.pow(1.10,(lv&&lv.rof)||0), rng:Math.pow(1.08,(lv&&lv.rng)||0)}; }
-    function recomputeTurretStats(t){
-      const base=TURRETS[t.id];
-      const mul=turretStatMult();
-      const lm=lvMults2(t.lv||{});
-      t.dmg=base.dmg*mul.dmg*lm.dmg;
-      t.rof=base.rof*mul.rof*lm.rof;
-      t.range=base.range*mul.rng*lm.rng;
-      t.color=base.color;
-      t.chain=base.chain||0;
-      t.splash=base.splash||0;
-      t.pierce=base.pierce||0;
-      t.beam=!!base.beam;
-      t.slow=base.slow?{mul:base.slow.mul,dur:base.slow.dur}:null;
-    }
-    function recomputeAllTurrets(){ for(let i=0;i<turrets.length;i++){ recomputeTurretStats(turrets[i]); } }
+<script>
+/* helpers */
+function formToObject(form){
+  const data={};
+  new FormData(form).forEach((v,k)=>{
+    if (data[k]!==undefined){ if(!Array.isArray(data[k])) data[k]=[data[k]]; data[k].push(v); }
+    else data[k]=v;
+  });
+  return data;
+}
+function fillForm(form,obj){
+  for(const el of form.elements){
+    if(!el.name) continue;
+    const v=obj[el.name]; if(v===undefined) continue;
+    if(el.type==='checkbox') el.checked = Array.isArray(v) ? v.includes(el.value) : (v===el.value||v===true);
+    else if(el.type==='radio') el.checked = (String(v)===el.value);
+    else el.value = Array.isArray(v) ? v[0] : v;
+  }
+}
+</script>
 
-    function showTurretPanel(t,x,y){
-      const div=ui.tPanel; if(!t.lv) t.lv={dmg:0,rof:0,rng:0};
-      function costUp(which){ return Math.floor(30*Math.pow(1.7, (t.lv && t.lv[which])||0)); }
-      var html='<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h4 style="margin:0">'+TURRETS[t.id].name+' — Upgrades</h4><button data-close style="background:#111827;border:1px solid #1f2937;border-radius:8px;padding:4px 8px">✕</button></div>'+
-        '<div class="row"><span>Damage +10%</span><button data-up="dmg">💎 '+costUp('dmg')+'</button></div>'+
-        '<div class="row"><span>Fire Rate +10%</span><button data-up="rof">💎 '+costUp('rof')+'</button></div>'+
-        '<div class="row"><span>Range +8%</span><button data-up="rng">💎 '+costUp('rng')+'</button></div>'+
-        '<div class="row"><span style="opacity:.6">— — —</span><span style="opacity:.6">— — —</span></div>'+
-        '<h4 style="margin:6px 0">Type Conversion</h4>';
-      var opts=['piercer','shock','cryo','plasma','gauss','splash','rail'];
-      for(var i=0;i<opts.length;i++){
-        var to=opts[i]; var fromCost=TURRETS[t.id].cost; var toCost=TURRETS[to].cost; var diff=Math.max(0,toCost-fromCost);
-        var disabled=''; var note=''; var isPrem = premiumTiles.has(key(t.c,t.r));
-        if(isPrem && toCost<70){ disabled=' disabled'; note=' (premium tile)'; }
-        if(toCost<=fromCost && t.id!=='basic'){ disabled=' disabled'; note=' (lateral/cheaper)'; }
-        html+='<div class="row"><span>Convert to '+TURRETS[to].name+note+'</span><button data-convert="'+to+'"'+disabled+'>💎 '+diff+'</button></div>';
-      }
-      html+='<div class="row"><span style="color:#9aa4b2">Sell (refund 50%)</span><button data-sell>↺ Sell</button></div>';
-      div.innerHTML=html; div.style.display='block';
-      // Position panel (avoid off-screen)
-      const margin=12, vw=window.innerWidth, vh=window.innerHeight; let tx=Math.max(margin, Math.min(vw-margin, x)); let ty=Math.max(margin, Math.min(vh-margin, y));
-      div.style.left=tx+'px'; div.style.top=ty+'px';
-      div.style.transform = (ty<200)? 'translate(-50%, 10px)' : 'translate(-50%,-100%)';
-      // Interactions
-      const closeBtn=div.querySelector('[data-close]'); if(closeBtn){ closeBtn.onclick=function(){ div.style.display='none'; }; }
-      div.querySelectorAll('[data-up]').forEach(function(b){ b.onclick=function(){ var k=b.getAttribute('data-up'); var price=costUp(k); if(shards<price){ toast('Not enough Shards'); return;} shards-=price; t.lv[k]=(t.lv[k]||0)+1; recomputeTurretStats(t); rAdd('spend', price); refreshProfile(); showTurretPanel(t,x,y); }; });
-      div.querySelectorAll('[data-convert]').forEach(function(b){ b.onclick=function(){ var to=b.getAttribute('data-convert'); var fromCost=TURRETS[t.id].cost; var toCost=TURRETS[to].cost; var isPrem=premiumTiles.has(key(t.c,t.r)); if(isPrem && toCost<70){ toast('Premium tile requires high‑tier turret'); return; }
-          var price=Math.max(0,toCost-fromCost); if(shards<price){ toast('Not enough Shards'); return; }
-          shards-=price; rAdd('spend', price); t.id=to; recomputeTurretStats(t); rSet('types', uniqueTypesOnField()); refreshProfile(); showTurretPanel(t,x,y); }; });
-      var sellBtn=div.querySelector('[data-sell]'); if(sellBtn){ sellBtn.onclick=function(){ shards+=Math.floor((TURRETS[t.id].cost)/2); turrets.splice(turrets.indexOf(t),1); div.style.display='none'; rSet('types', uniqueTypesOnField()); refreshProfile(); }; }
-    }
+<script>
+/* values → printable strings + flags (unchanged semantics) */
+function computeValues(d){
+  const out = {};
+  const num = n => (n===undefined || n===null || n==='') ? '' : String(n);
 
-    function uniqueTypesOnField(){ var s={}; for(let i=0;i<turrets.length;i++){ s[turrets[i].id]=1; } var n=0; for(var k in s){ if(Object.prototype.hasOwnProperty.call(s,k)) n++; } return n; }
+  Object.assign(out, {
+    name:d.name||'', primaryContactName:d.primaryContactName||'', primaryPhone:d.primaryPhone||'',
+    insuranceCompany:d.insuranceCompany||'', claimNumber:d.claimNumber||'', phone:d.phone||'',
+    address:d.address||'', cityStateZip:d.cityStateZip||'',
 
-    cvs.addEventListener('click',function(e){
-      if(!( (running && !paused) || intermission )) return;
-      const rect = cvs.getBoundingClientRect();
-      const sx = e.clientX - rect.left; const sy = e.clientY - rect.top; if(sx<0||sy<0||sx>rect.width||sy>rect.height) return;
-      const g = screenToGrid(sx, sy); if(!g) return;
-      const t = turrets.find(function(tt){return tt.c===g.c && tt.r===g.r});
-      if(t){ showTurretPanel(t, e.clientX, e.clientY); return; }
-      if(isOnPath(g.c,g.r) || !isBuildable(g.c,g.r)) return;
-      const isPremium = premiumTiles.has(key(g.c,g.r));
-      if(isPremium && TURRETS.basic.cost<70){ toast('Premium tile: requires higher‑tier turret'); return; }
-      if(shards>=TURRETS.basic.cost){ placeTurret('basic',g.c,g.r); shards -= TURRETS.basic.cost; rAdd('spend', TURRETS.basic.cost); rSet('types', uniqueTypesOnField()); refreshProfile(); }
-    });
+    tearOffLayers:d.tearOffLayers||'',
+    shinglesBrand:d.shinglesBrand||'', style:d.style||'', color:d.color||'', sqs:d.sqs||'',
+    iceWater:d.iceWater||'', dripEdge:d.dripEdge||'', gutterApron:d.gutterApron||'',
+    roofPitch:d.roofPitch||'', stories:d.stories||'', roofSize:d.roofSize||'',
+    ridgeCap:d.ridgeCap||'', ridgeVent:d.ridgeVent||'',
 
-    function screenToGrid(sx,sy){ const c=Math.floor(sx/gridSize), r=Math.floor(sy/gridSize); if(c<1||r<1||c>=cols-1||r>=rows-1) return null; return {c:c,r:r}; }
-    function isOnPath(c,r){ return path.some(function(p){return p[0]===c && p[1]===r}); }
-    function isBuildable(c,r){ if(c<1||r<1||c>=cols-1||r>=rows-1) return false; if(isOnPath(c,r)) return false; if(turrets.some(function(t){return t.c===c&&t.r===r})) return false; return true; }
+    guttersColor:d.guttersColor||'', downspoutsColor:d.downspoutsColor||'', gutterNotes:d.gutterNotes||'',
 
-    function placeTurret(id,c,r){ const base=TURRETS[id]; const mul=turretStatMult(); const t={id:id,c:c,r:r, cooldown:0, dmg:base.dmg*mul.dmg, rof:base.rof*mul.rof, range:base.range*mul.rng, color:base.color, chain:base.chain||0, splash:base.splash||0, barrel:0, lv:{dmg:0,rof:0,rng:0}}; turrets.push(t); trackEvent('turrets', turrets.length); }
+    sidingBrand:d.sidingBrand||'', sidingStyle:d.sidingStyle||'', sidingSqs:d.sidingSqs||'', sidingColor:d.sidingColor||'',
+    trim:d.trim||'', fasciaColor:d.fasciaColor||'', soffitColor:d.soffitColor||'',
+    windowWrapsColor:d.windowWrapsColor||'',
 
-    // ===== Loop =====
-    function step(t){ if(!running){ tPrev=t; return requestAnimationFrame(step);} let dt=Math.min(0.033,(t-tPrev)/1000); dt*=gameSpeed; tPrev=t; if(!paused){ update(dt); draw(); } requestAnimationFrame(step); }
+    materialDrop:d.materialDrop||'', redeck:d.redeck||'', interiorDamage:d.interiorDamage||'',
+    cleanup:d.cleanup||'', miscNotes:d.miscNotes||'',
+    agreedAmount:d.agreedAmount||'', firstPayment:d.firstPayment||'', finalPayment:d.finalPayment||'',
+    custDate:d.custDate||'', custSignature:d.custSignature||'', tdhDate:d.tdhDate||'', tdhSignature:d.tdhSignature||'',
+    instructions:d.instructions||'',
+  });
 
-    function update(dt){
-      // Creeps movement
-      for(let i=0;i<creeps.length;i++){
-        const c=creeps[i];
-        if(c.dead) continue; if(c.delay>0){ c.delay-=dt; continue; }
-        if(c.slowT>0){ c.slowT-=dt; if(c.slowT<=0){ c.slowMul=1; c.slowT=0; }}
-        if(c.kind==='boss' && c.shield<80) c.shield = Math.min(80, c.shield + 5*dt);
-        let remaining = (c.speed * (c.slowMul||1)) * dt;
-        while(remaining>0 && !c.dead){
-          const p = path[c.pathIndex];
-          if(!p){ loseLife(); c.dead=true; if(lives<=0){ endRun(); return; } break; }
-          const nx=gx(p[0]), ny=gy(p[1]);
-          const dx=nx-c.x, dy=ny-c.y; const dist=Math.hypot(dx,dy);
-          if(dist<=remaining){
-            c.x = nx; c.y = ny; c.pathIndex++;
-            remaining -= dist;
-            if(c.pathIndex>=path.length){ loseLife(); c.dead=true; if(lives<=0){ endRun(); return; } break; }
-          } else {
-            const ux = dx/(dist||1), uy = dy/(dist||1);
-            c.x += ux*remaining; c.y += uy*remaining;
-            remaining = 0;
-          }
-        }
-      }
-      // Turret fire
-      for(let i=0;i<turrets.length;i++){ const t=turrets[i]; t.cooldown-=dt; if(t.cooldown<=0){ const target=nearestCreep(t.c,t.r,t.range*gridSize); if(target){ fire(t,target); t.cooldown=Math.max(0.05, 1/t.rof); } } }
-      // Bullets
-      for(let i=bullets.length-1;i>=0;i--){ const b=bullets[i]; b.x+=b.vx*dt; b.y+=b.vy*dt; b.life-=dt; if(b._avoidIdTime){ b._avoidIdTime-=dt; if(b._avoidIdTime<=0){ b._avoidId=undefined; b._avoidIdTime=0; }} if(b.life<=0){ bullets.splice(i,1); continue; }
-        for(let j=0;j<creeps.length;j++){ const c=creeps[j]; if(c.dead||c.delay>0) continue; if(b._avoidId&&c.id===b._avoidId) continue; const d=Math.hypot(c.x-b.x,c.y-b.y); if(d<14){ let dmg=b.dmg; if(c.kind==='tank') dmg = Math.max(1, dmg - 10); if(c.kind==='boss' && c.shield>0){ const soak=Math.min(dmg, c.shield); c.shield-=soak; dmg-=soak; }
-            c.hp -= dmg; if(b.slowMul){ c.slowMul=Math.min(c.slowMul||1, b.slowMul); c.slowT=Math.max(c.slowT||0, b.slowDur||0); }
-            if(b.type==='splash') explode(b.x,b.y, b.splash, b.dmg*0.6); if(b.type==='rail') trackEvent('rail', b.dmg);
-            let removeBullet=true; if(b.pierce>0){ b.pierce--; b._avoidId=c.id; b._avoidIdTime=0.06; removeBullet=false; }
-            if(removeBullet){ bullets.splice(i,1); }
-            if(c.hp<=0){ var wasBoss=(c.kind==='boss'); c.dead=true; rAdd('kills',1); const gain = wasBoss?100: (c.kind==='tank'?22: (c.kind==='swarm'?7:9)); shards += gain; if(wasBoss && b.type==='rail') rAdd('railboss',1); rSet('types', uniqueTypesOnField()); }
-            break; }
-        }
-      }
-      // Particles
-      for(let i=particles.length-1;i>=0;i--){ const p=particles[i]; p.x+=p.vx*dt; p.y+=p.vy*dt; p.life-=dt; if(p.life<=0) particles.splice(i,1); }
-      // Wave complete -> Intermission
-      let allDead=true; for(let i=0;i<creeps.length;i++){ if(!creeps[i].dead){ allDead=false; break; } }
-      if(allDead){ if(!intermission){ startIntermission(); } }
-      refreshProfile(); if(save.bestWave<wave) save.bestWave=wave;
-    }
+  const ventTypeRaw = (d.ventsType==='Other' ? d.ventsTypeOther : d.ventsType) || '';
+  const ventType = ventTypeRaw.trim();
+  out.ventsQty = num(d.ventsQty);
+  out.ventsType = ventType;
+  out.ventsColor = (d.ventsColor||'').trim();
+  out.x_vents_Turtle = /\bturtle\b/i.test(ventType) ? 'X' : '';
 
-    function nearestCreep(c,r,range){ const x=gx(c), y=gy(r); let best=null, bd=1e9; for(let i=0;i<creeps.length;i++){ const m=creeps[i]; if(m.dead||m.delay>0) continue; const d=Math.hypot(m.x-x,m.y-y); if(d<range && d<bd){ best=m; bd=d; } } return best; }
+  const vm = d.valleyMode || '';
+  out.x_valley_Open   = vm==='Open'   ? 'X' : '';
+  out.x_valley_Closed = vm==='Closed' ? 'X' : '';
+  out.valleysColor = (d.valleysColor||'').trim();
 
-    function fire(t,target){
-      const x=gx(t.c), y=gy(t.r);
-      const dx=target.x-x, dy=target.y-y;
-      const d=Math.hypot(dx,dy)||1;
-      const sp=360; const vx=dx/d*sp, vy=dy/d*sp;
-      const type=t.splash?'splash':((t.id==='rail'||t.beam)?'rail':'bullet');
-      const b={x:x,y:y,vx:vx,vy:vy,life:1.2,dmg:t.dmg,type:type,splash:t.splash||0,trail:8,pierce:t.pierce||0};
-      if(t.slow){ b.slowMul=t.slow.mul; b.slowDur=t.slow.dur; }
-      bullets.push(b);
-      t.barrel=Math.atan2(dy,dx);
-      addMuzzle(x,y,t.color);
-      if(t.id==='shock' && save.tech.chain){ chainZap(target, 2, t.dmg*0.62); }
-      if(t.id==='piercer' && save.tech.incendiary){ burn(target, t.dmg*0.32); }
-    }
-    function chainZap(start,hops,dmg){ let current=start; for(let i=0;i<hops;i++){ const next=(function(){ for(let k=0;k<creeps.length;k++){ const c=creeps[k]; if(!c.dead && c!==current && Math.hypot(c.x-current.x,c.y-current.y)<86) return c; } return null; })(); if(!next) break; next.hp-=dmg; addZap(current.x,current.y,next.x,next.y); if(next.hp<=0){ next.dead=true; rAdd('kills',1); shards+=12; } current=next; } }
-    function burn(target,dmg){ target.burn=(target.burn||0)+dmg; }
-    function explode(x,y,r,dmg){ for(let i=0;i<creeps.length;i++){ const c=creeps[i]; if(c.dead||c.delay>0) continue; const d=Math.hypot(c.x-x,c.y-y); if(d<r){ let dm=dmg*(1-d/r); if(c.kind==='tank') dm=Math.max(1,dm-6); c.hp-=dm; if(c.hp<=0){ c.dead=true; rAdd('kills',1); shards+=9; } } } addExplosion(x,y,r); }
+  out.pipeJacksQty = num(d.pipeJacksQty);
+  out.pipeJacksType = (d.pipeJacksType||'').trim();
 
-    // Visuals
-    function addMuzzle(x,y,color){ if(!save.settings.particles) return; for(let i=0;i<8;i++){ const a=Math.random()*Math.PI*2; const s=80+Math.random()*120; particles.push({x:x,y:y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:0.22,color:color}); } }
-    function addExplosion(x,y,r){ if(!save.settings.particles) return; for(let i=0;i<20;i++){ const a=Math.random()*Math.PI*2; const s=20+Math.random()*160; particles.push({x:x,y:y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:0.55,color:'#fbbf24'}); } }
-    function addZap(x1,y1,x2,y2){ particles.push({x:x1,y:y1,vx:(x2-x1),vy:(y2-y1),life:0.08,color:'#a78bfa',beam:true}); }
+  const swQty = num(d.sideWallQty);
+  const swColor = (d.sideWallColor||'').trim();
+  out.sideWallMain = [swQty && (swQty + ' LF'), swColor].filter(Boolean).join(' ');
+  out.x_sideWall_Metal   = d.sideWallMaterial==='Metal'   ? 'X' : '';
+  out.x_sideWall_Plastic = d.sideWallMaterial==='Plastic' ? 'X' : '';
 
-    let starT=0;
-    function draw(){ const w=window.innerWidth, h=window.innerHeight; ctx.clearRect(0,0,w,h); const grad=ctx.createLinearGradient(0,0,0,h); grad.addColorStop(0,'#0b1020'); grad.addColorStop(1,'#05060f'); ctx.fillStyle=grad; ctx.fillRect(0,0,w,h); starT+=0.6*gameSpeed; ctx.save(); ctx.globalAlpha=0.35; ctx.fillStyle='#90a7ff'; for(let i=0;i<90;i++){ const x=((i*113+starT*3)%w); const y=((i*71+starT*2)%h); ctx.fillRect(x,y,2,2); } ctx.restore();
-      ctx.save(); const pulse=0.2+0.1*Math.sin(starT*0.06); ctx.globalAlpha=0.25+pulse; ctx.strokeStyle='#60a5fa'; ctx.lineWidth=gridSize*0.6; ctx.lineCap='round'; ctx.beginPath(); for(let i=0;i<path.length;i++){ const p=path[i]; const xx=gx(p[0]), yy=gy(p[1]); if(i){ctx.lineTo(xx,yy);} else {ctx.moveTo(xx,yy);} } ctx.stroke(); ctx.restore();
-      for(let r=1;r<rows-1;r++){ for(let c=1;c<cols-1;c++){ if(isOnPath(c,r)) continue; const x=c*gridSize+gridSize*0.2, y=r*gridSize+gridSize*0.2, w2=gridSize*0.6, h2=gridSize*0.6; if(premiumTiles.has(key(c,r))){ ctx.fillStyle='rgba(0,0,0,.6)'; ctx.fillRect(x,y,w2,h2); ctx.fillStyle='rgba(147,197,253,.06)'; for(let i=0;i<h2;i+=6){ ctx.fillRect(x,y+i,w2,1);} } else { ctx.fillStyle='rgba(99,102,241,.12)'; ctx.fillRect(x,y,w2,h2); } }}
-      for(let i=0;i<turrets.length;i++){ const t=turrets[i]; const x=gx(t.c), y=gy(t.r); glow(x,y,t.color); ctx.save(); ctx.translate(x,y); ctx.rotate(t.barrel||0); ctx.fillStyle=t.color; roundRect(-18,-18,36,36,10,true); ctx.fillStyle='#e5e7eb'; roundRect(6,-6,18,12,4,true); ctx.restore(); }
-      for(let i=0;i<creeps.length;i++){ const c=creeps[i]; if(c.dead||c.delay>0) continue; const hp=c.hp/c.max; ctx.save(); ctx.translate(c.x,c.y);
-        if(c.kind==='runner'){ ctx.fillStyle='#7dd3fc'; triangle(0,0,20); }
-        else if(c.kind==='tank'){ ctx.fillStyle='#f59e0b'; hex(0,0,16); ctx.strokeStyle='#1f2937'; ctx.stroke(); }
-        else if(c.kind==='swarm'){ ctx.fillStyle='#a78bfa'; circle(-8,-6,6); circle(10,-2,6); circle(-2,10,6); }
-        else { ring(0,0,26); ring(0,0,16); ctx.fillStyle='#fb7185'; circle(0,0,8); if(c.shield>0){ ctx.strokeStyle='#93c5fd'; ring(0,0,32); } }
-        ctx.restore();
-        ctx.fillStyle='#111827'; ctx.fillRect(c.x-14,c.y-18,28,4); ctx.fillStyle='#22c55e'; ctx.fillRect(c.x-14,c.y-18,28*hp,4);
-        if(c.burn){ c.hp -= 6*0.033*gameSpeed; c.burn -= 6*0.033*gameSpeed; }
-      }
-      for(let i=0;i<bullets.length;i++){ const b=bullets[i]; if(b.type==='rail'){ ctx.strokeStyle=b.splash? '#fb7185' : '#60a5fa'; ctx.globalAlpha=0.9; line(b.x,b.y,b.x-b.vx*0.06,b.y-b.vy*0.06); ctx.globalAlpha=1; } else { ctx.fillStyle='#e5e7eb'; ctx.globalAlpha=0.7; ctx.fillRect(b.x-2,b.y-2,4,4); ctx.globalAlpha=1; } }
-      ctx.save(); ctx.globalCompositeOperation='lighter'; for(let i=0;i<particles.length;i++){ const p=particles[i]; if(p.beam){ ctx.strokeStyle=p.color; ctx.globalAlpha=Math.max(0,p.life*3); line(p.x,p.y,p.x+p.vx,p.y+p.vy); } else { ctx.globalAlpha=Math.max(0,p.life*2); ctx.fillStyle=p.color||'#fff'; ctx.fillRect(p.x,p.y,2,2); } } ctx.restore();
-      drawTopBars();
-    }
+  const loc = new Set([].concat(d.roofingLocations||[]));
+  out.x_loc_House  = loc.has('House')  ? 'X' : '';
+  out.x_loc_Garage = loc.has('Garage') ? 'X' : '';
+  out.x_loc_Shed   = loc.has('Shed')   ? 'X' : '';
+  out.x_loc_Flat   = loc.has('Flat')   ? 'X' : '';
 
-    function triangle(x,y,s){ ctx.beginPath(); ctx.moveTo(x,y-s*0.8); ctx.lineTo(x+s*0.9,y+s*0.8); ctx.lineTo(x-s*0.9,y+s*0.8); ctx.closePath(); ctx.fill(); }
-    function hex(x,y,r){ ctx.beginPath(); for(let i=0;i<6;i++){ const a=i*Math.PI/3; const px=x+Math.cos(a)*r, py=y+Math.sin(a)*r; if(i){ctx.lineTo(px,py);} else {ctx.moveTo(px,py);} } ctx.closePath(); ctx.fill(); }
-    function circle(x,y,r){ ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill(); }
-    function ring(x,y,r){ ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.stroke(); }
+  out.x_under_15   = d.underlayment==='15lb'      ? 'X' : '';
+  out.x_under_30   = d.underlayment==='30lb'      ? 'X' : '';
+  out.x_under_Syn  = d.underlayment==='Synthetic' ? 'X' : '';
 
-    function glow(x,y,color){ if(!save.settings.glow) return; const g=ctx.createRadialGradient(x,y,6,x,y,40); g.addColorStop(0,color+'55'); g.addColorStop(1,'#0000'); ctx.fillStyle=g; ctx.fillRect(x-60,y-60,120,120); }
-    function roundRect(x,y,w,h,r,fill){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); if(fill){ctx.fill();}else{ctx.stroke();} }
-    function line(x1,y1,x2,y2){ ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke(); }
+  const rt = new Set([].concat(d.roofType||[]));
+  out.x_rt_Hip   = rt.has('Hip')   ? 'X' : '';
+  out.x_rt_Gable = rt.has('Gable') ? 'X' : '';
+  out.x_rt_Both  = rt.has('Both')  ? 'X' : '';
 
-    function drawTopBars(){ const w=window.innerWidth; ctx.fillStyle='rgba(147,197,253,.12)'; ctx.fillRect(10,10,w-20,6); const alive=creeps.filter(function(c){return !c.dead&&c.delay<=0}).length; const total=Math.max(1,alive+3); const prog=Math.min(1,alive/total); ctx.fillStyle='#60a5fa'; ctx.fillRect(10,10,(w-20)*(1-prog),6); }
+  out.x_gut_5  = d.guttersSize==='5' ? 'X' : '';
+  out.x_gut_6  = d.guttersSize==='6' ? 'X' : '';
+  out.x_ds_23  = d.downspoutsSize==='2x3' ? 'X' : '';
+  out.x_ds_34  = d.downspoutsSize==='3x4' ? 'X' : '';
 
-    const toasts=[]; function toast(msg){ toasts.push({msg:msg,t:2}); }
-    const _fillText=ctx.fillText.bind(ctx); const _draw=draw; draw=function(){ _draw(); const w=window.innerWidth; let y=44; ctx.font='14px system-ui, sans-serif'; ctx.textAlign='center'; ctx.textBaseline='top'; for(let i=toasts.length-1;i>=0;i--){ const t=toasts[i]; ctx.globalAlpha=Math.max(0,Math.min(1,t.t)); ctx.fillStyle='#e5e7eb'; _fillText(t.msg.length>60?t.msg.slice(0,60)+'…':t.msg, w/2, y); ctx.globalAlpha=1; y+=18; t.t-=0.02*gameSpeed; if(t.t<=0) toasts.splice(i,1); } };
+  const gg = new Set([].concat(d.gutterGuards||[]));
+  out.x_guard_Plastic  = gg.has('Plastic')   ? 'X' : '';
+  out.x_guard_RX       = gg.has('RX')        ? 'X' : '';
+  out.x_guard_LeafFree = gg.has('Leaf Free') ? 'X' : '';
 
-    // ===== Intermission & flow =====
-    function updateNextBtnLabel(){ ui.nextBtn.textContent = save.settings.autoIntermission ? ('Next Wave (auto in '+intermissionETA+'s)') : 'Next Wave'; }
-    function setupAutoIntermission(){ updatePlayButtons(); if(!intermission) return; clearInterval(intermissionTimerId); intermissionTimerId=null; intermissionETA = Math.max(2, +save.settings.autoIntermissionSec||6); updateNextBtnLabel(); if(save.settings.autoIntermission){ intermissionTimerId = setInterval(function(){ intermissionETA--; updateNextBtnLabel(); if(intermissionETA<=0){ clearInterval(intermissionTimerId); intermissionTimerId=null; nextWave(); } },1000);} }
+  out.x_fas_Smooth = d.fascia==='Smooth' ? 'X' : '';
+  out.x_fas_PVC    = d.fascia==='PVC'    ? 'X' : '';
+  out.x_sof_Solid  = d.soffit==='Solid'  ? 'X' : '';
+  out.x_sof_Vented = d.soffit==='Vented' ? 'X' : '';
+  out.x_wrap_Smooth= d.windowWraps==='Smooth' ? 'X' : '';
+  out.x_wrap_PVC   = d.windowWraps==='PVC'    ? 'X' : '';
 
-    function startRun(){ running=true; paused=false; intermission=false; ui.overlay.style.display='none'; ui.tPanel.style.display='none'; clearInterval(intermissionTimerId); intermissionTimerId=null; resetRunProg(); lives=18+(save.tech.fusion?1:0); shards=40+save.armory.startShards*15; interest=save.armory.interest*0.02; wave=1; turrets.length=0; bullets.length=0; creeps.length=0; particles.length=0; shards = Math.max(shards, minAvailableTurretCost()); rSet('types', uniqueTypesOnField()); spawnWave(); requestAnimationFrame(step); refreshProfile(); }
-    function startIntermission(){ intermission=true; running=false; paused=false; bullets.length=0; creeps.length=0; shards+=Math.floor(shards*interest); onWaveClearedReward(); shards = Math.max(shards, minAvailableTurretCost()); if(save.bestWave<wave) save.bestWave=wave; trackEvent('wave', wave); if(wave>=5 && runProg.livesLost===0) rAdd('noloss',1); ui.overlaySub.textContent = 'Wave '+wave+' cleared. Click turrets to convert their type, or start the next wave.'; ui.overlay.style.display='grid'; updatePlayButtons(); buildArmory(); buildTech(); buildChallenges(); refreshProfile(); setupAutoIntermission(); }
-    function nextWave(){ if(!intermission) return; if(intermissionTimerId){ clearInterval(intermissionTimerId); intermissionTimerId=null; } wave++; intermission=false; running=true; paused=false; ui.overlay.style.display='none'; spawnWave(); requestAnimationFrame(step); }
-    function endRun(){ running=false; intermission=false; ui.overlay.style.display='grid'; const bonus=Math.floor(shards/5); save.cores+=bonus; if(save.bestWave<wave) save.bestWave=wave; toast('Run over — converted '+Math.floor(shards)+' 💎 to +'+bonus+' ⚙'); persist(); buildArmory(); buildTech(); buildChallenges(); updatePlayButtons(); }
+  out._elev = new Set([].concat(d.elevations||[]));
+  out._blocks = new Set([].concat(d.blocks||[]));
+  return out;
+}
+</script>
 
-    ui.menuBtn.addEventListener('click', openMenu); ui.pauseBtn.addEventListener('click', togglePause);
-    ui.spd05.addEventListener('click', function(){setSpeed(0.5)}); ui.spd10.addEventListener('click', function(){setSpeed(1)}); ui.spd15.addEventListener('click', function(){setSpeed(1.5)}); ui.spd20.addEventListener('click', function(){setSpeed(2)}); ui.spd30.addEventListener('click', function(){setSpeed(3)}); ui.spd40.addEventListener('click', function(){setSpeed(4)});
-    ui.startBtn.addEventListener('click', function(){ startRun(); });
-    ui.resumeBtn.addEventListener('click', function(){ ui.overlay.style.display='none'; paused=false; running=true; updatePlayButtons(); });
-    ui.nextBtn.addEventListener('click', function(){ nextWave(); });
-    ui.resetBtn.addEventListener('click', function(){ if(confirm('Reset all saved progress?')){ localStorage.removeItem(SAVE_ROOT); location.reload(); }});
+<script>
+/* >>> READABLE, HIGH-CONTRAST PDF <<< */
+document.getElementById('downloadPdf').addEventListener('click', async ()=>{
+  if (!(await ensureJsPDFLoaded())) return;
+  const { jsPDF } = window.jspdf;
 
-    ui.tabPlay.addEventListener('click', function(){showTab('Play')});
-    ui.tabArmory.addEventListener('click', function(){ buildArmory(); showTab('Armory');});
-    ui.tabChallenges.addEventListener('click', function(){ buildChallenges(); showTab('Challenges'); });
-    ui.tabSettings.addEventListener('click', function(){showTab('Settings')});
+  const doc = new jsPDF({ unit:'in', format:'letter' });
+  const W = 8.5, H = 11, M = 0.5;
+  const LCOL_W = 5.0, GAP = 0.22;
 
-    ui.setParticles.addEventListener('input',function(){ save.settings.particles=+ui.setParticles.value; persist();}); ui.setGlow.addEventListener('input',function(){ save.settings.glow=+ui.setGlow.value; persist();}); ui.setDiff.addEventListener('change',function(){ save.settings.diff=+ui.setDiff.value; ui.p_diff.textContent={1:'Standard','1.35':'Veteran','1.8':'Insane'}[ui.setDiff.value]; persist();});
-    ui.setAuto.addEventListener('change',function(){ save.settings.autoIntermission = ui.setAuto.checked?1:0; persist(); if(intermission) setupAutoIntermission(); });
-    ui.setAutoSec.addEventListener('input',function(){ var v = Math.max(2, Math.min(30, +ui.setAutoSec.value||6)); ui.setAutoSec.value=v; save.settings.autoIntermissionSec=v; persist(); if(intermission) setupAutoIntermission(); });
+  // Typography
+  const FS = {
+    TITLE:22, SUB:11, SECTION:13.5, LABEL:10.5, VALUE:11.5, SMALL:9
+  };
+  const set = (w='normal', size=FS.VALUE)=>{ doc.setFont('helvetica', w); doc.setFontSize(size); doc.setTextColor(0,0,0); };
 
-    window.addEventListener('keydown',function(e){ if(['p','P','m','M','1','2','3','4','5','6'].includes(e.key)) e.preventDefault(); if(e.key==='p'||e.key==='P') togglePause(); if(e.key==='m'||e.key==='M') openMenu(); if(e.key==='1') setSpeed(0.5); if(e.key==='2') setSpeed(1); if(e.key==='3') setSpeed(1.5); if(e.key==='4') setSpeed(2); if(e.key==='5') setSpeed(3); if(e.key==='6') setSpeed(4); });
+  // Primitives
+  const line = (x1,y1,x2,y2,w=0.022)=>{ doc.setDrawColor(30,30,30); doc.setLineWidth(w); doc.line(x1,y1,x2,y2); };
+  const hline = (x,y,wid,w=0.018)=> line(x,y,x+wid,y,w);
+  const vline = (x,y,hei,w=0.018)=> line(x,y,x,y+hei,w);
+  const rect  = (x,y,w,h, lw=0.018)=>{ doc.setDrawColor(40,40,40); doc.setLineWidth(lw); doc.rect(x,y,w,h); };
+  const sectionBar = (title, x, y, w)=>{ doc.setFillColor(235); doc.roundedRect(x,y,w,0.35,0.06,0.06,'F'); set('bold',FS.SECTION); doc.text(title, x+0.14, y+0.24); };
 
-    // ===== Spawning =====
-    let _creepSeq=0; function makeCreep(hp, speed, delay, kind){ return {id:(++_creepSeq), hp:hp,max:hp, speed:speed, delay:delay, pathIndex:0, x:gx(path[0][0]), y:gy(path[0][1]), kind:kind, dead:false, armor: (kind==='tank'? 10 : 0), swarm: (kind==='swarm'? 3 : 0), shield: (kind==='boss'? 80 : 0), slowT:0, slowMul:1}; }
-    function spawnWave(){
-      const diff = (save.settings.diff||1);
-      const scale = Math.pow(1.12*diff, wave*0.85);
-      const baseN = 10 + Math.floor(wave*3.8);
-      const n = Math.floor(baseN * (1 + Math.sin(wave*0.3)*0.08));
-      const hpBase = 30 + wave*9.5;
-      const speedBase = 50 + wave*1.9;
-      for(let i=0;i<n;i++){
-        const kind = (i%9===0)? 'tank' : (i%7===0? 'swarm' : 'runner');
-        const hp = hpBase * scale * (kind==='tank'?1.9: (kind==='swarm'?0.6:1.0));
-        const sp = speedBase * (kind==='runner'?1.15: (kind==='swarm'?1.25:0.92));
-        const t=i*0.52; creeps.push(makeCreep(hp, sp, t, kind));
-      }
-      if(wave%5===0){ creeps.push(makeCreep(hpBase*scale*8, speedBase*0.9, 1.2, 'boss')); }
-    }
+  const label = (x,y,t)=>{ set('bold',FS.LABEL); doc.text(t,x,y); };
+  const value = (x,y,t)=>{ if(!t) return; set('normal',FS.VALUE); doc.text(String(t),x,y); };
+  const check = (x,y,flag)=>{
+    const s=0.22; doc.setDrawColor(60); doc.setLineWidth(0.014); doc.rect(x,y-s+0.06,s,s);
+    if(flag){ set('bold',12.5); doc.text('X', x+0.03, y-0.01); }
+  };
 
-    // ===== TESTS =====
-    try {
-      console.assert(typeof localStorage==='object','[TEST] localStorage available');
-      console.assert(document.body && document.body.tagName==='BODY','[TEST] body tag present');
-      console.assert(document.getElementById('game') instanceof HTMLCanvasElement,'[TEST] Canvas missing');
-      console.assert(Array.isArray(path),'[TEST] Path not array');
-      console.assert(minAvailableTurretCost()===TURRETS.basic.cost,'[TEST] base turret cost mismatch');
-      // Run challenge state resets
-      resetRunProg(); rAdd('kills',10); console.assert(rGet('kills')===10,'[TEST] run kills tracking'); resetRunProg(); console.assert(rGet('kills')===0,'[TEST] run reset failed');
-      // Conversion pricing monotonic
-      console.assert(TURRETS.piercer.cost>=TURRETS.basic.cost,'[TEST] piercer cost ordering');
-      // Stat upgrade increases stats
-      var tTest={id:'basic', lv:{dmg:0,rof:0,rng:0}}; recomputeTurretStats(tTest); var d0=tTest.dmg; tTest.lv.dmg++; recomputeTurretStats(tTest); console.assert(tTest.dmg>d0,'[TEST] dmg upgrade should increase damage');
-      // Upgrade cost escalates
-      function _cost(l){ return Math.floor(30*Math.pow(1.7,l)); } console.assert(_cost(1)>_cost(0),'[TEST] upgrade cost should escalate');
-      // Panel visible & has controls
-      showTurretPanel({id:'basic',c:3,r:3,lv:{dmg:0,rof:0,rng:0}}, 300, 120);
-      console.assert(ui.tPanel.style.display==='block','[TEST] tPanel displayed');
-      console.assert(ui.tPanel.innerHTML.includes('data-up') && ui.tPanel.innerHTML.includes('Type Conversion'),'[TEST] panel shows stat upgrades + conversion');
-      // Tech removed but stub exists
-      console.assert(!document.getElementById('tabTech'),'[TEST] Tech tab removed');
-      console.assert(typeof buildTech==='function','[TEST] buildTech stub exists');
-      console.assert(ui.tPanel.innerHTML.includes('Convert to Rail'),'[TEST] Rail available without Tech');
-      // Tab switching sanity
-      showTab('Settings'); console.assert(ui.panelSettings.style.display==='','[TEST] Settings tab visible'); showTab('Play');
-      ui.tPanel.style.display='none';
-      // New turret sanity
-      console.assert(!!TURRETS.cryo && !!TURRETS.plasma && !!TURRETS.gauss,'[TEST] new turrets exist');
-      var tCry={id:'cryo',lv:{}}; recomputeTurretStats(tCry); console.assert(tCry.slow && tCry.slow.mul<1,'[TEST] cryo slow present');
-      var tPier={id:'piercer',lv:{}}; recomputeTurretStats(tPier); console.assert((tPier.pierce||0)>=1,'[TEST] piercer has pierce');
-      var dummy={x:100,y:100}; tPier.c=2; tPier.r=2; fire(tPier,dummy); console.assert(bullets[bullets.length-1].pierce>=1,'[TEST] bullet carries pierce');
-      // New reward tests (non-persistent)
-      var __c0=save.cores; onWaveClearedReward(); console.assert(save.cores===__c0+1,'[TEST] +1 core per wave'); save.cores=__c0; persist();
-      var __s0=shards, __l0=lives; loseLife(); console.assert(shards===__s0+10,'[TEST] +10 shards per life lost'); shards=__s0; lives=__l0; if(runProg.livesLost>0) runProg.livesLost--; refreshProfile();
-    } catch(e){ console.error('[TEST] Runtime test failed', e); }
+  const v = computeValues(formToObject(document.getElementById('tdhForm')));
 
-    // Boot idle overlay & init controls
-    ui.overlay.style.display='grid'; updatePlayButtons(); buildArmory(); buildTech(); buildChallenges();
-    ui.setParticles.value = save.settings.particles?1:0; ui.setGlow.value = save.settings.glow?1:0; ui.setDiff.value = save.settings.diff||1; ui.setAuto.checked = !!save.settings.autoIntermission; ui.setAutoSec.value = save.settings.autoIntermissionSec||6;
-    refreshProfile();
-    requestAnimationFrame(step);
-  })();
-  </script>
+  // Header
+  set('bold',FS.TITLE);
+  doc.text('TDH Agreement', W/2, M+0.35, {align:'center'});
+  set('normal',FS.SUB);
+  doc.text('2513 River Rd Dr, Waterloo, NE 68069', W/2, M+0.65, {align:'center'});
+
+  // General Info box
+  const gi = {x:M, y:M+0.95, w:W-2*M, h:1.85};
+  rect(gi.x,gi.y,gi.w,gi.h,0.02);
+  vline(gi.x+gi.w/2, gi.y, gi.h, 0.016);
+  const rH = gi.h/4;
+  [1,2,3].forEach(i=>hline(gi.x, gi.y+i*rH, gi.w, 0.016));
+
+  // GI labels
+  label(gi.x+0.12, gi.y+0.28, 'Name:');
+  label(gi.x+gi.w/2+0.12, gi.y+0.28, 'Primary Contact Name:');
+  label(gi.x+0.12, gi.y+rH+0.28, 'Address:');
+  label(gi.x+gi.w/2+0.12, gi.y+rH+0.28, 'Primary Contact Phone Number:');
+  label(gi.x+0.12, gi.y+2*rH+0.28, 'City, State, Zip:');
+  label(gi.x+gi.w/2+0.12, gi.y+2*rH+0.28, 'Insurance Company:');
+  label(gi.x+0.12, gi.y+3*rH+0.28, 'Phone:');
+  label(gi.x+gi.w/2+0.12, gi.y+3*rH+0.28, 'Claim Number:');
+
+  // GI values
+  value(gi.x+0.95, gi.y+0.28, v.name);
+  value(gi.x+gi.w/2+1.75, gi.y+0.28, v.primaryContactName);
+  value(gi.x+0.85, gi.y+rH+0.28, v.address);
+  value(gi.x+gi.w/2+2.55, gi.y+rH+0.28, v.primaryPhone);
+  value(gi.x+1.25, gi.y+2*rH+0.28, v.cityStateZip);
+  value(gi.x+gi.w/2+1.9, gi.y+2*rH+0.28, v.insuranceCompany);
+  value(gi.x+0.8, gi.y+3*rH+0.28, v.phone);
+  value(gi.x+gi.w/2+1.5, gi.y+3*rH+0.28, v.claimNumber);
+
+  // Columns start
+  const L = {x:M, y:gi.y+gi.h+0.4, w:LCOL_W};
+  const R = {x:M+LCOL_W+GAP, y:L.y, w:W-2*M-LCOL_W-GAP};
+
+  /* LEFT COLUMN */
+  sectionBar('Roofing Info', L.x, L.y, L.w);
+  let y = L.y+0.45;
+
+  label(L.x, y, 'Roofing location/s:');
+  check(L.x+1.55, y+0.06, !!v.x_loc_House);  value(L.x+1.85, y+0.06, 'House');
+  check(L.x+2.7,  y+0.06, !!v.x_loc_Garage); value(L.x+3.0,  y+0.06, 'Garage');
+  check(L.x+3.85, y+0.06, !!v.x_loc_Shed);   value(L.x+4.15, y+0.06, 'Shed');
+  check(L.x+4.85, y+0.06, !!v.x_loc_Flat);   value(L.x+5.15, y+0.06, 'Flat');
+  y+=0.36;
+
+  label(L.x, y, 'Roof Type:');
+  check(L.x+0.85,y+0.06, !!v.x_rt_Hip);   value(L.x+1.15,y+0.06,'Hip');
+  check(L.x+1.75,y+0.06, !!v.x_rt_Gable); value(L.x+2.05,y+0.06,'Gable');
+  check(L.x+2.75,y+0.06, !!v.x_rt_Both);  value(L.x+3.05,y+0.06,'Both');
+  label(L.x+3.9, y, 'Roof Pitch:'); hline(L.x+4.7,y,0.9); value(L.x+4.78,y, v.roofPitch);
+  label(L.x+5.75, y, 'Stories:');   hline(L.x+6.35,y,0.55); value(L.x+6.42,y, v.stories);
+  y+=0.36;
+
+  label(L.x, y, 'Tear off layers:'); hline(L.x+1.45,y,0.7); value(L.x+1.52,y, v.tearOffLayers);
+  y+=0.34;
+
+  label(L.x, y, 'Underlayment:');
+  check(L.x+1.15,y+0.06, !!v.x_under_15); value(L.x+1.45,y+0.06,'15lb');
+  check(L.x+2.1, y+0.06, !!v.x_under_30); value(L.x+2.40,y+0.06,'30lb');
+  check(L.x+3.05,y+0.06, !!v.x_under_Syn);value(L.x+3.35,y+0.06,'Synthetic');
+  y+=0.34;
+
+  label(L.x, y, 'Ice and water Barrier (per code):'); hline(L.x+3.15,y,2.0); value(L.x+3.22,y, v.iceWater);
+  y+=0.34;
+
+  label(L.x, y, 'Shingles Brand:'); hline(L.x+1.45,y,1.2); value(L.x+1.52,y, v.shinglesBrand);
+  label(L.x+2.9, y, 'Style:');      hline(L.x+3.35,y,1.0); value(L.x+3.42,y, v.style);
+  label(L.x+4.45,y, 'Color:');      hline(L.x+4.9, y,1.0); value(L.x+4.97,y, v.color);
+  label(L.x+6.0, y, 'SQs:');        hline(L.x+6.35,y,0.6); value(L.x+6.42,y, v.sqs);
+  y+=0.34;
+
+  label(L.x, y, 'Drip Edge:');     hline(L.x+0.95,y,1.2); value(L.x+1.02,y, v.dripEdge);
+  label(L.x+2.45, y, 'Gutter Apron:'); hline(L.x+3.5,y,1.3); value(L.x+3.57,y, v.gutterApron);
+  y+=0.34;
+
+  // Vents (big X if Turtle)
+  check(L.x, y+0.06, !!v.x_vents_Turtle); label(L.x+0.28,y,'Vents:');
+  hline(L.x+0.95,y,2.0); value(L.x+1.02,y, [v.ventsQty, v.ventsType].filter(Boolean).join(' '));
+  label(L.x+3.1,y,'Color:'); hline(L.x+3.55,y,1.1); value(L.x+3.62,y, v.ventsColor);
+  y+=0.34;
+
+  label(L.x, y, 'Valleys:');
+  label(L.x+0.7,y,'Color:'); hline(L.x+1.1,y,1.2); value(L.x+1.17,y, v.valleysColor);
+  label(L.x+2.55,y,'Open or Closed');
+  check(L.x+3.9,y+0.06, !!v.x_valley_Open);  value(L.x+4.2,y+0.06,'Open');
+  check(L.x+5.1,y+0.06, !!v.x_valley_Closed);value(L.x+5.4,y+0.06,'Closed');
+  y+=0.34;
+
+  label(L.x, y, 'Pipe Jacks QTY:'); hline(L.x+1.5,y,0.8); value(L.x+1.57,y, v.pipeJacksQty);
+  label(L.x+2.5,y,'Type:');         hline(L.x+2.9,y,1.0); value(L.x+2.97,y, v.pipeJacksType);
+  label(L.x+4.1,y,'Size:');         hline(L.x+4.45,y,1.15); value(L.x+4.52,y, v.roofSize);
+  y+=0.34;
+
+  label(L.x, y, 'Ridge Cap:');  hline(L.x+1.0,y,1.4); value(L.x+1.07,y, v.ridgeCap);
+  label(L.x+2.6,y,'Ridge Vent:');hline(L.x+3.45,y,1.7); value(L.x+3.52,y, v.ridgeVent);
+
+  // Gutters / Downspouts
+  const gY = L.y + 4.7;
+  sectionBar('Gutters & Downspouts', L.x, gY, L.w);
+  let gy = gY+0.45;
+
+  label(L.x, gy, 'Gutters:');
+  check(L.x+0.9,gy+0.06, !!v.x_gut_5); value(L.x+1.2,gy+0.06,'5"');
+  check(L.x+1.8,gy+0.06, !!v.x_gut_6); value(L.x+2.1,gy+0.06,'6"');
+  label(L.x+2.6,gy,'Color:'); hline(L.x+3.05,gy,1.2); value(L.x+3.12,gy, v.guttersColor);
+  label(L.x+4.5,gy,'Downspouts:');
+  check(L.x+5.6,gy+0.06, !!v.x_ds_23); value(L.x+5.9,gy+0.06,'2×3');
+  check(L.x+6.6,gy+0.06, !!v.x_ds_34); value(L.x+6.9,gy+0.06,'3×4');
+  label(L.x+7.45,gy,'Color:'); hline(L.x+7.9,gy,0.9); value(L.x+7.97,gy, v.downspoutsColor);
+  gy+=0.36;
+
+  label(L.x, gy, 'Gutter Guards:');
+  check(L.x+1.3,gy+0.06, !!v.x_guard_Plastic);  value(L.x+1.6,gy+0.06,'Plastic');
+  check(L.x+2.4,gy+0.06, !!v.x_guard_RX);       value(L.x+2.7,gy+0.06,'RX');
+  check(L.x+3.2,gy+0.06, !!v.x_guard_LeafFree); value(L.x+3.5,gy+0.06,'Leaf Free');
+  label(L.x+4.4,gy,'Notes:'); hline(L.x+4.85,gy,3.1); value(L.x+4.92,gy, v.gutterNotes);
+
+  // Siding
+  const sY = gY + 1.25;
+  sectionBar('Siding Info', L.x, sY, L.w);
+  let sy = sY+0.45;
+
+  label(L.x,sy,'Brand:'); hline(L.x+0.6,sy,1.2); value(L.x+0.67,sy, v.sidingBrand);
+  label(L.x+2.0,sy,'Style:'); hline(L.x+2.45,sy,1.5); value(L.x+2.52,sy, v.sidingStyle);
+  label(L.x+4.1,sy,'SQs:');   hline(L.x+4.45,sy,0.8); value(L.x+4.52,sy, v.sidingSqs);
+  label(L.x+5.35,sy,'Color:');hline(L.x+5.8,sy,1.2);  value(L.x+5.87,sy, v.sidingColor);
+  sy+=0.36;
+
+  label(L.x,sy,'Elevations:');
+  check(L.x+0.95,sy+0.06, v._elev.has('Front')); value(L.x+1.25,sy+0.06,'Front');
+  check(L.x+2.0, sy+0.06, v._elev.has('Right')); value(L.x+2.3, sy+0.06,'Right');
+  check(L.x+3.0, sy+0.06, v._elev.has('Left'));  value(L.x+3.3, sy+0.06,'Left');
+  check(L.x+4.0, sy+0.06, v._elev.has('Rear'));  value(L.x+4.3, sy+0.06,'Rear');
+  label(L.x+5.2,sy,'Trim:'); hline(L.x+5.6,sy,1.6); value(L.x+5.67,sy, v.trim);
+  sy+=0.36;
+
+  label(L.x,sy,'Fascia:');
+  check(L.x+0.7,sy+0.06, !!v.x_fas_Smooth); value(L.x+1.0,sy+0.06,'Smooth');
+  check(L.x+2.0,sy+0.06, !!v.x_fas_PVC);    value(L.x+2.3,sy+0.06,'PVC');
+  label(L.x+3.1,sy,'Color:'); hline(L.x+3.55,sy,1.3); value(L.x+3.62,sy, v.fasciaColor);
+
+  label(L.x+5.1,sy,'Soffit:');
+  check(L.x+5.7,sy+0.06, !!v.x_sof_Solid);  value(L.x+6.0,sy+0.06,'Solid');
+  check(L.x+6.8,sy+0.06, !!v.x_sof_Vented); value(L.x+7.1,sy+0.06,'Vented');
+  label(L.x+7.9,sy,'Color:'); hline(L.x+8.3,sy,0.6); value(L.x+8.37,sy, v.soffitColor);
+  sy+=0.36;
+
+  label(L.x,sy,'Window Wraps:');
+  check(L.x+1.25,sy+0.06, !!v.x_wrap_Smooth); value(L.x+1.55,sy+0.06,'Smooth');
+  check(L.x+2.6, sy+0.06,  !!v.x_wrap_PVC);   value(L.x+2.9, sy+0.06,'PVC');
+  label(L.x+3.7, sy,'Color:'); hline(L.x+4.15,sy,1.45); value(L.x+4.22,sy, v.windowWrapsColor);
+  label(L.x+5.95,sy,'Blocks:');
+  check(L.x+6.55,sy+0.06, v._blocks.has('Light Blocks')); value(L.x+6.85,sy+0.06,'Light Blocks');
+  check(L.x+7.95,sy+0.06, v._blocks.has('Split Blocks'));  value(L.x+8.25,sy+0.06,'Split Blocks');
+
+  /* RIGHT COLUMN */
+  sectionBar('More Info', R.x, R.y, R.w);
+  let ry = R.y+0.45;
+  check(R.x, ry+0.06, v.x_more_Redeck);   value(R.x+0.3, ry+0.06, 'Redeck: Partial or Full'); ry+=0.34;
+  check(R.x, ry+0.06, v.x_more_Interior); value(R.x+0.3, ry+0.06, 'Interior damage'); ry+=0.34;
+  check(R.x, ry+0.06, v.x_more_MagRoll);  value(R.x+0.3, ry+0.06, 'Mag Roll Sweeper'); ry+=0.34;
+  check(R.x, ry+0.06, v.x_more_CleanHaul);value(R.x+0.3, ry+0.06, 'Clean and haul Debris'); ry+=0.44;
+
+  label(R.x, ry, 'Material drop off:'); hline(R.x+1.55,ry, R.w-1.75); value(R.x+1.62,ry, v.materialDrop);
+  ry+=0.55;
+
+  sectionBar('Payment Info', R.x, ry, R.w); ry+=0.45;
+  label(R.x, ry, 'Agreed Amount:'); hline(R.x+1.4,ry, R.w-1.6); value(R.x+1.47,ry, v.agreedAmount); ry+=0.36;
+  label(R.x, ry, 'First Payment:'); hline(R.x+1.35,ry, R.w-1.55); value(R.x+1.42,ry, v.firstPayment); ry+=0.36;
+  label(R.x, ry, 'Final Payment:'); hline(R.x+1.35,ry, R.w-1.55); value(R.x+1.42,ry, v.finalPayment); ry+=0.66;
+
+  sectionBar('Instructions', R.x, ry, R.w); ry+=0.45;
+  // 3 ruled lines
+  doc.setDrawColor(170); hline(R.x, ry, R.w, 0.012); hline(R.x, ry+0.38, R.w, 0.012); hline(R.x, ry+0.76, R.w, 0.012); doc.setDrawColor(30);
+  if (v.instructions){
+    set('normal',FS.VALUE);
+    const lines = doc.splitTextToSize(v.instructions, R.w-0.12).slice(0,3);
+    lines.forEach((ln,i)=> doc.text(ln, R.x+0.06, ry + i*0.38 - 0.02));
+  }
+
+  // Signatures
+  const sigY = H - 1.05;
+  label(M, sigY, 'Agreed to by Customer on date:'); hline(M+2.2, sigY, 1.25); value(M+2.28, sigY, v.custDate);
+  label(M+3.6, sigY, 'Signature:'); hline(M+4.25, sigY, 2.3); value(M+4.32, sigY, v.custSignature);
+
+  const sigY2 = sigY + 0.45;
+  label(M, sigY2, 'Agreed to by TDH Representative on date:'); hline(M+3.5, sigY2, 1.25); value(M+3.58, sigY2, v.tdhDate);
+  label(M+4.95, sigY2, 'Signature:'); hline(M+5.6, sigY2, 2.05); value(M+5.67, sigY2, v.tdhSignature);
+
+  // Save
+  const filename = `TDH_Agreement_${(v.name||'Filled').replace(/\s+/g,'_')}.pdf`;
+  doc.save(filename);
+});
+</script>
+
+<script>
+/* DEMO ONLY — fake example + clear */
+const form = document.getElementById('tdhForm');
+const example = {
+  name:"Jordan Sample", address:"7425 Oak Meadow Ct", cityStateZip:"Prairie City, NE 68000",
+  primaryContactName:"Taylor North", primaryPhone:"(555) 010-7744",
+  insuranceCompany:"Prairie Mutual", claimNumber:"PRM-2045-XS9",
+  phone:"(555) 010-2299",
+  roofingLocations:["House","Garage","Shed","Flat"],
+  tearOffLayers:"1", underlayment:"Synthetic",
+  shinglesBrand:"CertainTeed", style:"Landmark", color:"Desert Sand", sqs:"28",
+  iceWater:"Per code", dripEdge:"White", gutterApron:"White",
+  ventsQty:"9", ventsType:"Turtle", ventsTypeOther:"", ventsColor:"White",
+  valleyMode:"Open", valleysColor:"Painted",
+  pipeJacksQty:"2", pipeJacksType:"NC",
+  roofPitch:"4/12", stories:"1", roofSize:"1,050 SF",
+  roofType:["Hip","Gable","Both"],
+  ridgeCap:"High Profile", ridgeVent:"Shingle-over",
+  sideWallQty:"82", sideWallColor:"White", sideWallMaterial:"Metal",
+  guttersSize:"6", guttersColor:"White",
+  downspoutsSize:"3x4", downspoutsColor:"Bronze",
+  gutterGuards:["Plastic","RX","Leaf Free"],
+  gutterNotes:"Leafguard brand; 121 LF White",
+  materialDrop:"Driveway", redeck:"Partial near eaves",
+  interiorDamage:"Living room ceiling stain",
+  cleanup:"Magnetic roller; full debris haul",
+  miscNotes:"Reset satellite; R&R 1 EA 6\" rain cap",
+  agreedAmount:"ACV", firstPayment:"RCV + Approved Supplements", finalPayment:"RCV + Approved Supplements",
+  sidingBrand:"Norandex", sidingStyle:"Board & Batten", sidingSqs:"18", sidingColor:"Clay",
+  elevations:["Front","Right","Left","Rear"], trim:"3.5\" PVC",
+  fascia:"PVC", fasciaColor:"White", soffit:"Vented", soffitColor:"White",
+  windowWraps:"PVC", windowWrapsColor:"White",
+  blocks:["Light Blocks","Split Blocks"],
+  custDate:"", custSignature:"", tdhDate:"", tdhSignature:"",
+  instructions:"2513 River Rd Dr, Waterloo, NE 68069"
+};
+document.getElementById('loadExample').addEventListener('click', ()=> fillForm(form, example));
+document.getElementById('clearForm').addEventListener('click', ()=> form.reset());
+</script>
 </body>
 </html>
