@@ -41,16 +41,19 @@
   .status .light{width:8px;height:8px;border-radius:999px;background:#f59e0b;box-shadow:0 0 10px currentColor}
 
   /* === PRINTABLE (bulletproof, no-overlap) === */
-  #printRoot{position:fixed;inset:0;pointer-events:none;opacity:0}
+  #printRoot{position:fixed;inset:0;pointer-events:none;opacity:0;display:block} 
   .page{width:816px;min-height:1056px;background:#fff;color:#0b1220;padding:28px 32px;border:1px solid #e5e7eb;border-radius:8px}
-  /* Compact variant kicks in when space is tight */
-  .page.compact .h1{font-size:20px}
-  .page.compact .sec-title{font-size:13px}
-  .page.compact .kv{grid-template-columns:190px 1fr}
-  .page.compact .v{font-size:12px;line-height:1.45}
-  .page.compact .k{font-size:10px}
-  .page.compact .sigLine{height:26px}
+  /* Compact variant: denser spacing + balanced two-column sections */
   .page.compact{padding:22px 26px}
+  .page.compact .h1{font-size:20px}
+  .page.compact .sec{display:grid;grid-template-columns:1fr 1fr;column-gap:18px}
+  .page.compact .sec-title{grid-column:1 / -1;font-size:13px;margin-bottom:4px}
+  .page.compact .kv{grid-template-columns:150px 1fr}
+  .page.compact .v{font-size:12.5px;line-height:1.45}
+  .page.compact .k{font-size:10.5px}
+  .page.compact .pill{font-size:10.5px;padding:1px 7px}
+  .page.compact .sigLine{height:26px}
+  .page.compact .grid2{grid-template-columns:1fr 1fr}
   .header{display:flex;gap:16px;align-items:center;margin-bottom:8px}
   .logoBox{width:180px;min-height:60px;display:flex;align-items:center}
   .logoBox img{max-width:180px;max-height:70px;object-fit:contain}
@@ -567,18 +570,21 @@
       const data = collectData();
       const page = buildPrintable(data);
 
-      // === Auto-fit to one page ===
-      const capH = 1056; // target page height in px
-      const actual = page.scrollHeight; // full rendered height
-      let scale = 1;
+      // === Prefer layout compaction over scaling ===
+      const capH = 1056; // target US Letter height in px
+
+      // 1) Apply compact layout first (two-column sections, tighter spacing)
+      if ($('#fitToggle').checked) page.classList.add('compact');
+
+      // 2) If still too tall, apply a gentle scale AND shrink the element's CSS width so it's centered—not just visually scaled.
+      let actual = page.scrollHeight;
       if ($('#fitToggle').checked && actual > capH){
-        scale = capH / actual;
-        // Apply a visual scale so everything fits
-        page.style.transformOrigin = 'top left';
-        page.style.transform = `scale(${scale})`;
-        page.classList.add('compact');
-        // Ensure the container height matches the scaled height to avoid cropping
-        page.style.height = Math.ceil(actual * scale) + 'px';
+        const scale = Math.max(0.85, Math.min(1, capH / actual)); // don't go smaller than 85%
+        const scaledW = Math.round(816 * scale);
+        const scaledH = Math.round(actual * scale);
+        page.style.width = scaledW + 'px';
+        page.style.height = scaledH + 'px';
+        // No CSS transform needed; html2pdf will scale the node to fit the PDF width automatically, avoiding the "tiny-left" look.
       }
 
       const filenameSafe = (data.name || 'TDH_Agreement').replace(/[^a-z0-9_\-]+/gi,'_');
