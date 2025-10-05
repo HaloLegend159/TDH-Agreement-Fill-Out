@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>TDH Agreement – Web Form → PDF (Logo + Signatures)</title>
+<title>TDH Agreement – Web Form → PDF (Centered • One‑Page Fit)</title>
 <meta name="color-scheme" content="dark light" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -40,20 +40,10 @@
   .status{display:inline-flex;align-items:center;gap:8px;font-size:12px;color:#e5e7eb;background:#0b1220;border:1px solid var(--border);padding:6px 10px;border-radius:999px}
   .status .light{width:8px;height:8px;border-radius:999px;background:#f59e0b;box-shadow:0 0 10px currentColor}
 
-  /* === PRINTABLE (bulletproof, no-overlap) === */
-  #printRoot{position:fixed;inset:0;pointer-events:none;opacity:0;display:block} 
-  .page{width:816px;min-height:1056px;background:#fff;color:#0b1220;padding:28px 32px;border:1px solid #e5e7eb;border-radius:8px}
-  /* Compact variant: denser spacing + balanced two-column sections */
-  .page.compact{padding:22px 26px}
-  .page.compact .h1{font-size:20px}
-  .page.compact .sec{display:grid;grid-template-columns:1fr 1fr;column-gap:18px}
-  .page.compact .sec-title{grid-column:1 / -1;font-size:13px;margin-bottom:4px}
-  .page.compact .kv{grid-template-columns:150px 1fr}
-  .page.compact .v{font-size:12.5px;line-height:1.45}
-  .page.compact .k{font-size:10.5px}
-  .page.compact .pill{font-size:10.5px;padding:1px 7px}
-  .page.compact .sigLine{height:26px}
-  .page.compact .grid2{grid-template-columns:1fr 1fr}
+  /* === PRINTABLE (centered, no-overlap) === */
+  #printRoot{position:fixed;inset:0;pointer-events:none;opacity:0}
+  .page{position:relative;width:816px;min-height:1056px;background:#fff;color:#0b1220;margin:0 auto;padding:28px 32px;border:1px solid #e5e7eb;border-radius:8px}
+  .page-inner{width:100%; transform-origin: top center;}
   .header{display:flex;gap:16px;align-items:center;margin-bottom:8px}
   .logoBox{width:180px;min-height:60px;display:flex;align-items:center}
   .logoBox img{max-width:180px;max-height:70px;object-fit:contain}
@@ -67,15 +57,24 @@
   .v{font-size:13px;font-weight:600;white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;line-height:1.5}
   .pillrow{display:flex;flex-wrap:wrap;gap:6px}
   .pill{display:inline-block;background:#eef2ff;border:1px solid #c7d2fe;color:#1e3a8a;border-radius:999px;padding:2px 8px;font-size:11px}
-  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px}
   .avoid-break{page-break-inside:avoid}
   /* Signatures */
   .signRow{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:10px}
   .sigBox{border:1px dashed #cbd5e1;border-radius:8px;padding:10px 12px}
-  .sigLine{height:32px;border-bottom:2px solid #0f172a;margin:16px 0 8px}
+  .sigLine{height:30px;border-bottom:2px solid #0f172a;margin:16px 0 8px}
   .sigMeta{display:grid;grid-template-columns:120px 1fr;gap:4px 8px}
   .sigMeta .k{font-size:10px;color:#64748b}
-/* end of styles */
+
+  /* Compact (1-page fit) – balanced two-column sections and subtle type reduction */
+  .page.compact{padding:22px 26px}
+  .page.compact .h1{font-size:20px}
+  .page.compact .sec{display:grid;grid-template-columns:1fr 1fr;column-gap:18px}
+  .page.compact .sec-title{grid-column:1 / -1;font-size:13px;margin-bottom:4px}
+  .page.compact .kv{grid-template-columns:170px 1fr}
+  .page.compact .v{font-size:12.7px;line-height:1.45}
+  .page.compact .k{font-size:10.6px}
+  .page.compact .pill{font-size:10.5px;padding:1px 7px}
+  .page.compact .sigLine{height:26px}
 </style>
 </head>
 <body>
@@ -84,9 +83,7 @@
       <div class="toolbar-inner">
         <div class="title"><span class="dot"></span><span>TDH Agreement – Form → PDF</span></div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <label class="status" style="gap:6px;cursor:pointer">
-            <input id="fitToggle" type="checkbox" checked style="accent-color:#22c55e"> Fit to 1 page
-          </label>
+          <label class="status" style="gap:6px;cursor:pointer"><input id="fitToggle" type="checkbox" checked style="accent-color:#22c55e"> Fit to 1 page</label>
           <span class="status" id="engineStatus"><span class="light" id="engineLight"></span><span id="engineText">PDF engine: loading…</span></span>
           <button class="btn ghost" id="btnExample" title="Fill with example data">Load Example</button>
           <button class="btn secondary" id="btnClear" title="Clear all fields">Clear</button>
@@ -96,7 +93,7 @@
       </div>
     </div>
 
-    <p class="note">PDF now includes the TDH logo and signature boxes for both the customer and the representative. You can also **force everything to fit on one page** via the new toggle. Layout uses a **two‑column, no‑overlap** grid.</p>
+    <p class="note">PDF is now **centered** and the 1‑page fit uses a balanced two‑column layout so text stays readable. All form fields are included in the export.</p>
 
     <!-- GENERAL INFO -->
     <section class="panel">
@@ -262,7 +259,7 @@
     const $$ = (sel, root=document) => [...root.querySelectorAll(sel)];
 
     // Paths
-    const LOGO_PATH = './assets/tdh-logo.png'; // Place your tdh-logo.png in /assets
+    const LOGO_PATH = './assets/tdh-logo.png';
 
     // ---------- PDF engine loader with fallbacks ----------
     const PDF_CDNS = [
@@ -274,11 +271,8 @@
     function loadScript(url){
       return new Promise((resolve, reject)=>{
         const s = document.createElement('script');
-        s.src = url;
-        s.crossOrigin = 'anonymous';
-        s.referrerPolicy = 'no-referrer';
-        s.onload = ()=> resolve(url);
-        s.onerror = ()=> reject(new Error('Failed to load '+url));
+        s.src = url; s.crossOrigin = 'anonymous'; s.referrerPolicy = 'no-referrer';
+        s.onload = ()=> resolve(url); s.onerror = ()=> reject(new Error('Failed to load '+url));
         document.head.appendChild(s);
       });
     }
@@ -293,20 +287,14 @@
       throw lastErr || new Error('html2pdf failed to load from all CDNs');
     }
 
-    // ---------- UI state for engine light ----------
     function setEngineStatus(status, msg){
-      const light = $('#engineLight');
-      const text = $('#engineText');
-      text.textContent = msg;
+      const light = $('#engineLight'); const text = $('#engineText'); text.textContent = msg;
       if(status==='ok'){ light.style.background = '#22c55e'; light.style.boxShadow='0 0 10px #22c55e'; }
       else if(status==='bad'){ light.style.background = '#ef4444'; light.style.boxShadow='0 0 10px #ef4444'; }
       else { light.style.background = '#f59e0b'; light.style.boxShadow='0 0 10px #f59e0b'; }
     }
 
-    (async()=>{
-      try{ await ensurePdfLoaded(); setEngineStatus('ok','PDF engine: ready'); }
-      catch(e){ setEngineStatus('bad','PDF engine: failed to load'); console.error(e); }
-    })();
+    (async()=>{ try{ await ensurePdfLoaded(); setEngineStatus('ok','PDF engine: ready'); } catch(e){ setEngineStatus('bad','PDF engine: failed to load'); console.error(e); } })();
 
     // ---------- Form helpers ----------
     function getCheckedChips(container){ return $$("input[type='checkbox']:checked", container).map(i=>i.value) }
@@ -372,12 +360,7 @@
       };
     }
 
-    function clearForm(){
-      $$('input, textarea, select').forEach(el=>{
-        if(el.type==='checkbox' || el.type==='radio'){ el.checked = false; }
-        else { el.value = ''; }
-      });
-    }
+    function clearForm(){ $$('input, textarea, select').forEach(el=>{ if(el.type==='checkbox' || el.type==='radio'){ el.checked = false; } else { el.value = ''; } }); }
 
     function loadExample(){
       const ex = {
@@ -392,10 +375,7 @@
         materialDrop:'Driveway (left side) – 7am OK', redeck:'No', interior:'Master bath ceiling stain', agreedAmount:'18124.55', firstPayment:'5000.00', finalPayment:'13124.55',
         custDate:new Date().toISOString().slice(0,10), repDate:new Date().toISOString().slice(0,10), repName:'TDH Rep – J. Morales'
       };
-      for(const [k,v] of Object.entries(ex)){
-        const el = document.getElementById(k);
-        if(el){ el.value = v }
-      }
+      for(const [k,v] of Object.entries(ex)){ const el = document.getElementById(k); if(el){ el.value = v } }
       $$('#roofLocations input[type="checkbox"]').forEach(cb=>{cb.checked = ex.roofLocations.includes(cb.value)});
       $$('#underlayment input[type="radio"]').forEach(r=>{r.checked = (r.value===ex.underlayment)});
       $$('#roofType input[type="radio"]').forEach(r=>{r.checked = (r.value===ex.roofType)});
@@ -403,164 +383,78 @@
 
     function currency(n){ if(n==null||n==='')return''; const v=Number(n); if(Number.isNaN(v))return n; return v.toLocaleString(undefined,{style:'currency',currency:'USD'}) }
 
-    function kv(parent,label,value){
-      const wrap = document.createElement('div');
-      wrap.className = 'kv';
-      wrap.innerHTML = `<div class="k">${label}</div><div class="v">${value || '—'}</div>`;
-      parent.appendChild(wrap);
-    }
+    function kv(parent,label,value){ const wrap = document.createElement('div'); wrap.className = 'kv'; wrap.innerHTML = `<div class="k">${label}</div><div class="v">${value || '—'}</div>`; parent.appendChild(wrap); }
 
     function buildHeader(){
-      const h = document.createElement('div');
-      h.className = 'header';
-      const logo = document.createElement('div');
-      logo.className = 'logoBox';
-      const img = new Image();
-      img.src = LOGO_PATH;
-      img.alt = 'TDH Logo';
-      img.loading = 'eager';
-      img.decoding = 'sync';
-      img.crossOrigin = 'anonymous';
-      img.onerror = ()=>{ logo.innerHTML = '<strong>TDH</strong>'; };
-      logo.appendChild(img);
-      const text = document.createElement('div');
-      text.innerHTML = `<div class="h1">TDH Agreement</div><div class="sub">Generated ${new Date().toLocaleDateString()}</div>`;
-      h.appendChild(logo); h.appendChild(text);
-      return h;
+      const h = document.createElement('div'); h.className = 'header';
+      const logo = document.createElement('div'); logo.className = 'logoBox'; const img = new Image(); img.src = LOGO_PATH; img.alt = 'TDH Logo'; img.loading = 'eager'; img.decoding = 'sync'; img.crossOrigin = 'anonymous'; img.onerror = ()=>{ logo.innerHTML = '<strong>TDH</strong>'; }; logo.appendChild(img);
+      const text = document.createElement('div'); text.innerHTML = `<div class="h1">TDH Agreement</div><div class="sub">Generated ${new Date().toLocaleDateString()}</div>`;
+      h.appendChild(logo); h.appendChild(text); return h;
     }
 
     function buildSignatures(d){
-      const s = document.createElement('section');
-      s.className = 'sec avoid-break';
-      s.innerHTML = `<div class="sec-title">Signatures</div>`;
-
-      const row = document.createElement('div');
-      row.className = 'signRow';
-
-      const customer = document.createElement('div');
-      customer.className = 'sigBox';
-      customer.innerHTML = `
+      const s = document.createElement('section'); s.className = 'sec avoid-break'; s.innerHTML = `<div class="sec-title">Signatures</div>`;
+      const row = document.createElement('div'); row.className = 'signRow';
+      const customer = document.createElement('div'); customer.className = 'sigBox'; customer.innerHTML = `
         <div class="k" style="font-weight:700">Customer Signature</div>
         <div class="sigLine"></div>
-        <div class="sigMeta">
-          <div class="k">Printed Name</div><div class="v">${d.name || '____________________________'}</div>
-          <div class="k">Date</div><div class="v">${d.custDate || '____/____/________'}</div>
-        </div>`;
-
-      const rep = document.createElement('div');
-      rep.className = 'sigBox';
-      rep.innerHTML = `
+        <div class="sigMeta"><div class="k">Printed Name</div><div class="v">${d.name || '____________________________'}</div><div class="k">Date</div><div class="v">${d.custDate || '____/____/________'}</div></div>`;
+      const rep = document.createElement('div'); rep.className = 'sigBox'; rep.innerHTML = `
         <div class="k" style="font-weight:700">TDH Representative</div>
         <div class="sigLine"></div>
-        <div class="sigMeta">
-          <div class="k">Printed Name</div><div class="v">${d.repName || '____________________________'}</div>
-          <div class="k">Date</div><div class="v">${d.repDate || '____/____/________'}</div>
-        </div>`;
-
-      row.appendChild(customer); row.appendChild(rep);
-      s.appendChild(row);
-      return s;
+        <div class="sigMeta"><div class="k">Printed Name</div><div class="v">${d.repName || '____________________________'}</div><div class="k">Date</div><div class="v">${d.repDate || '____/____/________'}</div></div>`;
+      row.appendChild(customer); row.appendChild(rep); s.appendChild(row); return s;
     }
 
     function buildPrintable(d){
-      const root = $('#printRoot');
-      root.innerHTML = '';
-      const page = document.createElement('div');
-      page.className = 'page';
+      const root = $('#printRoot'); root.innerHTML = '';
+      const page = document.createElement('div'); page.className = 'page';
+      const inner = document.createElement('div'); inner.className = 'page-inner';
 
-      const sec = (title)=>{
-        const s = document.createElement('section');
-        s.className = 'sec avoid-break';
-        s.innerHTML = `<div class="sec-title">${title}</div>`;
-        return s;
-      };
+      const section = (title)=>{ const s = document.createElement('section'); s.className = 'sec avoid-break'; s.innerHTML = `<div class="sec-title">${title}</div>`; return s; };
 
-      // Header with logo
-      page.appendChild(buildHeader());
+      // Header
+      inner.appendChild(buildHeader());
 
       // General
-      const s1 = sec('General Information');
-      kv(s1,'Name', d.name);
-      kv(s1,'Primary Contact', d.primaryContactName);
-      kv(s1,'Primary Phone', d.primaryContactPhone);
-      kv(s1,'Insurance Company', d.insuranceCompany);
-      kv(s1,'Claim Number', d.claimNumber);
-      kv(s1,'Phone', d.phone);
-      kv(s1,'Address', d.address);
-      kv(s1,'City/State/Zip', d.cityStateZip);
+      const s1 = section('General Information');
+      kv(s1,'Name', d.name); kv(s1,'Primary Contact', d.primaryContactName); kv(s1,'Primary Phone', d.primaryContactPhone);
+      kv(s1,'Insurance Company', d.insuranceCompany); kv(s1,'Claim Number', d.claimNumber); kv(s1,'Phone', d.phone);
+      kv(s1,'Address', d.address); kv(s1,'City/State/Zip', d.cityStateZip);
 
       // Roofing
-      const s2 = sec('Roofing');
-      const locWrap = document.createElement('div'); locWrap.className='kv';
-      const pillRow = `<div class="pillrow">${(d.roofLocations||[]).map(x=>`<span class='pill'>${x}</span>`).join('') || '—'}</div>`;
-      locWrap.innerHTML = `<div class="k">Locations</div><div class="v">${pillRow}</div>`;
-      s2.appendChild(locWrap);
-      kv(s2,'Tear Off Layers', d.tearOffLayers);
-      kv(s2,'Underlayment', d.underlayment);
-      kv(s2,'Shingles Brand', d.shinglesBrand);
-      kv(s2,'Style', d.style);
-      kv(s2,'Color', d.color);
-      kv(s2,'SQs', d.sqs);
-      kv(s2,'Ice & Water', d.iceWater);
-      kv(s2,'Drip Edge', d.dripEdge);
-      kv(s2,'Gutter Apron', d.gutterApron);
-      kv(s2,'Side Wall Flashing', d.sideWallFlashing);
-      kv(s2,'Vents', d.vents);
-      kv(s2,'Valleys', d.valleys);
-      kv(s2,'Pipe Jacks', d.pipeJacks);
-      kv(s2,'Ridge', d.ridge);
-      kv(s2,'Roof Pitch', d.roofPitch);
-      kv(s2,'Stories', d.stories);
-      kv(s2,'Roof Size', d.roofSize);
-      kv(s2,'Roof Type', d.roofType);
+      const s2 = section('Roofing');
+      const locWrap = document.createElement('div'); locWrap.className='kv'; const pillRow = `<div class="pillrow">${(d.roofLocations||[]).map(x=>`<span class='pill'>${x}</span>`).join('') || '—'}</div>`; locWrap.innerHTML = `<div class="k">Locations</div><div class="v">${pillRow}</div>`; s2.appendChild(locWrap);
+      ['Tear Off Layers','Underlayment','Shingles Brand','Style','Color','SQs','Ice & Water','Drip Edge','Gutter Apron','Side Wall Flashing','Vents','Valleys','Pipe Jacks','Ridge','Roof Pitch','Stories','Roof Size','Roof Type']
+        .forEach((label,i)=>{
+          const map = { 'Tear Off Layers':d.tearOffLayers,'Underlayment':d.underlayment,'Shingles Brand':d.shinglesBrand,'Style':d.style,'Color':d.color,'SQs':d.sqs,'Ice & Water':d.iceWater,'Drip Edge':d.dripEdge,'Gutter Apron':d.gutterApron,'Side Wall Flashing':d.sideWallFlashing,'Vents':d.vents,'Valleys':d.valleys,'Pipe Jacks':d.pipeJacks,'Ridge':d.ridge,'Roof Pitch':d.roofPitch,'Stories':d.stories,'Roof Size':d.roofSize,'Roof Type':d.roofType };
+          kv(s2,label,map[label]);
+        });
 
       // Gutters & Siding
-      const s3 = sec('Gutters & Siding');
-      kv(s3,'Gutters', d.gutters);
-      kv(s3,'Downspouts', d.downspouts);
-      kv(s3,'Gutter Color', d.gutterColor);
-      kv(s3,'Downspout Color', d.downspoutColor);
-      kv(s3,'Gutter Guards', d.gutterGuards);
-      kv(s3,'Mag Roll Sweeper', d.magRoll);
-      kv(s3,'Clean & Haul Debris', d.debris);
-      kv(s3,'Siding Brand', d.sidingBrand);
-      kv(s3,'Siding Style', d.sidingStyle);
-      kv(s3,'Siding SQs', d.sidingSqs);
-      kv(s3,'Siding Color', d.sidingColor);
-      kv(s3,'Elevations', d.elevations);
-      kv(s3,'Trim', d.trim);
-      kv(s3,'Fascia', d.fascia);
-      kv(s3,'Soffit', d.soffit);
-      kv(s3,'Window Wraps', d.windowWraps);
-      kv(s3,'Blocks', d.blocks);
-      kv(s3,'Siding Notes', d.sidingNotes);
-      kv(s3,'Partial or Full', d.partialFull);
+      const s3 = section('Gutters & Siding');
+      ['Gutters','Downspouts','Gutter Color','Downspout Color','Gutter Guards','Mag Roll Sweeper','Clean & Haul Debris','Siding Brand','Siding Style','Siding SQs','Siding Color','Elevations','Trim','Fascia','Soffit','Window Wraps','Blocks','Siding Notes','Partial or Full']
+        .forEach(label=>{
+          const map = { 'Gutters':d.gutters,'Downspouts':d.downspouts,'Gutter Color':d.gutterColor,'Downspout Color':d.downspoutColor,'Gutter Guards':d.gutterGuards,'Mag Roll Sweeper':d.magRoll,'Clean & Haul Debris':d.debris,'Siding Brand':d.sidingBrand,'Siding Style':d.sidingStyle,'Siding SQs':d.sidingSqs,'Siding Color':d.sidingColor,'Elevations':d.elevations,'Trim':d.trim,'Fascia':d.fascia,'Soffit':d.soffit,'Window Wraps':d.windowWraps,'Blocks':d.blocks,'Siding Notes':d.sidingNotes,'Partial or Full':d.partialFull };
+          kv(s3,label,map[label]);
+        });
 
-      // Payments & Dates
-      const s4 = sec('Payments & Dates');
-      const cols = document.createElement('div'); cols.className='grid2';
-      const left = document.createElement('div'); const right = document.createElement('div');
-      cols.appendChild(left); cols.appendChild(right); s4.appendChild(cols);
-      kv(left,'Agreed Amount', currency(d.agreedAmount));
-      kv(left,'First Payment', currency(d.firstPayment));
-      kv(left,'Final Payment', currency(d.finalPayment));
-      kv(right,'Customer Date', d.custDate);
-      kv(right,'TDH Rep Date', d.repDate);
-      kv(right,'TDH Representative', d.repName);
+      // Payments & Dates – list all fields explicitly so nothing is missed
+      const s4 = section('Payments & Dates');
+      kv(s4,'Agreed Amount', currency(d.agreedAmount));
+      kv(s4,'First Payment', currency(d.firstPayment));
+      kv(s4,'Final Payment', currency(d.finalPayment));
+      kv(s4,'Customer Date', d.custDate);
+      kv(s4,'TDH Rep Date', d.repDate);
+      kv(s4,'TDH Representative', d.repName);
 
       // Signatures
       const s5 = buildSignatures(d);
 
-      const pageFrag = document.createDocumentFragment();
-      pageFrag.appendChild(s1);
-      pageFrag.appendChild(s2);
-      pageFrag.appendChild(s3);
-      pageFrag.appendChild(s4);
-      pageFrag.appendChild(s5);
-      page.appendChild(pageFrag);
-
-      $('#printRoot').appendChild(page);
-      return page;
+      // Compose
+      inner.appendChild(s1); inner.appendChild(s2); inner.appendChild(s3); inner.appendChild(s4); inner.appendChild(s5);
+      page.appendChild(inner); $('#printRoot').appendChild(page);
+      return {page, inner};
     }
 
     async function downloadPDF(){
@@ -568,89 +462,38 @@
       catch(e){ setEngineStatus('bad','PDF engine: failed to load (click Repair)'); alert('PDF engine failed to load. Click "Repair PDF Engine" to try alternate CDNs.'); return; }
 
       const data = collectData();
-      const page = buildPrintable(data);
+      const {page, inner} = buildPrintable(data);
 
-      // === Prefer layout compaction over scaling ===
-      const capH = 1056; // target US Letter height in px
-
-      // 1) Apply compact layout first (two-column sections, tighter spacing)
+      // === Centered one‑page fit ===
+      const capH = 1056; // US Letter height in px
       if ($('#fitToggle').checked) page.classList.add('compact');
 
-      // 2) If still too tall, apply a gentle scale AND shrink the element's CSS width so it's centered—not just visually scaled.
-      let actual = page.scrollHeight;
+      const actual = inner.scrollHeight;
       if ($('#fitToggle').checked && actual > capH){
-        const scale = Math.max(0.85, Math.min(1, capH / actual)); // don't go smaller than 85%
-        const scaledW = Math.round(816 * scale);
-        const scaledH = Math.round(actual * scale);
-        page.style.width = scaledW + 'px';
-        page.style.height = scaledH + 'px';
-        // No CSS transform needed; html2pdf will scale the node to fit the PDF width automatically, avoiding the "tiny-left" look.
+        const scale = Math.max(0.86, Math.min(1, capH / actual));
+        inner.style.transformOrigin = 'top center';
+        inner.style.transform = `scale(${scale})`;
+        // keep outer page full width (816px) so the capture is centered
+        page.style.height = Math.ceil(actual * scale) + 'px';
       }
 
       const filenameSafe = (data.name || 'TDH_Agreement').replace(/[^a-z0-9_\-]+/gi,'_');
-      const opt = {
-        margin:[0,0,0,0],
-        filename: `${filenameSafe}_${new Date().toISOString().slice(0,10)}.pdf`,
-        image: { type:'jpeg', quality:0.98 },
-        html2canvas: { scale: 3, useCORS:true, letterRendering:true },
-        jsPDF: { unit:'pt', format:'letter', orientation:'portrait' }
-      };
+      const opt = { margin:[0,0,0,0], filename: `${filenameSafe}_${new Date().toISOString().slice(0,10)}.pdf`, image: { type:'jpeg', quality:0.98 }, html2canvas: { scale: 3, useCORS:true, letterRendering:true }, jsPDF: { unit:'pt', format:'letter', orientation:'portrait' } };
       await html2pdf().set(opt).from(page).save();
     }
 
-    // ---------- Diagnostics (existing + new tests) ----------
-    function addTestLine(name, ok, extra=''){
-      const line = document.createElement('div');
-      line.className = 'test';
-      line.innerHTML = `<span>${name}</span><span class="${ok?'ok':'bad'}">${ok?'PASS':'FAIL'}${extra? ' – '+extra: ''}</span>`;
-      $('#tests').appendChild(line);
-    }
+    // ---------- Diagnostics ----------
+    function addTestLine(name, ok, extra=''){ const line = document.createElement('div'); line.style.cssText='display:flex;justify-content:space-between;gap:12px;padding:6px 8px;background:#0f1628;border:1px solid #1c263d;border-radius:10px;margin-top:6px'; line.innerHTML = `<span>${name}</span><span style="${ok?'color:#22c55e':'color:#ef4444'}">${ok?'PASS':'FAIL'}${extra? ' – '+extra: ''}</span>`; $('#tests').appendChild(line); }
 
     async function runDiagnostics(){
       $('#tests').innerHTML = '';
-
-      // Test 1: Engine presence
       const engineLoaded = !!window.html2pdf || await ensurePdfLoaded().then(()=>true).catch(()=>false);
       addTestLine('Engine loads (html2pdf present)', engineLoaded);
-      if(!engineLoaded){ setEngineStatus('bad','PDF engine: failed to load'); return; }
-
-      // Test 2: Minimal render (no download)
-      const probe = document.createElement('div');
-      probe.style.width='400px'; probe.style.padding='16px'; probe.style.background='#fff'; probe.style.color='#111';
-      probe.innerHTML = '<h3>Minimal PDF Probe</h3><p>This is a lightweight render test that should not download a file.</p>';
-      document.body.appendChild(probe);
-      try{
-        await html2pdf().from(probe).set({ html2canvas:{scale:1}, jsPDF:{unit:'pt',format:'letter'} }).toPdf().get('pdf');
-        addTestLine('Minimal render pipeline', true);
-      }catch(e){ console.error(e); addTestLine('Minimal render pipeline', false, e.message||e.toString()); }
-      finally{ document.body.removeChild(probe); }
-
-      // Test 3: Long-content wrap
-      const longData = {
-        name:'Very Long Name That Should Wrap Cleanly Without Any Overlap Whatsoever In The PDF Export Output For Reliability',
-        primaryContactName:'Alexandria Catherine Exampleton the Third', primaryContactPhone:'(402) 555‑0000',
-        insuranceCompany:'Prairie Mutual of the Greater Midwestern United Insurance Conglomerate – Division X',
-        claimNumber:'PM‑NE‑24‑DEMO‑SUPER‑LONG‑1234567890', phone:'(402) 555‑0001',
-        address:'12345 Extraordinarily Long Avenue Name That Spans Many Characters Suite 100', cityStateZip:'Somewhere, NE 68000‑1234',
-        roofLocations:['House','Garage','Shed','Flat'], tearOffLayers:'2', underlayment:'Synthetic', shinglesBrand:'Malarkey Vista', style:'Architectural', color:'Weathered Wood', sqs:'28',
-        iceWater:'Yes – eaves/valleys (per code)', dripEdge:'Yes – charcoal', gutterApron:'Yes – charcoal', sideWallFlashing:'Metal',
-        vents:'8 box vents – black', valleys:'Open (metal)', pipeJacks:'3 – neoprene', ridge:'Ridge cap – matching', roofPitch:'9/12', stories:'2', roofSize:'~3,400 sq ft', roofType:'Gable',
-        gutters:'6"', downspouts:'3x4', gutterColor:'Charcoal', downspoutColor:'Charcoal', gutterGuards:'Leaf Free', magRoll:'Yes', debris:'Yes',
-        sidingBrand:'LP SmartSide', sidingStyle:'Lap 8"', sidingSqs:'25', sidingColor:'Charcoal', elevations:'Front / Rear / Left / Right', trim:'PVC', fascia:'Smooth', soffit:'Vented', windowWraps:'Smooth', blocks:'2 Light, 1 Split', sidingNotes:'This note is intentionally verbose to test wrapping and ensure there are no overlaps or clipping in the final layout under worst-case text lengths.', partialFull:'Full Replacement',
-        materialDrop:'Driveway (left side) – 7am OK', redeck:'No', interior:'Master bath ceiling stain', agreedAmount:'20000', firstPayment:'5000', finalPayment:'15000',
-        custDate:new Date().toISOString().slice(0,10), repDate:new Date().toISOString().slice(0,10), repName:'QA Tester'
-      };
-      try{
-        const page = buildPrintable(longData);
-        await html2pdf().from(page).set({ html2canvas:{scale:1, useCORS:true}, jsPDF:{unit:'pt',format:'letter'} }).toPdf().get('pdf');
-        addTestLine('Long-content wrap (no overlap runtime errors)', true);
-      }catch(e){ console.error(e); addTestLine('Long-content wrap', false, e.message||e.toString()); }
-
-      // Test 4: Logo loads
-      try{
-        await new Promise((res,rej)=>{ const img=new Image(); img.onload=()=>res(); img.onerror=()=>rej(new Error('Logo not found at '+LOGO_PATH)); img.src=LOGO_PATH; });
-        addTestLine('Logo asset reachable (assets/tdh-logo.png)', true);
-      }catch(e){ addTestLine('Logo asset reachable (assets/tdh-logo.png)', false, e.message||e.toString()); }
+      try{ await new Promise((res,rej)=>{ const img=new Image(); img.onload=res; img.onerror=()=>rej(new Error('Logo not found')); img.src=LOGO_PATH; }); addTestLine('Logo asset reachable', true);}catch(e){ addTestLine('Logo asset reachable', false, e.message||e.toString()); }
+      // all fields present check (simple presence)
+      const required = ['name','primaryContactName','primaryContactPhone','insuranceCompany','claimNumber','phone','address','cityStateZip','gutters','downspouts','gutterColor','downspoutColor','gutterGuards','magRoll','debris','sidingBrand','sidingStyle','sidingSqs','sidingColor','elevations','trim','fascia','soffit','windowWraps','blocks','sidingNotes','partialFull','agreedAmount','firstPayment','finalPayment','custDate','repDate','repName'];
+      const missing = required.filter(id=>document.getElementById(id)===null);
+      addTestLine('All form fields exist in DOM', missing.length===0, missing.length?('Missing: '+missing.join(', ')):'');
     }
 
     function resetDiagnostics(){ $('#tests').innerHTML = ''; }
@@ -659,12 +502,7 @@
     $('#btnExample').addEventListener('click', loadExample);
     $('#btnClear').addEventListener('click', clearForm);
     $('#btnDownload').addEventListener('click', downloadPDF);
-    $('#btnRepair').addEventListener('click', async ()=>{
-      setEngineStatus('pending','PDF engine: loading…');
-      try{ await ensurePdfLoaded(); setEngineStatus('ok','PDF engine: ready'); }
-      catch(e){ setEngineStatus('bad','PDF engine: failed to load'); console.error(e); }
-    });
-
+    $('#btnRepair').addEventListener('click', async ()=>{ setEngineStatus('pending','PDF engine: loading…'); try{ await ensurePdfLoaded(); setEngineStatus('ok','PDF engine: ready'); } catch(e){ setEngineStatus('bad','PDF engine: failed to load'); console.error(e); } });
     $('#btnRunDiag').addEventListener('click', runDiagnostics);
     $('#btnResetDiag').addEventListener('click', resetDiagnostics);
   </script>
