@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>TDH Agreement – Web Form → PDF (No-Overlap • Robust Loader)</title>
+<title>TDH Agreement – Web Form → PDF (Logo + Signatures)</title>
 <meta name="color-scheme" content="dark light" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -43,8 +43,11 @@
   /* === PRINTABLE (bulletproof, no-overlap) === */
   #printRoot{position:fixed;inset:0;pointer-events:none;opacity:0}
   .page{width:816px;min-height:1056px;background:#fff;color:#0b1220;padding:28px 32px;border:1px solid #e5e7eb;border-radius:8px}
-  .h1{font-size:22px;font-weight:700;margin:0 0 4px}
-  .sub{color:#475569;margin:0 0 16px}
+  .header{display:flex;gap:16px;align-items:center;margin-bottom:8px}
+  .logoBox{width:180px;min-height:60px;display:flex;align-items:center}
+  .logoBox img{max-width:180px;max-height:70px;object-fit:contain}
+  .h1{font-size:22px;font-weight:700;margin:0}
+  .sub{color:#475569;margin:2px 0 0}
   .sec{margin-top:14px}
   .sec-title{font-size:14px;font-weight:700;margin:0 0 6px;border-bottom:1px solid #e5e7eb;padding-bottom:4px}
   .kv{display:grid;grid-template-columns:220px 1fr;gap:4px 10px;align-items:start}
@@ -55,14 +58,12 @@
   .pill{display:inline-block;background:#eef2ff;border:1px solid #c7d2fe;color:#1e3a8a;border-radius:999px;padding:2px 8px;font-size:11px}
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px}
   .avoid-break{page-break-inside:avoid}
-
-  /* Diagnostics UI */
-  .diag{background:#0b1220;border:1px solid var(--border);border-radius:12px;padding:12px;margin-top:16px}
-  .diag h3{margin:0 0 6px;font-size:14px}
-  .tests{display:grid;gap:8px}
-  .test{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:8px 10px;background:#0f1628;border:1px solid #1c263d;border-radius:10px}
-  .ok{color:#22c55e}
-  .bad{color:#ef4444}
+  /* Signatures */
+  .signRow{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:10px}
+  .sigBox{border:1px dashed #cbd5e1;border-radius:8px;padding:10px 12px}
+  .sigLine{height:32px;border-bottom:2px solid #0f172a;margin:16px 0 8px}
+  .sigMeta{display:grid;grid-template-columns:120px 1fr;gap:4px 8px}
+  .sigMeta .k{font-size:10px;color:#64748b}
 </style>
 </head>
 <body>
@@ -80,7 +81,7 @@
       </div>
     </div>
 
-    <p class="note">PDF export now uses a **robust loader** with CDN fallbacks. The generated page uses a **two‑column, no‑overlap layout**; long text wraps and will not clip.</p>
+    <p class="note">PDF now includes the TDH logo and signature boxes for both the customer and the representative. Layout uses a **two‑column, no‑overlap** grid.</p>
 
     <!-- GENERAL INFO -->
     <section class="panel">
@@ -245,6 +246,9 @@
     const $ = (sel, root=document) => root.querySelector(sel);
     const $$ = (sel, root=document) => [...root.querySelectorAll(sel)];
 
+    // Paths
+    const LOGO_PATH = './assets/tdh-logo.png'; // Place your tdh-logo.png in /assets
+
     // ---------- PDF engine loader with fallbacks ----------
     const PDF_CDNS = [
       'https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js',
@@ -284,7 +288,6 @@
       else { light.style.background = '#f59e0b'; light.style.boxShadow='0 0 10px #f59e0b'; }
     }
 
-    // Try to load immediately
     (async()=>{
       try{ await ensurePdfLoaded(); setEngineStatus('ok','PDF engine: ready'); }
       catch(e){ setEngineStatus('bad','PDF engine: failed to load'); console.error(e); }
@@ -374,12 +377,10 @@
         materialDrop:'Driveway (left side) – 7am OK', redeck:'No', interior:'Master bath ceiling stain', agreedAmount:'18124.55', firstPayment:'5000.00', finalPayment:'13124.55',
         custDate:new Date().toISOString().slice(0,10), repDate:new Date().toISOString().slice(0,10), repName:'TDH Rep – J. Morales'
       };
-      // Fill
       for(const [k,v] of Object.entries(ex)){
         const el = document.getElementById(k);
         if(el){ el.value = v }
       }
-      // Set chips/radios
       $$('#roofLocations input[type="checkbox"]').forEach(cb=>{cb.checked = ex.roofLocations.includes(cb.value)});
       $$('#underlayment input[type="radio"]').forEach(r=>{r.checked = (r.value===ex.underlayment)});
       $$('#roofType input[type="radio"]').forEach(r=>{r.checked = (r.value===ex.roofType)});
@@ -394,14 +395,63 @@
       parent.appendChild(wrap);
     }
 
+    function buildHeader(){
+      const h = document.createElement('div');
+      h.className = 'header';
+      const logo = document.createElement('div');
+      logo.className = 'logoBox';
+      const img = new Image();
+      img.src = LOGO_PATH;
+      img.alt = 'TDH Logo';
+      img.loading = 'eager';
+      img.decoding = 'sync';
+      img.crossOrigin = 'anonymous';
+      img.onerror = ()=>{ logo.innerHTML = '<strong>TDH</strong>'; };
+      logo.appendChild(img);
+      const text = document.createElement('div');
+      text.innerHTML = `<div class="h1">TDH Agreement</div><div class="sub">Generated ${new Date().toLocaleDateString()}</div>`;
+      h.appendChild(logo); h.appendChild(text);
+      return h;
+    }
+
+    function buildSignatures(d){
+      const s = document.createElement('section');
+      s.className = 'sec avoid-break';
+      s.innerHTML = `<div class="sec-title">Signatures</div>`;
+
+      const row = document.createElement('div');
+      row.className = 'signRow';
+
+      const customer = document.createElement('div');
+      customer.className = 'sigBox';
+      customer.innerHTML = `
+        <div class="k" style="font-weight:700">Customer Signature</div>
+        <div class="sigLine"></div>
+        <div class="sigMeta">
+          <div class="k">Printed Name</div><div class="v">${d.name || '____________________________'}</div>
+          <div class="k">Date</div><div class="v">${d.custDate || '____/____/________'}</div>
+        </div>`;
+
+      const rep = document.createElement('div');
+      rep.className = 'sigBox';
+      rep.innerHTML = `
+        <div class="k" style="font-weight:700">TDH Representative</div>
+        <div class="sigLine"></div>
+        <div class="sigMeta">
+          <div class="k">Printed Name</div><div class="v">${d.repName || '____________________________'}</div>
+          <div class="k">Date</div><div class="v">${d.repDate || '____/____/________'}</div>
+        </div>`;
+
+      row.appendChild(customer); row.appendChild(rep);
+      s.appendChild(row);
+      return s;
+    }
+
     function buildPrintable(d){
       const root = $('#printRoot');
       root.innerHTML = '';
       const page = document.createElement('div');
       page.className = 'page';
-
-      const header = document.createElement('div');
-      header.innerHTML = `<div class="h1">TDH Agreement</div><div class="sub">Generated ${new Date().toLocaleDateString()}</div>`;
 
       const sec = (title)=>{
         const s = document.createElement('section');
@@ -409,6 +459,9 @@
         s.innerHTML = `<div class="sec-title">${title}</div>`;
         return s;
       };
+
+      // Header with logo
+      page.appendChild(buildHeader());
 
       // General
       const s1 = sec('General Information');
@@ -480,12 +533,15 @@
       kv(right,'TDH Rep Date', d.repDate);
       kv(right,'TDH Representative', d.repName);
 
+      // Signatures
+      const s5 = buildSignatures(d);
+
       const pageFrag = document.createDocumentFragment();
-      pageFrag.appendChild(header);
       pageFrag.appendChild(s1);
       pageFrag.appendChild(s2);
       pageFrag.appendChild(s3);
       pageFrag.appendChild(s4);
+      pageFrag.appendChild(s5);
       page.appendChild(pageFrag);
 
       $('#printRoot').appendChild(page);
@@ -493,14 +549,8 @@
     }
 
     async function downloadPDF(){
-      try{
-        await ensurePdfLoaded();
-        setEngineStatus('ok','PDF engine: ready');
-      }catch(e){
-        setEngineStatus('bad','PDF engine: failed to load (click Repair)');
-        alert('PDF engine failed to load. Click "Repair PDF Engine" to try alternate CDNs.');
-        return;
-      }
+      try{ await ensurePdfLoaded(); setEngineStatus('ok','PDF engine: ready'); }
+      catch(e){ setEngineStatus('bad','PDF engine: failed to load (click Repair)'); alert('PDF engine failed to load. Click "Repair PDF Engine" to try alternate CDNs.'); return; }
 
       const data = collectData();
       const page = buildPrintable(data);
@@ -515,7 +565,7 @@
       await html2pdf().set(opt).from(page).save();
     }
 
-    // ---------- Diagnostics ("test cases") ----------
+    // ---------- Diagnostics (existing + new tests) ----------
     function addTestLine(name, ok, extra=''){
       const line = document.createElement('div');
       line.className = 'test';
@@ -529,7 +579,6 @@
       // Test 1: Engine presence
       const engineLoaded = !!window.html2pdf || await ensurePdfLoaded().then(()=>true).catch(()=>false);
       addTestLine('Engine loads (html2pdf present)', engineLoaded);
-
       if(!engineLoaded){ setEngineStatus('bad','PDF engine: failed to load'); return; }
 
       // Test 2: Minimal render (no download)
@@ -540,24 +589,17 @@
       try{
         await html2pdf().from(probe).set({ html2canvas:{scale:1}, jsPDF:{unit:'pt',format:'letter'} }).toPdf().get('pdf');
         addTestLine('Minimal render pipeline', true);
-      }catch(e){
-        console.error(e); addTestLine('Minimal render pipeline', false, e.message||e.toString());
-      }finally{
-        document.body.removeChild(probe);
-      }
+      }catch(e){ console.error(e); addTestLine('Minimal render pipeline', false, e.message||e.toString()); }
+      finally{ document.body.removeChild(probe); }
 
       // Test 3: Long-content wrap
       const longData = {
         name:'Very Long Name That Should Wrap Cleanly Without Any Overlap Whatsoever In The PDF Export Output For Reliability',
-        primaryContactName:'Alexandria Catherine Exampleton the Third',
-        primaryContactPhone:'(402) 555‑0000',
+        primaryContactName:'Alexandria Catherine Exampleton the Third', primaryContactPhone:'(402) 555‑0000',
         insuranceCompany:'Prairie Mutual of the Greater Midwestern United Insurance Conglomerate – Division X',
-        claimNumber:'PM‑NE‑24‑DEMO‑SUPER‑LONG‑1234567890',
-        phone:'(402) 555‑0001',
-        address:'12345 Extraordinarily Long Avenue Name That Spans Many Characters Suite 100',
-        cityStateZip:'Somewhere, NE 68000‑1234',
-        roofLocations:['House','Garage','Shed','Flat'],
-        tearOffLayers:'2', underlayment:'Synthetic', shinglesBrand:'Malarkey Vista', style:'Architectural', color:'Weathered Wood', sqs:'28',
+        claimNumber:'PM‑NE‑24‑DEMO‑SUPER‑LONG‑1234567890', phone:'(402) 555‑0001',
+        address:'12345 Extraordinarily Long Avenue Name That Spans Many Characters Suite 100', cityStateZip:'Somewhere, NE 68000‑1234',
+        roofLocations:['House','Garage','Shed','Flat'], tearOffLayers:'2', underlayment:'Synthetic', shinglesBrand:'Malarkey Vista', style:'Architectural', color:'Weathered Wood', sqs:'28',
         iceWater:'Yes – eaves/valleys (per code)', dripEdge:'Yes – charcoal', gutterApron:'Yes – charcoal', sideWallFlashing:'Metal',
         vents:'8 box vents – black', valleys:'Open (metal)', pipeJacks:'3 – neoprene', ridge:'Ridge cap – matching', roofPitch:'9/12', stories:'2', roofSize:'~3,400 sq ft', roofType:'Gable',
         gutters:'6"', downspouts:'3x4', gutterColor:'Charcoal', downspoutColor:'Charcoal', gutterGuards:'Leaf Free', magRoll:'Yes', debris:'Yes',
@@ -567,11 +609,15 @@
       };
       try{
         const page = buildPrintable(longData);
-        await html2pdf().from(page).set({ html2canvas:{scale:1}, jsPDF:{unit:'pt',format:'letter'} }).toPdf().get('pdf');
+        await html2pdf().from(page).set({ html2canvas:{scale:1, useCORS:true}, jsPDF:{unit:'pt',format:'letter'} }).toPdf().get('pdf');
         addTestLine('Long-content wrap (no overlap runtime errors)', true);
-      }catch(e){
-        console.error(e); addTestLine('Long-content wrap', false, e.message||e.toString());
-      }
+      }catch(e){ console.error(e); addTestLine('Long-content wrap', false, e.message||e.toString()); }
+
+      // Test 4: Logo loads
+      try{
+        await new Promise((res,rej)=>{ const img=new Image(); img.onload=()=>res(); img.onerror=()=>rej(new Error('Logo not found at '+LOGO_PATH)); img.src=LOGO_PATH; });
+        addTestLine('Logo asset reachable (assets/tdh-logo.png)', true);
+      }catch(e){ addTestLine('Logo asset reachable (assets/tdh-logo.png)', false, e.message||e.toString()); }
     }
 
     function resetDiagnostics(){ $('#tests').innerHTML = ''; }
