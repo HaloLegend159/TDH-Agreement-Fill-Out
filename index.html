@@ -67,17 +67,19 @@
   .sigMeta .k{font-size:10px;color:#64748b}
 
   /* Compact (1-page fit) – balanced two-column sections and subtle type reduction */
-  .page.compact{padding:18px 22px}
-  .page.compact .h1{font-size:19px}
-  .page.compact .sec{display:grid;grid-template-columns:1fr 1fr;column-gap:16px;row-gap:6px}
-  .page.compact .sec-title{grid-column:1 / -1;font-size:12.5px;margin-bottom:2px}
-  .page.compact .kv{grid-template-columns:160px 1fr}
-  .page.compact .v{font-size:12.4px;line-height:1.42}
-  .page.compact .k{font-size:10.4px}
-  .page.compact .pill{font-size:10.2px;padding:1px 6px}
-  .page.compact .logoBox{width:150px}
-  .page.compact .sigBox{padding:8px 10px}
-  .page.compact .sigLine{height:22px;margin:10px 0 6px}
+  .page.compact{padding:16px 20px}
+  .page.compact .h1{font-size:18.5px}
+  .page.compact .sec{display:grid;grid-template-columns:1fr 1fr;column-gap:14px;row-gap:6px}
+  .page.compact .sec-title{grid-column:1 / -1;font-size:12.2px;margin-bottom:0}
+  .page.compact .kv{grid-template-columns:155px 1fr}
+  .page.compact .v{font-size:12.2px;line-height:1.38}
+  .page.compact .k{font-size:10.2px}
+  .page.compact .pill{font-size:10px;padding:1px 6px}
+  .page.compact .logoBox{width:140px}
+  .page.compact .sigBox{padding:6px 8px}
+  .page.compact .sigLine{height:18px;margin:8px 0 6px}
+  .page.compact .signRow{gap:14px}
+  .page.compact .sigMeta{grid-template-columns:100px 1fr}
   .page.compact .sec.paydates{grid-template-columns:repeat(3,1fr)}
 </style>
 </head>
@@ -397,7 +399,9 @@
     }
 
     function buildSignatures(d){
-      const s = document.createElement('section'); s.className = 'sec avoid-break'; s.innerHTML = `<div class="sec-title">Signatures</div>`;
+      const s = document.createElement('section');
+      s.className = 'sec signatures avoid-break';
+      s.innerHTML = `<div class="sec-title">Signatures</div>`;
       const row = document.createElement('div'); row.className = 'signRow';
       const customer = document.createElement('div'); customer.className = 'sigBox'; customer.innerHTML = `
         <div class="k" style="font-weight:700">Customer Signature</div>
@@ -473,16 +477,20 @@
       if ($('#fitToggle').checked) page.classList.add('compact');
 
       const actual = inner.scrollHeight;
-      if ($('#fitToggle').checked && actual > capH){
-        const scale = Math.max(0.78, Math.min(1, capH / actual));
-        inner.style.transformOrigin = 'top center';
-        inner.style.transform = `scale(${scale})`;
-        // keep outer page full width (816px) so the capture is centered
-        page.style.height = Math.ceil(actual * scale) + 'px';
+      if ($('#fitToggle').checked){
+        const reserve = 24; // headroom to prevent accidental second page
+        let scale = Math.min(1, (capH - reserve) / actual);
+        if (scale < 0.72) scale = 0.72; // allow more shrink if required
+        if (scale < 1){
+          inner.style.transformOrigin = 'top center';
+          inner.style.transform = `scale(${scale})`;
+        }
+        // Fix outer height to the exact page height so html2pdf captures a single page
+        page.style.height = capH + 'px';
       }
 
       const filenameSafe = (data.name || 'TDH_Agreement').replace(/[^a-z0-9_\-]+/gi,'_');
-      const opt = { margin:[0,0,0,0], filename: `${filenameSafe}_${new Date().toISOString().slice(0,10)}.pdf`, image: { type:'jpeg', quality:0.98 }, html2canvas: { scale: 3, useCORS:true, letterRendering:true }, jsPDF: { unit:'pt', format:'letter', orientation:'portrait' } };
+      const opt = { margin:[0,0,0,0], filename: `${filenameSafe}_${new Date().toISOString().slice(0,10)}.pdf`, image: { type:'jpeg', quality:0.98 }, html2canvas: { scale: 3, useCORS:true, letterRendering:true }, jsPDF: { unit:'pt', format:'letter', orientation:'portrait' }, pagebreak: { mode: ['avoid-all','css','legacy'] } };
       await html2pdf().set(opt).from(page).save();
     }
 
