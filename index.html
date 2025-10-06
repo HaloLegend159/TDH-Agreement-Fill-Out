@@ -493,26 +493,55 @@
 
     // === PDF EXPORT ===
     async function downloadPDF(){
+      // Ensure engine present
       try { await ensurePdfLoaded(); setEngineStatus('ok','PDF engine: ready'); }
       catch(e){ setEngineStatus('bad','PDF engine: failed to load (click Repair)'); alert('PDF engine failed to load. Click "Repair PDF Engine" to try alternate CDNs.'); return; }
 
+      // Build printable page in #printRoot
       const data = collectData();
-      const { page } = buildPrintable(data);
+      const { page, inner } = buildPrintable(data);
 
-      const exportPage = page.cloneNode(true);
-      const exportInner = exportPage.querySelector('.page-inner');
-      if (exportInner){ exportInner.style.transform='none'; exportInner.style.transformOrigin='top left'; }
-      if ($('#fitToggle').checked) exportPage.classList.add('compact');
-      Object.assign(exportPage.style, { position:'fixed', left:'0', top:'0', opacity:'0', pointerEvents:'none', width:'816px', minHeight:'1056px', background:'#ffffff', zIndex:'-1' });
-      document.body.appendChild(exportPage);
-      void exportPage.offsetHeight; // force layout
+      // Wait for fonts & images so html2canvas doesn't capture a blank
+      try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch(_){}
+      const imgs = Array.from(page.querySelectorAll('img'));
+      await Promise.all(imgs.map(img => img.complete ? Promise.resolve() : new Promise(res=>{ img.onload=res; img.onerror=res; })));
+
+      // Single‑page fit logic (restore previously working behavior)
+      const capH = 1056; // US Letter height in px
+      if ($('#fitToggle').checked) page.classList.add('compact');
+      // Allow layout to settle before reading heights
+      await new Promise(r=>requestAnimationFrame(()=>r()));
+      const actual = inner.scrollHeight;
+      const reserve = 24; // headroom to prevent spill
+      let scale = Math.min(1, (capH - reserve) / actual);
+      if (scale < 1){
+        inner.style.transformOrigin = 'top center';
+        inner.style.transform = `scale(${scale})`;
+      }
+      page.style.height = capH + 'px';
+
+      // Temporarily reveal the print root while capturing
+      const pr = document.getElementById('printRoot');
+      const prevOpacity = pr.style.opacity; const prevPE = pr.style.pointerEvents;
+      pr.style.opacity = '1'; pr.style.pointerEvents = 'auto';
 
       const filenameSafe = (data.name || 'TDH_Agreement').replace(/[^a-z0-9_\-]+/gi,'_');
       const opt = {
-        margin:[0,0,0,0], filename: `${filenameSafe}_${new Date().toISOString().slice(0,10)}.pdf`, image:{type:'jpeg',quality:0.98},
-        html2canvas:{ scale:2, useCORS:true, backgroundColor:'#ffffff', letterRendering:true, scrollX:0, scrollY:0 },
-        jsPDF:{ unit:'pt', format:'letter', orientation:'portrait' }, pagebreak:{ mode:['css','legacy','avoid-all'] }
+        margin:[0,0,0,0],
+        filename: `${filenameSafe}_${new Date().toISOString().slice(0,10)}.pdf`,
+        image: { type:'jpeg', quality:0.98 },
+        html2canvas: { scale: 3, useCORS:true, backgroundColor:'#ffffff', letterRendering:true },
+        jsPDF: { unit:'pt', format:'letter', orientation:'portrait' },
+        pagebreak: { mode: ['avoid-all','css','legacy'] }
       };
+
+      try {
+        await html2pdf().set(opt).from(page).save();
+      } finally {
+        pr.style.opacity = prevOpacity || '0';
+        pr.style.pointerEvents = prevPE || 'none';
+      }
+    };
       try { await html2pdf().set(opt).from(exportPage).save(); }
       finally { exportPage.remove(); }
     }
