@@ -474,6 +474,55 @@
       try{ await ensurePdfLoaded(); setEngineStatus('ok','PDF engine: ready'); }
       catch(e){ setEngineStatus('bad','PDF engine: failed to load (click Repair)'); alert('PDF engine failed to load. Click "Repair PDF Engine" to try alternate CDNs.'); return; }
 
+      // Collect & build a fresh printable node (kept hidden in #printRoot for UI)
+      const data = collectData();
+      const {page} = buildPrintable(data);
+
+      // === Robust export path ===
+      // Clone the page, remove any transforms, and render it off‑screen so html2canvas captures reliably.
+      const exportPage = page.cloneNode(true);
+      const exportInner = exportPage.querySelector('.page-inner');
+      if (exportInner){
+        exportInner.style.transform = 'none';
+        exportInner.style.transformOrigin = 'top left';
+      }
+      // Force one‑page layout styles but avoid transform scaling during capture.
+      if ($('#fitToggle').checked) exportPage.classList.add('compact');
+      exportPage.style.position = 'absolute';
+      exportPage.style.left = '-10000px';
+      exportPage.style.top = '0';
+      exportPage.style.width = '816px';
+      exportPage.style.minHeight = '1056px';
+      exportPage.style.background = '#ffffff';
+
+      document.body.appendChild(exportPage);
+
+      const filenameSafe = (data.name || 'TDH_Agreement').replace(/[^a-z0-9_\-]+/gi,'_');
+      const opt = {
+        margin:[0,0,0,0],
+        filename: `${filenameSafe}_${new Date().toISOString().slice(0,10)}.pdf`,
+        image: { type:'jpeg', quality:0.98 },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: '#ffffff',
+          scrollX: 0,
+          scrollY: 0,
+          windowWidth: exportPage.offsetWidth,
+          windowHeight: exportPage.offsetHeight
+        },
+        jsPDF: { unit:'pt', format:'letter', orientation:'portrait' },
+        pagebreak: { mode: ['avoid-all','css','legacy'] }
+      };
+
+      try{
+        await html2pdf().set(opt).from(exportPage).save();
+      } finally {
+        exportPage.remove();
+      }
+    }
+      catch(e){ setEngineStatus('bad','PDF engine: failed to load (click Repair)'); alert('PDF engine failed to load. Click "Repair PDF Engine" to try alternate CDNs.'); return; }
+
       const data = collectData();
       const {page, inner} = buildPrintable(data);
 
