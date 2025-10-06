@@ -495,8 +495,12 @@
       }
 
       const filenameSafe = (data.name || 'TDH_Agreement').replace(/[^a-z0-9_\-]+/gi,'_');
-      const opt = { margin:[0,0,0,0], filename: `${filenameSafe}_${new Date().toISOString().slice(0,10)}.pdf`, image: { type:'jpeg', quality:0.98 }, html2canvas: { scale: 3, useCORS:true, letterRendering:true }, jsPDF: { unit:'pt', format:'letter', orientation:'portrait' }, pagebreak: { mode: ['avoid-all','css','legacy'] } };
-      await html2pdf().set(opt).from(page).save();
+      const opt = { margin:[0,0,0,0], filename: `${filenameSafe}_${new Date().toISOString().slice(0,10)}.pdf`, image: { type:'jpeg', quality:0.98 }, html2canvas: { scale: 3, useCORS:true, letterRendering:true, backgroundColor:'#ffffff' }, jsPDF: { unit:'pt', format:'letter', orientation:'portrait' }, pagebreak: { mode: ['avoid-all','css','legacy'] } };
+      const pr = $('#printRoot');
+      const prevOpacity = pr.style.opacity; const prevPE = pr.style.pointerEvents;
+      try{ pr.style.opacity='1'; pr.style.pointerEvents='auto';
+        await html2pdf().set(opt).from(page).save();
+      } finally { pr.style.opacity = prevOpacity || '0'; pr.style.pointerEvents = prevPE || 'none'; }
     }
 
     // ---------- Diagnostics ----------
