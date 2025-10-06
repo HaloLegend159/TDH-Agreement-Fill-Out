@@ -303,11 +303,26 @@
       else { light.style.background = '#f59e0b'; light.style.boxShadow='0 0 10px #f59e0b'; }
     }
 
-    (async()=>{ try{ await ensurePdfLoaded(); setEngineStatus('ok','PDF engine: ready'); } catch(e){ setEngineStatus('bad','PDF engine: failed to load'); console.error(e); } })();
+    // Wrap awaits inside an async IIFE to avoid top‑level await errors
+    (async () => {
+      try {
+        await ensurePdfLoaded();
+        setEngineStatus('ok','PDF engine: ready');
+      } catch (e) {
+        setEngineStatus('bad','PDF engine: failed to load');
+        console.error(e);
+      }
+    })();
 
     // ---------- Form helpers ----------
-    function getCheckedChips(container){ return $("input[type='checkbox']:checked", container) ? $$("input[type='checkbox']:checked", container).map(i=>i.value) : []; }
-    function getCheckedRadio(container){ const r = $("input[type='radio']:checked", container); return r? r.value: "" }
+    function getCheckedChips(container){
+      const nodes = $$("input[type='checkbox']:checked", container);
+      return nodes.map(i=>i.value);
+    }
+    function getCheckedRadio(container){
+      const r = $("input[type='radio']:checked", container);
+      return r ? r.value : '';
+    }
 
     function collectData(){
       return {
@@ -370,7 +385,11 @@
       };
     }
 
-    function clearForm(){ $$("input, textarea, select").forEach(el=>{ if(el.type==='checkbox' || el.type==='radio'){ el.checked = false; } else { el.value = ''; } }); }
+    function clearForm(){
+      $$('input, textarea, select').forEach(el=>{
+        if(el.type==='checkbox' || el.type==='radio') el.checked=false; else el.value='';
+      });
+    }
 
     function loadExample(){
       const ex = {
@@ -385,21 +404,33 @@
         materialDrop:'Driveway (left side) – 7am OK', redeck:'No', interior:'Master bath ceiling stain', agreedAmount:'18124.55', firstPayment:'5000.00', finalPayment:'13124.55', currentPrice:'18124.55',
         custDate:new Date().toISOString().slice(0,10), repDate:new Date().toISOString().slice(0,10), repName:'TDH Rep – J. Morales'
       };
-      for(const [k,v] of Object.entries(ex)){ const el = document.getElementById(k); if(el){ el.value = v } }
-      $$("#roofLocations input[type='checkbox']").forEach(cb=>{cb.checked = (ex.roofLocations||[]).includes(cb.value)});
-      $$("#underlayment input[type='radio']").forEach(r=>{r.checked = (r.value===ex.underlayment)});
-      $$("#roofType input[type='radio']").forEach(r=>{r.checked = (r.value===ex.roofType)});
+      for(const [k,v] of Object.entries(ex)){
+        const el = document.getElementById(k); if(el) el.value = v;
+      }
+      $$('#roofLocations input[type="checkbox"]').forEach(cb=>{cb.checked=(ex.roofLocations||[]).includes(cb.value)});
+      $$('#underlayment input[type="radio"]').forEach(r=>{r.checked=(r.value===ex.underlayment)});
+      $$('#roofType input[type="radio"]').forEach(r=>{r.checked=(r.value===ex.roofType)});
     }
 
     function currency(n){ if(n==null||n==='')return''; const v=Number(n); if(Number.isNaN(v))return n; return v.toLocaleString(undefined,{style:'currency',currency:'USD'}) }
 
-    function kv(parent,label,value){ const wrap = document.createElement('div'); wrap.className = 'kv'; wrap.innerHTML = `<div class="k">${label}</div><div class="v">${value || '—'}</div>`; parent.appendChild(wrap); }
+    function kv(parent,label,value){
+      const wrap = document.createElement('div');
+      wrap.className = 'kv';
+      wrap.innerHTML = `<div class="k">${label}</div><div class="v">${value || '—'}</div>`;
+      parent.appendChild(wrap);
+    }
 
     function buildHeader(){
       const h = document.createElement('div'); h.className = 'header';
-      const logo = document.createElement('div'); logo.className = 'logoBox'; const img = new Image(); img.src = LOGO_PATH; img.alt = 'TDH Logo'; img.loading = 'eager'; img.decoding = 'sync'; img.crossOrigin = 'anonymous'; img.onerror = ()=>{ logo.innerHTML = '<strong>TDH</strong>'; }; logo.appendChild(img);
-      const text = document.createElement('div'); text.innerHTML = `<div class="h1">TDH Agreement</div><div class="sub">Generated ${new Date().toLocaleDateString()}</div>`;
-      h.appendChild(logo); h.appendChild(text); return h;
+      const logo = document.createElement('div'); logo.className = 'logoBox';
+      const img = new Image(); img.src = LOGO_PATH; img.alt = 'TDH Logo'; img.loading='eager'; img.decoding='sync'; img.crossOrigin='anonymous';
+      img.onerror = ()=>{ logo.innerHTML = '<strong>TDH</strong>'; };
+      logo.appendChild(img);
+      const text = document.createElement('div');
+      text.innerHTML = `<div class="h1">TDH Agreement</div><div class="sub">Generated ${new Date().toLocaleDateString()}</div>`;
+      h.appendChild(logo); h.appendChild(text);
+      return h;
     }
 
     function buildSignatures(d){
@@ -415,7 +446,8 @@
         <div class="k" style="font-weight:700">TDH Representative</div>
         <div class="sigLine"></div>
         <div class="sigMeta"><div class="k">Printed Name</div><div class="v">${d.repName || '____________________________'}</div><div class="k">Date</div><div class="v">${d.repDate || '____/____/________'}</div></div>`;
-      row.appendChild(customer); row.appendChild(rep); s.appendChild(row); return s;
+      row.appendChild(customer); row.appendChild(rep); s.appendChild(row);
+      return s;
     }
 
     function buildPrintable(d){
@@ -425,33 +457,24 @@
 
       const section = (title)=>{ const s = document.createElement('section'); s.className = 'sec avoid-break'; s.innerHTML = `<div class="sec-title">${title}</div>`; return s; };
 
-      // Header
       inner.appendChild(buildHeader());
 
-      // General
       const s1 = section('General Information');
       kv(s1,'Name', d.name); kv(s1,'Primary Contact', d.primaryContactName); kv(s1,'Primary Phone', d.primaryContactPhone);
       kv(s1,'Insurance Company', d.insuranceCompany); kv(s1,'Claim Number', d.claimNumber); kv(s1,'Phone', d.phone);
       kv(s1,'Address', d.address); kv(s1,'City/State/Zip', d.cityStateZip);
 
-      // Roofing
       const s2 = section('Roofing');
-      const locWrap = document.createElement('div'); locWrap.className='kv'; const pillRow = `<div class="pillrow">${(d.roofLocations||[]).map(x=>`<span class='pill'>${x}</span>`).join('') || '—'}</div>`; locWrap.innerHTML = `<div class="k">Locations</div><div class="v">${pillRow}</div>`; s2.appendChild(locWrap);
+      const locWrap = document.createElement('div'); locWrap.className='kv';
+      const pillRow = `<div class="pillrow">${(d.roofLocations||[]).map(x=>`<span class='pill'>${x}</span>`).join('') || '—'}</div>`;
+      locWrap.innerHTML = `<div class="k">Locations</div><div class="v">${pillRow}</div>`; s2.appendChild(locWrap);
       ['Tear Off Layers','Underlayment','Shingles Brand','Style','Color','SQs','Ice & Water','Drip Edge','Gutter Apron','Side Wall Flashing','Vents','Valleys','Pipe Jacks','Ridge','Roof Pitch','Stories','Roof Size','Roof Type']
-        .forEach((label)=>{
-          const map = { 'Tear Off Layers':d.tearOffLayers,'Underlayment':d.underlayment,'Shingles Brand':d.shinglesBrand,'Style':d.style,'Color':d.color,'SQs':d.sqs,'Ice & Water':d.iceWater,'Drip Edge':d.dripEdge,'Gutter Apron':d.gutterApron,'Side Wall Flashing':d.sideWallFlashing,'Vents':d.vents,'Valleys':d.valleys,'Pipe Jacks':d.pipeJacks,'Ridge':d.ridge,'Roof Pitch':d.roofPitch,'Stories':d.stories,'Roof Size':d.roofSize,'Roof Type':d.roofType };
-          kv(s2,label,map[label]);
-        });
+        .forEach(label=>{ const map = { 'Tear Off Layers':d.tearOffLayers,'Underlayment':d.underlayment,'Shingles Brand':d.shinglesBrand,'Style':d.style,'Color':d.color,'SQs':d.sqs,'Ice & Water':d.iceWater,'Drip Edge':d.dripEdge,'Gutter Apron':d.gutterApron,'Side Wall Flashing':d.sideWallFlashing,'Vents':d.vents,'Valleys':d.valleys,'Pipe Jacks':d.pipeJacks,'Ridge':d.ridge,'Roof Pitch':d.roofPitch,'Stories':d.stories,'Roof Size':d.roofSize,'Roof Type':d.roofType }; kv(s2,label,map[label]); });
 
-      // Gutters & Siding
       const s3 = section('Gutters & Siding');
       ['Gutters','Downspouts','Gutter Color','Downspout Color','Gutter Guards','Mag Roll Sweeper','Clean & Haul Debris','Siding Brand','Siding Style','Siding SQs','Siding Color','Elevations','Trim','Fascia','Soffit','Window Wraps','Blocks','Siding Notes','Partial or Full']
-        .forEach(label=>{
-          const map = { 'Gutters':d.gutters,'Downspouts':d.downspouts,'Gutter Color':d.gutterColor,'Downspout Color':d.downspoutColor,'Gutter Guards':d.gutterGuards,'Mag Roll Sweeper':d.magRoll,'Clean & Haul Debris':d.debris,'Siding Brand':d.sidingBrand,'Siding Style':d.sidingStyle,'Siding SQs':d.sidingSqs,'Siding Color':d.sidingColor,'Elevations':d.elevations,'Trim':d.trim,'Fascia':d.fascia,'Soffit':d.soffit,'Window Wraps':d.windowWraps,'Blocks':d.blocks,'Siding Notes':d.sidingNotes,'Partial or Full':d.partialFull };
-          kv(s3,label,map[label]);
-        });
+        .forEach(label=>{ const map = { 'Gutters':d.gutters,'Downspouts':d.downspouts,'Gutter Color':d.gutterColor,'Downspout Color':d.downspoutColor,'Gutter Guards':d.gutterGuards,'Mag Roll Sweeper':d.magRoll,'Clean & Haul Debris':d.debris,'Siding Brand':d.sidingBrand,'Siding Style':d.sidingStyle,'Siding SQs':d.sidingSqs,'Siding Color':d.sidingColor,'Elevations':d.elevations,'Trim':d.trim,'Fascia':d.fascia,'Soffit':d.soffit,'Window Wraps':d.windowWraps,'Blocks':d.blocks,'Siding Notes':d.sidingNotes,'Partial or Full':d.partialFull }; kv(s3,label,map[label]); });
 
-      // Payments & Dates – list all fields explicitly so nothing is missed
       const s4 = section('Payments & Dates'); s4.classList.add('paydates');
       kv(s4,'Agreed Amount', currency(d.agreedAmount));
       kv(s4,'First Payment', currency(d.firstPayment));
@@ -461,63 +484,37 @@
       kv(s4,'TDH Rep Date', d.repDate);
       kv(s4,'TDH Representative', d.repName);
 
-      // Signatures
       const s5 = buildSignatures(d);
 
-      // Compose
       inner.appendChild(s1); inner.appendChild(s2); inner.appendChild(s3); inner.appendChild(s4); inner.appendChild(s5);
       page.appendChild(inner); $('#printRoot').appendChild(page);
       return {page, inner};
     }
 
-    // === PDF EXPORT (fixed try/catch structure; no stray catch blocks) ===
+    // === PDF EXPORT ===
     async function downloadPDF(){
-      try{ await ensurePdfLoaded(); setEngineStatus('ok','PDF engine: ready'); }
+      try { await ensurePdfLoaded(); setEngineStatus('ok','PDF engine: ready'); }
       catch(e){ setEngineStatus('bad','PDF engine: failed to load (click Repair)'); alert('PDF engine failed to load. Click "Repair PDF Engine" to try alternate CDNs.'); return; }
 
-      // Collect & build a fresh printable node (kept hidden in #printRoot for UI)
       const data = collectData();
-      const {page} = buildPrintable(data);
+      const { page } = buildPrintable(data);
 
-      // Clone the page, remove any transforms, and render it off‑screen so html2canvas captures reliably.
       const exportPage = page.cloneNode(true);
       const exportInner = exportPage.querySelector('.page-inner');
-      if (exportInner){
-        exportInner.style.transform = 'none';
-        exportInner.style.transformOrigin = 'top left';
-      }
+      if (exportInner){ exportInner.style.transform='none'; exportInner.style.transformOrigin='top left'; }
       if ($('#fitToggle').checked) exportPage.classList.add('compact');
-      exportPage.style.position = 'absolute';
-      exportPage.style.left = '-10000px';
-      exportPage.style.top = '0';
-      exportPage.style.width = '816px';
-      exportPage.style.minHeight = '1056px';
-      exportPage.style.background = '#ffffff';
+      Object.assign(exportPage.style, { position:'fixed', left:'0', top:'0', opacity:'0', pointerEvents:'none', width:'816px', minHeight:'1056px', background:'#ffffff', zIndex:'-1' });
       document.body.appendChild(exportPage);
+      void exportPage.offsetHeight; // force layout
 
       const filenameSafe = (data.name || 'TDH_Agreement').replace(/[^a-z0-9_\-]+/gi,'_');
       const opt = {
-        margin:[0,0,0,0],
-        filename: `${filenameSafe}_${new Date().toISOString().slice(0,10)}.pdf`,
-        image: { type:'jpeg', quality:0.98 },
-        html2canvas: {
-          scale: 2,
-          useCORS: true,
-          backgroundColor: '#ffffff',
-          scrollX: 0,
-          scrollY: 0,
-          windowWidth: exportPage.offsetWidth,
-          windowHeight: exportPage.offsetHeight
-        },
-        jsPDF: { unit:'pt', format:'letter', orientation:'portrait' },
-        pagebreak: { mode: ['avoid-all','css','legacy'] }
+        margin:[0,0,0,0], filename: `${filenameSafe}_${new Date().toISOString().slice(0,10)}.pdf`, image:{type:'jpeg',quality:0.98},
+        html2canvas:{ scale:2, useCORS:true, backgroundColor:'#ffffff', letterRendering:true, scrollX:0, scrollY:0 },
+        jsPDF:{ unit:'pt', format:'letter', orientation:'portrait' }, pagebreak:{ mode:['css','legacy','avoid-all'] }
       };
-
-      try{
-        await html2pdf().set(opt).from(exportPage).save();
-      } finally {
-        exportPage.remove();
-      }
+      try { await html2pdf().set(opt).from(exportPage).save(); }
+      finally { exportPage.remove(); }
     }
 
     // ---------- Diagnostics ----------
@@ -529,17 +526,15 @@
       addTestLine('Engine loads (html2pdf present)', engineLoaded);
       try{ await new Promise((res,rej)=>{ const img=new Image(); img.onload=res; img.onerror=()=>rej(new Error('Logo not found')); img.src=LOGO_PATH; }); addTestLine('Logo asset reachable', true);}catch(e){ addTestLine('Logo asset reachable', false, e.message||e.toString()); }
 
-      // New sanity tests (don’t change existing ones)
+      // Keep existing tests
       addTestLine('downloadPDF is defined', typeof downloadPDF==='function');
-      try{
-        const {page} = buildPrintable(collectData());
-        const hasTitle = !!page.querySelector('.h1');
-        addTestLine('Printable builder returns page with header', hasTitle);
-        // cleanup buildPrintable side effects
-        $('#printRoot').innerHTML = '';
-      } catch(err){ addTestLine('Printable builder returns page with header', false, err.message||String(err)); }
+      try{ const {page} = buildPrintable(collectData()); const hasTitle = !!page.querySelector('.h1'); addTestLine('Printable builder returns page with header', hasTitle); $('#printRoot').innerHTML=''; }
+      catch(err){ addTestLine('Printable builder returns page with header', false, err.message||String(err)); }
 
-      // All form fields present
+      // New tests
+      try { const {page} = buildPrintable(collectData()); const clone = page.cloneNode(true); document.body.appendChild(clone); const w = clone.offsetWidth, h = clone.offsetHeight; clone.remove(); addTestLine('Export node has measurable size', w>0 && h>0, `w=${w}, h=${h}`); }
+      catch(err){ addTestLine('Export node has measurable size', false, err.message||String(err)); }
+
       const required = ['name','primaryContactName','primaryContactPhone','insuranceCompany','claimNumber','phone','address','cityStateZip','gutters','downspouts','gutterColor','downspoutColor','gutterGuards','magRoll','debris','sidingBrand','sidingStyle','sidingSqs','sidingColor','elevations','trim','fascia','soffit','windowWraps','blocks','sidingNotes','partialFull','agreedAmount','firstPayment','finalPayment','currentPrice','custDate','repDate','repName'];
       const missing = required.filter(id=>document.getElementById(id)===null);
       addTestLine('All form fields exist in DOM', missing.length===0, missing.length?('Missing: '+missing.join(', ')):'');
