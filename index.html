@@ -491,7 +491,7 @@
       return {page, inner};
     }
 
-    // === PDF EXPORT ===
+    // === PDF EXPORT (always single page) ===
     async function downloadPDF(){
       // Ensure engine present
       try { await ensurePdfLoaded(); setEngineStatus('ok','PDF engine: ready'); }
@@ -502,18 +502,17 @@
       const { page, inner } = buildPrintable(data);
 
       // Wait for fonts & images so html2canvas doesn't capture a blank
-      try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch(_){}
+      try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch(_){/* ignore */}
       const imgs = Array.from(page.querySelectorAll('img'));
       await Promise.all(imgs.map(img => img.complete ? Promise.resolve() : new Promise(res=>{ img.onload=res; img.onerror=res; })));
 
-      // Single‑page fit logic (restore previously working behavior)
+      // Single‑page fit logic
       const capH = 1056; // US Letter height in px
       if ($('#fitToggle').checked) page.classList.add('compact');
-      // Allow layout to settle before reading heights
-      await new Promise(r=>requestAnimationFrame(()=>r()));
+      await new Promise(r=>requestAnimationFrame(()=>r())); // let layout settle
       const actual = inner.scrollHeight;
       const reserve = 24; // headroom to prevent spill
-      let scale = Math.min(1, (capH - reserve) / actual);
+      const scale = Math.min(1, (capH - reserve) / actual);
       if (scale < 1){
         inner.style.transformOrigin = 'top center';
         inner.style.transform = `scale(${scale})`;
@@ -541,9 +540,6 @@
         pr.style.opacity = prevOpacity || '0';
         pr.style.pointerEvents = prevPE || 'none';
       }
-    };
-      try { await html2pdf().set(opt).from(exportPage).save(); }
-      finally { exportPage.remove(); }
     }
 
     // ---------- Diagnostics ----------
