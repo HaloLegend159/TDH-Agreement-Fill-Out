@@ -299,8 +299,11 @@
       else { light.style.background = '#f59e0b'; light.style.boxShadow='0 0 10px #f59e0b'; }
     }
 
-    // Initialize engine (no top-level await)
-    (async ()=>{ try{ await ensurePdfLoaded(); setEngineStatus('ok','PDF engine: ready'); } catch(e){ setEngineStatus('bad','PDF engine: failed to load'); console.error(e); } })();
+    // Initialize engine (wrap awaits in async IIFE – avoids top-level await)
+    (async ()=>{
+      try{ await ensurePdfLoaded(); setEngineStatus('ok','PDF engine: ready'); }
+      catch(e){ setEngineStatus('bad','PDF engine: failed to load'); console.error(e); }
+    })();
 
     // ---------- Form helpers ----------
     function getCheckedChips(container){ const nodes = $$("input[type='checkbox']:checked", container); return nodes.map(i=>i.value); }
@@ -421,24 +424,20 @@
 
       inner.appendChild(buildHeader());
 
-      // General
       const s1 = section('General Information');
       kv(s1,'Name', d.name); kv(s1,'Primary Contact', d.primaryContactName); kv(s1,'Primary Phone', d.primaryContactPhone);
       kv(s1,'Insurance Company', d.insuranceCompany); kv(s1,'Claim Number', d.claimNumber); kv(s1,'Phone', d.phone);
       kv(s1,'Address', d.address); kv(s1,'City/State/Zip', d.cityStateZip);
 
-      // Roofing
       const s2 = section('Roofing');
       const locWrap = document.createElement('div'); locWrap.className='kv'; const pillRow = `<div class="pillrow">${(d.roofLocations||[]).map(x=>`<span class='pill'>${x}</span>`).join('') || '—'}</div>`; locWrap.innerHTML = `<div class="k">Locations</div><div class="v">${pillRow}</div>`; s2.appendChild(locWrap);
       ['Tear Off Layers','Underlayment','Shingles Brand','Style','Color','SQs','Ice & Water','Drip Edge','Gutter Apron','Side Wall Flashing','Vents','Valleys','Pipe Jacks','Ridge','Roof Pitch','Stories','Roof Size','Roof Type']
         .forEach((label)=>{ const map = { 'Tear Off Layers':d.tearOffLayers,'Underlayment':d.underlayment,'Shingles Brand':d.shinglesBrand,'Style':d.style,'Color':d.color,'SQs':d.sqs,'Ice & Water':d.iceWater,'Drip Edge':d.dripEdge,'Gutter Apron':d.gutterApron,'Side Wall Flashing':d.sideWallFlashing,'Vents':d.vents,'Valleys':d.valleys,'Pipe Jacks':d.pipeJacks,'Ridge':d.ridge,'Roof Pitch':d.roofPitch,'Stories':d.stories,'Roof Size':d.roofSize,'Roof Type':d.roofType }; kv(s2,label,map[label]); });
 
-      // Gutters & Siding
       const s3 = section('Gutters & Siding');
       ['Gutters','Downspouts','Gutter Color','Downspout Color','Gutter Guards','Mag Roll Sweeper','Clean & Haul Debris','Siding Brand','Siding Style','Siding SQs','Siding Color','Elevations','Trim','Fascia','Soffit','Window Wraps','Blocks','Siding Notes','Partial or Full']
         .forEach(label=>{ const map = { 'Gutters':d.gutters,'Downspouts':d.downspouts,'Gutter Color':d.gutterColor,'Downspout Color':d.downspoutColor,'Gutter Guards':d.gutterGuards,'Mag Roll Sweeper':d.magRoll,'Clean & Haul Debris':d.debris,'Siding Brand':d.sidingBrand,'Siding Style':d.sidingStyle,'Siding SQs':d.sidingSqs,'Siding Color':d.sidingColor,'Elevations':d.elevations,'Trim':d.trim,'Fascia':d.fascia,'Soffit':d.soffit,'Window Wraps':d.windowWraps,'Blocks':d.blocks,'Siding Notes':d.sidingNotes,'Partial or Full':d.partialFull }; kv(s3,label,map[label]); });
 
-      // Payments & Dates
       const s4 = section('Payments & Dates'); s4.classList.add('paydates');
       kv(s4,'Agreed Amount', currency(d.agreedAmount));
       kv(s4,'First Payment', currency(d.firstPayment));
@@ -447,58 +446,44 @@
       kv(s4,'TDH Rep Date', d.repDate);
       kv(s4,'TDH Representative', d.repName);
 
-      // Signatures
       const s5 = buildSignatures(d);
 
-      // Compose
       inner.appendChild(s1); inner.appendChild(s2); inner.appendChild(s3); inner.appendChild(s4); inner.appendChild(s5);
       page.appendChild(inner); $('#printRoot').appendChild(page);
       return {page, inner};
     }
 
-    // === PDF EXPORT – original, stable path ===
+    // === PDF EXPORT – visible overlay capture (prevents blank pages) ===
     async function downloadPDF(){
-      try{ await ensurePdfLoaded(); setEngineStatus('ok','PDF engine: ready'); }
+      try { await ensurePdfLoaded(); setEngineStatus('ok','PDF engine: ready'); }
       catch(e){ setEngineStatus('bad','PDF engine: failed to load (click Repair)'); alert('PDF engine failed to load. Click "Repair PDF Engine" to try alternate CDNs.'); return; }
 
       const data = collectData();
       const { page, inner } = buildPrintable(data);
 
-      // Wait for fonts & images before capture
-      try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch(_){}
+      try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch(_){/* ignore */}
       const imgs = Array.from(page.querySelectorAll('img'));
       await Promise.all(imgs.map(img => img.complete ? Promise.resolve() : new Promise(res=>{ img.onload=res; img.onerror=res; })));
 
-      // Force single page (Letter)
-      const capH = 1056; // px
-      if ($('#fitToggle').checked) page.classList.add('compact');
-      await new Promise(r=>requestAnimationFrame(()=>r())); // settle layout
+      const capH = 1056; if ($('#fitToggle').checked) page.classList.add('compact');
+      await new Promise(r=>requestAnimationFrame(()=>r()));
       const actual = inner.scrollHeight; const reserve = 24;
       const scale = Math.min(1, (capH - reserve) / actual);
       if (scale < 1){ inner.style.transformOrigin = 'top center'; inner.style.transform = `scale(${scale})`; }
       page.style.height = capH + 'px';
 
-      // Reveal print root for capture
-      const pr = document.getElementById('printRoot');
-      const prevOpacity = pr.style.opacity; const prevPE = pr.style.pointerEvents;
-      pr.style.opacity = '1'; pr.style.pointerEvents = 'auto';
+      const overlay = document.createElement('div');
+      Object.assign(overlay.style, { position:'fixed', inset:'0', background:'#ffffff', zIndex:'999999', display:'flex', justifyContent:'center', alignItems:'flex-start', padding:'20px', overflow:'auto' });
+      try { const pr = document.getElementById('printRoot'); if (page.parentNode === pr) pr.removeChild(page); } catch(_){ }
+      overlay.appendChild(page);
+      document.body.appendChild(overlay);
+      await new Promise(r=>requestAnimationFrame(()=>r()));
 
       const filenameSafe = (data.name || 'TDH_Agreement').replace(/[^a-z0-9_\-]+/gi,'_');
-      const opt = {
-        margin:[0,0,0,0],
-        filename: `${filenameSafe}_${new Date().toISOString().slice(0,10)}.pdf`,
-        image: { type:'jpeg', quality:0.98 },
-        html2canvas: { scale: 3, useCORS:true, backgroundColor:'#ffffff', letterRendering:true },
-        jsPDF: { unit:'pt', format:'letter', orientation:'portrait' },
-        pagebreak: { mode: ['avoid-all','css','legacy'] }
-      };
+      const opt = { margin:[0,0,0,0], filename: `${filenameSafe}_${new Date().toISOString().slice(0,10)}.pdf`, image: { type:'jpeg', quality:0.98 }, html2canvas: { scale: 3, useCORS:true, backgroundColor:'#ffffff', letterRendering:true, scrollX:0, scrollY:0 }, jsPDF: { unit:'pt', format:'letter', orientation:'portrait' }, pagebreak: { mode: ['avoid-all','css','legacy'] } };
 
-      try{
-        await html2pdf().set(opt).from(page).save();
-      } finally {
-        pr.style.opacity = prevOpacity || '0';
-        pr.style.pointerEvents = prevPE || 'none';
-      }
+      try { await html2pdf().set(opt).from(page).save(); }
+      finally { overlay.remove(); }
     }
 
     // ---------- Diagnostics ----------
