@@ -238,6 +238,9 @@
         <div class="field"><label for="finalPayment">Final Payment ($)</label><input id="finalPayment" type="number" inputmode="decimal" placeholder="0.00"/></div>
       </div>
       <div class="row cols-3" style="margin-top:var(--gap)">
+        <div class="field"><label for="currentPrice">Current Price ($)</label><input id="currentPrice" type="number" inputmode="decimal" placeholder="0.00"/></div>
+      </div>
+      <div class="row cols-3" style="margin-top:var(--gap)">
         <div class="field"><label for="custDate">Agreed by Customer (date)</label><input id="custDate" type="date"/></div>
         <div class="field"><label for="repDate">Agreed by TDH Rep (date)</label><input id="repDate" type="date"/></div>
         <div class="field"><label for="repName">TDH Representative</label><input id="repName" placeholder="Name"/></div>
@@ -360,6 +363,7 @@
         agreedAmount: $('#agreedAmount').value,
         firstPayment: $('#firstPayment').value,
         finalPayment: $('#finalPayment').value,
+        currentPrice: $('#currentPrice').value,
         custDate: $('#custDate').value,
         repDate: $('#repDate').value,
         repName: $('#repName').value.trim()
@@ -452,6 +456,7 @@
       kv(s4,'Agreed Amount', currency(d.agreedAmount));
       kv(s4,'First Payment', currency(d.firstPayment));
       kv(s4,'Final Payment', currency(d.finalPayment));
+      kv(s4,'Current Price', currency(d.currentPrice));
       kv(s4,'Customer Date', d.custDate);
       kv(s4,'TDH Rep Date', d.repDate);
       kv(s4,'TDH Representative', d.repName);
@@ -503,7 +508,7 @@
       addTestLine('Engine loads (html2pdf present)', engineLoaded);
       try{ await new Promise((res,rej)=>{ const img=new Image(); img.onload=res; img.onerror=()=>rej(new Error('Logo not found')); img.src=LOGO_PATH; }); addTestLine('Logo asset reachable', true);}catch(e){ addTestLine('Logo asset reachable', false, e.message||e.toString()); }
       // all fields present check (simple presence)
-      const required = ['name','primaryContactName','primaryContactPhone','insuranceCompany','claimNumber','phone','address','cityStateZip','gutters','downspouts','gutterColor','downspoutColor','gutterGuards','magRoll','debris','sidingBrand','sidingStyle','sidingSqs','sidingColor','elevations','trim','fascia','soffit','windowWraps','blocks','sidingNotes','partialFull','agreedAmount','firstPayment','finalPayment','custDate','repDate','repName'];
+      const required = ['name','primaryContactName','primaryContactPhone','insuranceCompany','claimNumber','phone','address','cityStateZip','gutters','downspouts','gutterColor','downspoutColor','gutterGuards','magRoll','debris','sidingBrand','sidingStyle','sidingSqs','sidingColor','elevations','trim','fascia','soffit','windowWraps','blocks','sidingNotes','partialFull','agreedAmount','firstPayment','finalPayment','currentPrice','custDate','repDate','repName'];
       const missing = required.filter(id=>document.getElementById(id)===null);
       addTestLine('All form fields exist in DOM', missing.length===0, missing.length?('Missing: '+missing.join(', ')):'');
     }
