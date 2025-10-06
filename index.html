@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>TDH Agreement – Web Form → PDF (Centered • One‑Page Fit)</title>
+<title>TDH Agreement – One‑Page PDF</title>
 <meta name="color-scheme" content="dark light" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -40,7 +40,7 @@
   .status{display:inline-flex;align-items:center;gap:8px;font-size:12px;color:#e5e7eb;background:#0b1220;border:1px solid var(--border);padding:6px 10px;border-radius:999px}
   .status .light{width:8px;height:8px;border-radius:999px;background:#f59e0b;box-shadow:0 0 10px currentColor}
 
-  /* === PRINTABLE (centered, no-overlap) === */
+  /* === PRINTABLE (centered, single page) === */
   #printRoot{position:fixed;inset:0;pointer-events:none;opacity:0}
   .page{position:relative;width:816px;min-height:1056px;background:#fff;color:#0b1220;margin:0 auto;padding:28px 32px;border:1px solid #e5e7eb;border-radius:8px}
   .page-inner{width:100%; transform-origin: top center;}
@@ -53,7 +53,6 @@
   .sec-title{font-size:14px;font-weight:700;margin:0 0 6px;border-bottom:1px solid #e5e7eb;padding-bottom:4px}
   .kv{display:grid;grid-template-columns:220px 1fr;gap:4px 10px;align-items:start}
   .kv + .kv{margin-top:6px}
-  .page.compact .kv + .kv{margin-top:4px}
   .k{font-size:11px;color:#64748b}
   .v{font-size:13px;font-weight:600;white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;line-height:1.5}
   .pillrow{display:flex;flex-wrap:wrap;gap:6px}
@@ -66,7 +65,7 @@
   .sigMeta{display:grid;grid-template-columns:120px 1fr;gap:4px 8px}
   .sigMeta .k{font-size:10px;color:#64748b}
 
-  /* Compact (1-page fit) – balanced two-column sections and subtle type reduction */
+  /* Compact (1-page fit) */
   .page.compact{padding:16px 20px}
   .page.compact .h1{font-size:18.5px}
   .page.compact .sec{display:grid;grid-template-columns:1fr 1fr;column-gap:14px;row-gap:6px}
@@ -99,7 +98,7 @@
       </div>
     </div>
 
-    <p class="note">PDF is now <strong>centered</strong> and the 1‑page fit uses a balanced two‑column layout so text stays readable. All form fields are included in the export. No scope code included.</p>
+    <p class="note">This is the **rolled‑back** version that previously worked (no Current Price field, single‑page PDF, standard exporter).</p>
 
     <!-- GENERAL INFO -->
     <section class="panel">
@@ -224,7 +223,7 @@
       </div>
     </section>
 
-    <!-- MORE / PAYMENT -->
+    <!-- MATERIALS / INTERIOR / PAYMENTS (no Current Price in rollback) -->
     <section class="panel">
       <h2>Materials / Interior / Payments</h2>
       <div class="row cols-3">
@@ -238,9 +237,6 @@
         <div class="field"><label for="finalPayment">Final Payment ($)</label><input id="finalPayment" type="number" inputmode="decimal" placeholder="0.00"/></div>
       </div>
       <div class="row cols-3" style="margin-top:var(--gap)">
-        <div class="field"><label for="currentPrice">Current Price ($)</label><input id="currentPrice" type="number" inputmode="decimal" placeholder="0.00"/></div>
-      </div>
-      <div class="row cols-3" style="margin-top:var(--gap)">
         <div class="field"><label for="custDate">Agreed by Customer (date)</label><input id="custDate" type="date"/></div>
         <div class="field"><label for="repDate">Agreed by TDH Rep (date)</label><input id="repDate" type="date"/></div>
         <div class="field"><label for="repName">TDH Representative</label><input id="repName" placeholder="Name"/></div>
@@ -249,7 +245,7 @@
 
     <div class="panel diag">
       <h3>Diagnostics</h3>
-      <p class="note">Run these tests if PDF isn’t downloading or the engine light is red.</p>
+      <p class="note">Run these if PDF isn’t downloading or the engine light is red.</p>
       <div class="tests" id="tests"></div>
       <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn" id="btnRunDiag">Run Diagnostics</button>
@@ -303,26 +299,12 @@
       else { light.style.background = '#f59e0b'; light.style.boxShadow='0 0 10px #f59e0b'; }
     }
 
-    // Wrap awaits inside an async IIFE to avoid top‑level await errors
-    (async () => {
-      try {
-        await ensurePdfLoaded();
-        setEngineStatus('ok','PDF engine: ready');
-      } catch (e) {
-        setEngineStatus('bad','PDF engine: failed to load');
-        console.error(e);
-      }
-    })();
+    // Initialize engine (no top-level await)
+    (async ()=>{ try{ await ensurePdfLoaded(); setEngineStatus('ok','PDF engine: ready'); } catch(e){ setEngineStatus('bad','PDF engine: failed to load'); console.error(e); } })();
 
     // ---------- Form helpers ----------
-    function getCheckedChips(container){
-      const nodes = $$("input[type='checkbox']:checked", container);
-      return nodes.map(i=>i.value);
-    }
-    function getCheckedRadio(container){
-      const r = $("input[type='radio']:checked", container);
-      return r ? r.value : '';
-    }
+    function getCheckedChips(container){ const nodes = $$("input[type='checkbox']:checked", container); return nodes.map(i=>i.value); }
+    function getCheckedRadio(container){ const r = $("input[type='radio']:checked", container); return r ? r.value : ''; }
 
     function collectData(){
       return {
@@ -378,18 +360,13 @@
         agreedAmount: $('#agreedAmount').value,
         firstPayment: $('#firstPayment').value,
         finalPayment: $('#finalPayment').value,
-        currentPrice: $('#currentPrice').value,
         custDate: $('#custDate').value,
         repDate: $('#repDate').value,
         repName: $('#repName').value.trim()
       };
     }
 
-    function clearForm(){
-      $$('input, textarea, select').forEach(el=>{
-        if(el.type==='checkbox' || el.type==='radio') el.checked=false; else el.value='';
-      });
-    }
+    function clearForm(){ $$('input, textarea, select').forEach(el=>{ if(el.type==='checkbox' || el.type==='radio'){ el.checked=false; } else { el.value=''; } }); }
 
     function loadExample(){
       const ex = {
@@ -401,42 +378,28 @@
         vents:'4 box vents – black', valleys:'Open (metal)', pipeJacks:'3 – neoprene', ridge:'Ridge cap – matching', roofPitch:'6/12', stories:'2', roofSize:'~2,800 sq ft', roofType:'Gable',
         gutters:'5"', downspouts:'3x4', gutterColor:'Charcoal', downspoutColor:'Charcoal', gutterGuards:'Leaf Free', magRoll:'Yes', debris:'Yes',
         sidingBrand:'LP SmartSide', sidingStyle:'Lap 8"', sidingSqs:'19', sidingColor:'Charcoal', elevations:'Front, Rear, Left, Right', trim:'PVC', fascia:'Smooth', soffit:'Vented', windowWraps:'Smooth', blocks:'2 Light, 1 Split', sidingNotes:'Replace damaged starter strips on north elevation', partialFull:'Partial – storm faces only',
-        materialDrop:'Driveway (left side) – 7am OK', redeck:'No', interior:'Master bath ceiling stain', agreedAmount:'18124.55', firstPayment:'5000.00', finalPayment:'13124.55', currentPrice:'18124.55',
+        materialDrop:'Driveway (left side) – 7am OK', redeck:'No', interior:'Master bath ceiling stain', agreedAmount:'18124.55', firstPayment:'5000.00', finalPayment:'13124.55',
         custDate:new Date().toISOString().slice(0,10), repDate:new Date().toISOString().slice(0,10), repName:'TDH Rep – J. Morales'
       };
-      for(const [k,v] of Object.entries(ex)){
-        const el = document.getElementById(k); if(el) el.value = v;
-      }
-      $$('#roofLocations input[type="checkbox"]').forEach(cb=>{cb.checked=(ex.roofLocations||[]).includes(cb.value)});
-      $$('#underlayment input[type="radio"]').forEach(r=>{r.checked=(r.value===ex.underlayment)});
-      $$('#roofType input[type="radio"]').forEach(r=>{r.checked=(r.value===ex.roofType)});
+      for(const [k,v] of Object.entries(ex)){ const el = document.getElementById(k); if(el){ el.value = v } }
+      $$("#roofLocations input[type='checkbox']").forEach(cb=>{cb.checked = (ex.roofLocations||[]).includes(cb.value)});
+      $$("#underlayment input[type='radio']").forEach(r=>{r.checked = (r.value===ex.underlayment)});
+      $$("#roofType input[type='radio']").forEach(r=>{r.checked = (r.value===ex.roofType)});
     }
 
     function currency(n){ if(n==null||n==='')return''; const v=Number(n); if(Number.isNaN(v))return n; return v.toLocaleString(undefined,{style:'currency',currency:'USD'}) }
 
-    function kv(parent,label,value){
-      const wrap = document.createElement('div');
-      wrap.className = 'kv';
-      wrap.innerHTML = `<div class="k">${label}</div><div class="v">${value || '—'}</div>`;
-      parent.appendChild(wrap);
-    }
+    function kv(parent,label,value){ const wrap = document.createElement('div'); wrap.className = 'kv'; wrap.innerHTML = `<div class="k">${label}</div><div class="v">${value || '—'}</div>`; parent.appendChild(wrap); }
 
     function buildHeader(){
       const h = document.createElement('div'); h.className = 'header';
-      const logo = document.createElement('div'); logo.className = 'logoBox';
-      const img = new Image(); img.src = LOGO_PATH; img.alt = 'TDH Logo'; img.loading='eager'; img.decoding='sync'; img.crossOrigin='anonymous';
-      img.onerror = ()=>{ logo.innerHTML = '<strong>TDH</strong>'; };
-      logo.appendChild(img);
-      const text = document.createElement('div');
-      text.innerHTML = `<div class="h1">TDH Agreement</div><div class="sub">Generated ${new Date().toLocaleDateString()}</div>`;
-      h.appendChild(logo); h.appendChild(text);
-      return h;
+      const logo = document.createElement('div'); logo.className = 'logoBox'; const img = new Image(); img.src = LOGO_PATH; img.alt = 'TDH Logo'; img.loading = 'eager'; img.decoding = 'sync'; img.crossOrigin = 'anonymous'; img.onerror = ()=>{ logo.innerHTML = '<strong>TDH</strong>'; }; logo.appendChild(img);
+      const text = document.createElement('div'); text.innerHTML = `<div class="h1">TDH Agreement</div><div class="sub">Generated ${new Date().toLocaleDateString()}</div>`;
+      h.appendChild(logo); h.appendChild(text); return h;
     }
 
     function buildSignatures(d){
-      const s = document.createElement('section');
-      s.className = 'sec signatures avoid-break';
-      s.innerHTML = `<div class="sec-title">Signatures</div>`;
+      const s = document.createElement('section'); s.className = 'sec signatures avoid-break'; s.innerHTML = `<div class="sec-title">Signatures</div>`;
       const row = document.createElement('div'); row.className = 'signRow';
       const customer = document.createElement('div'); customer.className = 'sigBox'; customer.innerHTML = `
         <div class="k" style="font-weight:700">Customer Signature</div>
@@ -446,8 +409,7 @@
         <div class="k" style="font-weight:700">TDH Representative</div>
         <div class="sigLine"></div>
         <div class="sigMeta"><div class="k">Printed Name</div><div class="v">${d.repName || '____________________________'}</div><div class="k">Date</div><div class="v">${d.repDate || '____/____/________'}</div></div>`;
-      row.appendChild(customer); row.appendChild(rep); s.appendChild(row);
-      return s;
+      row.appendChild(customer); row.appendChild(rep); s.appendChild(row); return s;
     }
 
     function buildPrintable(d){
@@ -459,67 +421,64 @@
 
       inner.appendChild(buildHeader());
 
+      // General
       const s1 = section('General Information');
       kv(s1,'Name', d.name); kv(s1,'Primary Contact', d.primaryContactName); kv(s1,'Primary Phone', d.primaryContactPhone);
       kv(s1,'Insurance Company', d.insuranceCompany); kv(s1,'Claim Number', d.claimNumber); kv(s1,'Phone', d.phone);
       kv(s1,'Address', d.address); kv(s1,'City/State/Zip', d.cityStateZip);
 
+      // Roofing
       const s2 = section('Roofing');
-      const locWrap = document.createElement('div'); locWrap.className='kv';
-      const pillRow = `<div class="pillrow">${(d.roofLocations||[]).map(x=>`<span class='pill'>${x}</span>`).join('') || '—'}</div>`;
-      locWrap.innerHTML = `<div class="k">Locations</div><div class="v">${pillRow}</div>`; s2.appendChild(locWrap);
+      const locWrap = document.createElement('div'); locWrap.className='kv'; const pillRow = `<div class="pillrow">${(d.roofLocations||[]).map(x=>`<span class='pill'>${x}</span>`).join('') || '—'}</div>`; locWrap.innerHTML = `<div class="k">Locations</div><div class="v">${pillRow}</div>`; s2.appendChild(locWrap);
       ['Tear Off Layers','Underlayment','Shingles Brand','Style','Color','SQs','Ice & Water','Drip Edge','Gutter Apron','Side Wall Flashing','Vents','Valleys','Pipe Jacks','Ridge','Roof Pitch','Stories','Roof Size','Roof Type']
-        .forEach(label=>{ const map = { 'Tear Off Layers':d.tearOffLayers,'Underlayment':d.underlayment,'Shingles Brand':d.shinglesBrand,'Style':d.style,'Color':d.color,'SQs':d.sqs,'Ice & Water':d.iceWater,'Drip Edge':d.dripEdge,'Gutter Apron':d.gutterApron,'Side Wall Flashing':d.sideWallFlashing,'Vents':d.vents,'Valleys':d.valleys,'Pipe Jacks':d.pipeJacks,'Ridge':d.ridge,'Roof Pitch':d.roofPitch,'Stories':d.stories,'Roof Size':d.roofSize,'Roof Type':d.roofType }; kv(s2,label,map[label]); });
+        .forEach((label)=>{ const map = { 'Tear Off Layers':d.tearOffLayers,'Underlayment':d.underlayment,'Shingles Brand':d.shinglesBrand,'Style':d.style,'Color':d.color,'SQs':d.sqs,'Ice & Water':d.iceWater,'Drip Edge':d.dripEdge,'Gutter Apron':d.gutterApron,'Side Wall Flashing':d.sideWallFlashing,'Vents':d.vents,'Valleys':d.valleys,'Pipe Jacks':d.pipeJacks,'Ridge':d.ridge,'Roof Pitch':d.roofPitch,'Stories':d.stories,'Roof Size':d.roofSize,'Roof Type':d.roofType }; kv(s2,label,map[label]); });
 
+      // Gutters & Siding
       const s3 = section('Gutters & Siding');
       ['Gutters','Downspouts','Gutter Color','Downspout Color','Gutter Guards','Mag Roll Sweeper','Clean & Haul Debris','Siding Brand','Siding Style','Siding SQs','Siding Color','Elevations','Trim','Fascia','Soffit','Window Wraps','Blocks','Siding Notes','Partial or Full']
         .forEach(label=>{ const map = { 'Gutters':d.gutters,'Downspouts':d.downspouts,'Gutter Color':d.gutterColor,'Downspout Color':d.downspoutColor,'Gutter Guards':d.gutterGuards,'Mag Roll Sweeper':d.magRoll,'Clean & Haul Debris':d.debris,'Siding Brand':d.sidingBrand,'Siding Style':d.sidingStyle,'Siding SQs':d.sidingSqs,'Siding Color':d.sidingColor,'Elevations':d.elevations,'Trim':d.trim,'Fascia':d.fascia,'Soffit':d.soffit,'Window Wraps':d.windowWraps,'Blocks':d.blocks,'Siding Notes':d.sidingNotes,'Partial or Full':d.partialFull }; kv(s3,label,map[label]); });
 
+      // Payments & Dates
       const s4 = section('Payments & Dates'); s4.classList.add('paydates');
       kv(s4,'Agreed Amount', currency(d.agreedAmount));
       kv(s4,'First Payment', currency(d.firstPayment));
       kv(s4,'Final Payment', currency(d.finalPayment));
-      kv(s4,'Current Price', currency(d.currentPrice));
       kv(s4,'Customer Date', d.custDate);
       kv(s4,'TDH Rep Date', d.repDate);
       kv(s4,'TDH Representative', d.repName);
 
+      // Signatures
       const s5 = buildSignatures(d);
 
+      // Compose
       inner.appendChild(s1); inner.appendChild(s2); inner.appendChild(s3); inner.appendChild(s4); inner.appendChild(s5);
       page.appendChild(inner); $('#printRoot').appendChild(page);
       return {page, inner};
     }
 
-    // === PDF EXPORT (always single page) ===
+    // === PDF EXPORT – original, stable path ===
     async function downloadPDF(){
-      // Ensure engine present
-      try { await ensurePdfLoaded(); setEngineStatus('ok','PDF engine: ready'); }
+      try{ await ensurePdfLoaded(); setEngineStatus('ok','PDF engine: ready'); }
       catch(e){ setEngineStatus('bad','PDF engine: failed to load (click Repair)'); alert('PDF engine failed to load. Click "Repair PDF Engine" to try alternate CDNs.'); return; }
 
-      // Build printable page in #printRoot
       const data = collectData();
       const { page, inner } = buildPrintable(data);
 
-      // Wait for fonts & images so html2canvas doesn't capture a blank
-      try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch(_){/* ignore */}
+      // Wait for fonts & images before capture
+      try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch(_){}
       const imgs = Array.from(page.querySelectorAll('img'));
       await Promise.all(imgs.map(img => img.complete ? Promise.resolve() : new Promise(res=>{ img.onload=res; img.onerror=res; })));
 
-      // Single‑page fit logic
-      const capH = 1056; // US Letter height in px
+      // Force single page (Letter)
+      const capH = 1056; // px
       if ($('#fitToggle').checked) page.classList.add('compact');
-      await new Promise(r=>requestAnimationFrame(()=>r())); // let layout settle
-      const actual = inner.scrollHeight;
-      const reserve = 24; // headroom to prevent spill
+      await new Promise(r=>requestAnimationFrame(()=>r())); // settle layout
+      const actual = inner.scrollHeight; const reserve = 24;
       const scale = Math.min(1, (capH - reserve) / actual);
-      if (scale < 1){
-        inner.style.transformOrigin = 'top center';
-        inner.style.transform = `scale(${scale})`;
-      }
+      if (scale < 1){ inner.style.transformOrigin = 'top center'; inner.style.transform = `scale(${scale})`; }
       page.style.height = capH + 'px';
 
-      // Temporarily reveal the print root while capturing
+      // Reveal print root for capture
       const pr = document.getElementById('printRoot');
       const prevOpacity = pr.style.opacity; const prevPE = pr.style.pointerEvents;
       pr.style.opacity = '1'; pr.style.pointerEvents = 'auto';
@@ -534,7 +493,7 @@
         pagebreak: { mode: ['avoid-all','css','legacy'] }
       };
 
-      try {
+      try{
         await html2pdf().set(opt).from(page).save();
       } finally {
         pr.style.opacity = prevOpacity || '0';
@@ -550,19 +509,9 @@
       const engineLoaded = !!window.html2pdf || await ensurePdfLoaded().then(()=>true).catch(()=>false);
       addTestLine('Engine loads (html2pdf present)', engineLoaded);
       try{ await new Promise((res,rej)=>{ const img=new Image(); img.onload=res; img.onerror=()=>rej(new Error('Logo not found')); img.src=LOGO_PATH; }); addTestLine('Logo asset reachable', true);}catch(e){ addTestLine('Logo asset reachable', false, e.message||e.toString()); }
-
-      // Keep existing tests
       addTestLine('downloadPDF is defined', typeof downloadPDF==='function');
       try{ const {page} = buildPrintable(collectData()); const hasTitle = !!page.querySelector('.h1'); addTestLine('Printable builder returns page with header', hasTitle); $('#printRoot').innerHTML=''; }
       catch(err){ addTestLine('Printable builder returns page with header', false, err.message||String(err)); }
-
-      // New tests
-      try { const {page} = buildPrintable(collectData()); const clone = page.cloneNode(true); document.body.appendChild(clone); const w = clone.offsetWidth, h = clone.offsetHeight; clone.remove(); addTestLine('Export node has measurable size', w>0 && h>0, `w=${w}, h=${h}`); }
-      catch(err){ addTestLine('Export node has measurable size', false, err.message||String(err)); }
-
-      const required = ['name','primaryContactName','primaryContactPhone','insuranceCompany','claimNumber','phone','address','cityStateZip','gutters','downspouts','gutterColor','downspoutColor','gutterGuards','magRoll','debris','sidingBrand','sidingStyle','sidingSqs','sidingColor','elevations','trim','fascia','soffit','windowWraps','blocks','sidingNotes','partialFull','agreedAmount','firstPayment','finalPayment','currentPrice','custDate','repDate','repName'];
-      const missing = required.filter(id=>document.getElementById(id)===null);
-      addTestLine('All form fields exist in DOM', missing.length===0, missing.length?('Missing: '+missing.join(', ')):'');
     }
 
     function resetDiagnostics(){ $('#tests').innerHTML = ''; }
